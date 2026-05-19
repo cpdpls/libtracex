@@ -7,8 +7,6 @@
 
 #define TRACE_MAGIC_NUMBER_ID_LE    0x54585442
 #define TRACE_MAGIC_NUMBER_ID_BE    0x42545854
-#define TRACE_INVALID_PTR           1
-#define TRACE_INVALID_ID            2
 
 
 struct trace_control_header
