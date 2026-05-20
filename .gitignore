@@ -1,3 +1,4 @@
 compile_commands.json
 trace.trx
 build
+test_dump.trx

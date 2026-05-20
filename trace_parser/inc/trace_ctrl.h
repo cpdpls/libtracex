@@ -1,12 +1,11 @@
-#ifndef __TRACE_CTRL_HEADER_H__
-#define __TRACE_CTRL_HEADER_H__
+#ifndef __TRACE_CTRL_H__
+#define __TRACE_CTRL_H__
 
 #include <stdint.h>
 #include <stddef.h>
-#include <stdio.h>
 
-#define TRACE_MAGIC_NUMBER_ID_LE    0x54585442
-#define TRACE_MAGIC_NUMBER_ID_BE    0x42545854
+#define TRACE_CTRL_MAGIC_NUMBER_ID_LE    0x54585442
+#define TRACE_CTRL_MAGIC_NUMBER_ID_BE    0x42545854
 
 
 struct trace_control_header

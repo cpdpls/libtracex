@@ -1,8 +1,11 @@
+#include <endian.h>
 #include <stddef.h>
+#include <stdio.h>
 
-#include "trace_debug.h"
+#include "trace_parser_debug.h"
+#include "trace_parser.h"
 
-void trace_debug_print_header(struct trace_control_header *control_header)
+void trace_parser_debug_print_header(struct trace_control_header *control_header)
 {
     if (control_header == NULL)
     {
@@ -11,7 +14,7 @@ void trace_debug_print_header(struct trace_control_header *control_header)
     else
     {
         printf("----TRACE_HEADER_DEBUG----\n\n");
-        printf("Header ID --> %d\n", control_header->header_id);
+        printf("Header ID --> %.*s\n", sizeof(control_header->header_id),&control_header->header_id);
         printf("Header timer_valid_mask --> %d\n", control_header->header_timer_valid_mask);
         printf("Header trace base address --> 0x%08x\n", control_header->header_trace_base_addr);
         printf("Header registry start pointer --> 0x%08x\n", control_header->header_obj_registry_start_ptr);
@@ -24,5 +27,22 @@ void trace_debug_print_header(struct trace_control_header *control_header)
         printf("Header reserved 2 --> %d\n", control_header->header_res2);
         printf("Header reserved 3 --> %d\n", control_header->header_res3);
         printf("Header reserved 4 --> %d\n\n\n", control_header->header_res4);
+    }
+}
+
+
+void trace_parser_debug_parser(struct trace_parser *parser)
+{
+    if (parser != NULL)
+    {
+        if (parser->endianess == TRACE_PARSER_LE)
+        {
+            printf("Trace file is little endian !");
+        }
+        else
+    {
+            printf("Trace file is big endian !");
+
+        }
     }
 }

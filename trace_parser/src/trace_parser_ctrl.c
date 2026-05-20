@@ -1,18 +1,81 @@
 #include "trace_parser_ctrl.h"
 #include "trace_ctrl.h"
+#include "trace_parser.h"
+#include "trace_parser_errno.h"
 #include <stdio.h>
 
-static inline int trace_parse_magic_number(void *trace_buffer);
-static inline int trace_parse_read_header(FILE *trace_file, void *trace_buffer);
+static struct trace_control_header *alloc_trace_parser_ctrl(void);
+static inline int trace_parser_ctrl_check_magic_number(struct trace_control_header *control_header);
+static inline int trace_parser_set_endianess(struct trace_parser *parser);
+static int trace_parser_read_header(struct trace_parser *parser);
 
-static inline int trace_parse_magic_number(void *trace_buffer)
+int trace_parser_ctrl_header(struct trace_parser *parser)
+{
+    int status;
+    
+    parser->parsed_trace.control_header = alloc_trace_parser_ctrl();
+    if (parser->parsed_trace.control_header == NULL)
+    {
+        status = TRACE_PARSER_MEM_ERR;
+        goto cleanup_header_error;
+    }
+
+    status = trace_parser_read_header(parser);
+    if (status != 0)
+    {
+        goto cleanup_header_error;
+    }
+    
+    status = trace_parser_ctrl_check_magic_number(parser->parsed_trace.control_header);
+    if (status != 0)
+    {
+        goto cleanup_header_error;
+    }
+    
+    status = trace_parser_set_endianess(parser);
+    if (status != 0)
+    {
+        goto cleanup_header_error;
+    }
+
+    return 0;
+
+cleanup_header_error:
+    trace_parser_ctrl_destroy(parser->parsed_trace.control_header);
+
+status_return:
+    return status;
+}
+void trace_parser_ctrl_destroy(struct trace_control_header *control_header)
+{
+    if (control_header != NULL)
+    {
+        free(control_header);
+    }
+
+}
+
+static struct trace_control_header *alloc_trace_parser_ctrl(void)
+{
+    struct trace_control_header *control_header;
+    
+    control_header = (void*)malloc(sizeof(struct trace_control_header));
+    if (control_header == NULL)
+    {
+        return NULL;
+    }
+
+    return control_header;
+}
+
+static inline int trace_parser_ctrl_check_magic_number(struct trace_control_header *control_header)
 {
     int magic_status;
 
-    if (*(uint32_t*)trace_buffer != TRACE_MAGIC_NUMBER_ID_LE &&
-        *(uint32_t*)trace_buffer != TRACE_MAGIC_NUMBER_ID_BE)
+    if (control_header->header_id != TRACE_CTRL_MAGIC_NUMBER_ID_LE &&
+        control_header->header_id != TRACE_CTRL_MAGIC_NUMBER_ID_BE)
     {
-        magic_status =  TRACE_PARSER_CTRL_INVALID_ID;
+        magic_status =  TRACE_PARSER_INVALID_MAGIC_NUMBER;
     }
     else
     {
@@ -20,53 +83,34 @@ static inline int trace_parse_magic_number(void *trace_buffer)
     }
     return magic_status;
 }
-
-static inline int trace_parse_read_header(FILE *trace_file, void *trace_buffer)
+int trace_parser_set_endianess(struct trace_parser *parser)
 {
-    if (fread(trace_buffer, 1, sizeof(struct trace_control_header), trace_file) != sizeof(struct trace_control_header))
+    if(parser->parsed_trace.control_header->header_id == TRACE_CTRL_MAGIC_NUMBER_ID_BE)
     {
-        return TRACE_PARSER_CTRL_MEM_ERROR;
+        parser->endianess = TRACE_PARSER_BE;
+        return 0;
     }
-
-}
-int trace_parse_ctrl_header(FILE *trace_file, void *trace_raw_buffer, struct trace_control_header **control_header)
-{
-    int result;
-
-    if (control_header == NULL || trace_raw_buffer == NULL || trace_file == NULL)
-        return TRACE_PARSER_CTRL_INVALID_PTR;
-    
-    trace_raw_buffer = (void*)malloc(sizeof(struct trace_control_header));
-    if (trace_raw_buffer == NULL)
+    if (parser->parsed_trace.control_header->header_id == TRACE_CTRL_MAGIC_NUMBER_ID_LE)
     {
-        return TRACE_PARSER_CTRL_MEM_ERROR;
+        parser->endianess = TRACE_PARSER_LE;
+        return 0;
     }
-
-    result = trace_parse_read_header(trace_file, trace_raw_buffer); 
-
-    if (trace_parse_magic_number(trace_buffer) != 0)
-        return TRACE_PARSER_CTRL_INVALID_ID;
-
-    *control_header = *(struct trace_control_header *)trace_buffer;
-
-error_cleanup_all:
-
-    
-    return 0;
-    
-}
-void trace_parse_ctrl_destroy(struct trace_control_header *control_header)
-{
-
-}
-int trace_get_endianess(struct trace_control_header *control_header)
-{
-    if(control_header->header_id == TRACE_MAGIC_NUMBER_ID_BE)
-        return TRACE_PARSER_CTRL_BE;
-    if (control_header->header_id == TRACE_MAGIC_NUMBER_ID_LE)
-        return TRACE_PARSER_CTRL_LE;
 
     else
-        return TRACE_PARSER_CTRL_INVALID_ID;
+        return TRACE_PARSER_INVALID_MAGIC_NUMBER;
+
+}
+static int trace_parser_read_header(struct trace_parser *parser)
+{
+    int bytes_read;
+
+    bytes_read = fread((void*)parser->parsed_trace.control_header, 1, sizeof(struct trace_control_header), parser->trace_file);
+
+    if (bytes_read != sizeof(struct trace_control_header))
+    {
+        return TRACE_PARSER_FILE_OP_ERROR;
+    }
+    
+    return 0;
 
 }
