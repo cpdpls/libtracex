@@ -2,9 +2,11 @@
 #include <stdio.h>
 
 #include "trace_parser_debug.h"
+#include "trace_ctrl.h"
 #include "trace_parser.h"
+#include "trace_registry.h"
 
-void trace_parser_debug_print_header(struct trace_control_header *control_header)
+void trace_parser_debug_print_header(struct trace_parsed_control_header *control_header)
 {
     if (control_header == NULL)
     {
@@ -44,4 +46,32 @@ void trace_parser_debug_parser(struct trace_parser *parser)
 
         }
     }
+}
+void trace_parser_debug_print_objects(struct trace_parser *parser)
+{
+    size_t i;
+    struct trace_object_entry **object;
+    if (parser == NULL)
+    {
+        printf("DEBUG : BAD PTR !\n");
+    }
+
+
+    for (i = 0; i < parser->parsed_trace.registry->parsed_registry->objects_count; i++)
+    {
+        object = parser->parsed_trace.registry->parsed_registry->objects;
+
+        printf("Obj available : %d\n", object[i]->obj_available);
+        printf("Obj type : %d\n", object[i]->obj_type);
+        printf("Obj res1 : %d\n", object[i]->obj_res1);
+        printf("Obj res2 : %d\n", object[i]->obj_res2);
+        printf("Obj ptr : 0x%08x\n", object[i]->obj_ptr);
+        printf("Obj param 1 : %d\n", object[i]->obj_param_1);
+        printf("Obj param 2 : %d\n", object[i]->obj_param_2);
+        printf("Obj name : %.*s\n", parser->parsed_trace.header->parsed_header->header_obj_registry_name_size, &object[i]->obj_name);
+
+    }
+
+
+
 }

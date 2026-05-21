@@ -8,7 +8,7 @@
 #define TRACE_CTRL_MAGIC_NUMBER_ID_BE    0x42545854
 
 
-struct trace_control_header
+struct trace_parsed_control_header
 {
     uint32_t header_id;
     uint32_t header_timer_valid_mask;
@@ -25,4 +25,10 @@ struct trace_control_header
     uint32_t header_res4;
 } __attribute__((packed));
 
+struct trace_control_header
+{
+    struct trace_parsed_control_header *parsed_header;
+    void *raw_buffer;
+    size_t raw_buffer_size;
+};
 #endif

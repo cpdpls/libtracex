@@ -17,11 +17,19 @@ struct trace_object_entry
 
 }__attribute__((packed));
 
-struct trace_registry
+struct trace_parsed_registry
 {
-    struct trace_object_entry *objects;
+    struct trace_object_entry **objects;
+    size_t object_size_in_buffer;
     size_t objects_count;
 
+};
+
+struct trace_registry
+{
+    struct trace_parsed_registry *parsed_registry;
+    void *raw_buffer;
+    size_t raw_buffer_size;
 };
 #endif
 
