@@ -8,7 +8,7 @@
 #define TRACE_PARSER_CTRL_LE                    4
 #define TRACE_PARSER_CTRL_BE                    5
 
-int trace_parser_ctrl_header(struct trace_parser *parser);
+int trace_parser_ctrl_header(FILE *file_ptr, struct trace_control_header **parser);
 void trace_parser_ctrl_destroy(struct trace_control_header *control_header);
 #endif
 

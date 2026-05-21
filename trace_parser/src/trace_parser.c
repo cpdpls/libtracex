@@ -11,6 +11,7 @@
 
 static int open_trace_file(struct trace_parser *parser, uint8_t *trace_path);
 static int check_trace_size(struct trace_parser *parser);
+static inline int trace_parser_set_endianess(struct trace_parser *parser);
 static struct trace_parser *alloc_parser(void);
 
 static int open_trace_file(struct trace_parser *parser, uint8_t *trace_path)
@@ -104,7 +105,8 @@ int trace_parser_open(uint8_t *trace_path, struct trace_parser **parser_ptr)
         goto error_cleanup_all;
     }
     
-    status = trace_parser_ctrl_header(temp_parser);
+    /* Parse the header file to check for the correct file type */
+    status = trace_parser_ctrl_header(temp_parser->trace_file, &temp_parser->parsed_trace.control_header);
     if (status != 0)
     {
         goto error_cleanup_all;
@@ -133,7 +135,13 @@ int trace_parser_open(uint8_t *trace_path, struct trace_parser **parser_ptr)
         status = TRACE_PARSER_FILE_OP_ERROR;
         goto error_cleanup_all;
     }
-    
+
+    /* We finally set the endianess of the file */
+    status = trace_parser_set_endianess(temp_parser);
+    if (status != 0)
+    {
+        goto error_cleanup_all;
+    }
     status = 0;
     /* Assign the called parser to the filled in temp parser */
     *parser_ptr = temp_parser;
@@ -182,3 +190,20 @@ static struct trace_parser *alloc_parser(void)
 }
 
 
+int trace_parser_set_endianess(struct trace_parser *parser)
+{
+    if(parser->parsed_trace.control_header->header_id == TRACE_CTRL_MAGIC_NUMBER_ID_BE)
+    {
+        parser->endianess = TRACE_PARSER_BE;
+        return 0;
+    }
+    if (parser->parsed_trace.control_header->header_id == TRACE_CTRL_MAGIC_NUMBER_ID_LE)
+    {
+        parser->endianess = TRACE_PARSER_LE;
+        return 0;
+    }
+
+    else
+        return TRACE_PARSER_INVALID_MAGIC_NUMBER;
+
+}

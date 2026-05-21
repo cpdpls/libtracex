@@ -1,4 +1,3 @@
-#include <endian.h>
 #include <stddef.h>
 #include <stdio.h>
 
@@ -15,7 +14,7 @@ void trace_parser_debug_print_header(struct trace_control_header *control_header
     {
         printf("----TRACE_HEADER_DEBUG----\n\n");
         printf("Header ID --> %.*s\n", sizeof(control_header->header_id),&control_header->header_id);
-        printf("Header timer_valid_mask --> %d\n", control_header->header_timer_valid_mask);
+        printf("Header timer_valid_mask --> 0x%08x\n", control_header->header_timer_valid_mask);
         printf("Header trace base address --> 0x%08x\n", control_header->header_trace_base_addr);
         printf("Header registry start pointer --> 0x%08x\n", control_header->header_obj_registry_start_ptr);
         printf("Header reserved 1 --> %hu\n", control_header->header_res1);
