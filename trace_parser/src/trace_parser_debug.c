@@ -148,6 +148,7 @@ static void print_highest_isr(struct trace_parser *parser)
     size_t *isr_counter;
     struct trace_event_entry *event;
     size_t highest_isr_enter;
+    size_t isr_highest_index;
 
     
     isr_enter_count = 0;
@@ -165,14 +166,18 @@ static void print_highest_isr(struct trace_parser *parser)
         }
     }
 
-    isr_counter = calloc(0, sizeof(size_t) * highest_isr_number);
+    isr_counter = malloc(sizeof(size_t) * (highest_isr_number + 1));
     
     if (isr_counter == NULL)
     {
         printf("DEBUG : Internal mem error !\n");
         return;
     }
-
+    
+    for (i = 0; i < highest_isr_number + 1; i++)
+    {
+        isr_counter[i] = 0;
+    }
     
     highest_isr_enter = 0;
     for (i = 0; i < parser->parsed_trace.events_regitry->parsed_registry->events_count; i++)
@@ -185,15 +190,24 @@ static void print_highest_isr(struct trace_parser *parser)
 
             if (isr_counter[event->info_2] > highest_isr_enter)
             {
-                highest_isr_enter = event->info_2;
+                isr_highest_index = event->info_2;
+                highest_isr_enter = isr_counter[event->info_2];
 
             }
         }
     }
-
+    //
+    printf("Highest isr number : %ld\n", highest_isr_number);
+    printf("---- Total occurences per ISR ----\n\n");
+    for (i = 0; i < highest_isr_number + 1; i++)
+    {
+        printf("ISR %ld --> %ld Interrupts\n", i, isr_counter[i]);
+    }
+    //
     printf("Number of ISR's : %lu\n", isr_enter_count);
-    printf("Highest ISR number entered : %lu with %lu\n", highest_isr_enter, isr_counter[highest_isr_enter]);
-
+    printf("Highest ISR number entered : %lu with %lu interrupts\n", isr_highest_index, isr_counter[isr_highest_index]);
+    
+    free(isr_counter);
 }
 static void print_total_ticks(struct trace_parser *parser)
 {
