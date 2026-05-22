@@ -3,7 +3,8 @@
 
 #include <stdio.h>
 #include "trace_ctrl.h"
-#include "trace_registry.h"
+#include "trace_events.h"
+#include "trace_objects_registry.h"
 
 
 enum trace_endianess 
@@ -15,7 +16,8 @@ enum trace_endianess
 struct trace_parsed
 {
     struct trace_control_header *header;
-    struct trace_registry *registry;
+    struct trace_objects_registry *objects_registry;
+    struct trace_events_registry *events_regitry;
 };
 
 struct trace_parser
@@ -23,7 +25,7 @@ struct trace_parser
     enum trace_endianess endianess;
     struct trace_parsed parsed_trace;
     FILE *trace_file;
-    size_t trace_size; /* TODO: Maybe remove this variable as it might not be needed */
+    size_t trace_size;
 };
 
 int trace_parser_open(uint8_t *trace_path, struct trace_parser **parser_ptr);

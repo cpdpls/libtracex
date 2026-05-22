@@ -1,7 +1,8 @@
 #include "trace_parser.h"
 #include "trace_ctrl.h"
 #include "trace_parser_ctrl.h"
-#include "trace_parser_registry.h"
+#include "trace_parser_event.h"
+#include "trace_parser_object.h"
 #include "trace_parser_errno.h"
 
 #include <stddef.h>
@@ -141,8 +142,15 @@ int trace_parser_parse_data(struct trace_parser *parser_ptr)
         return TRACE_PARSER_INVALID_PTR;
     }
 
-    status = trace_parse_registry(parser_ptr->trace_file, parser_ptr->parsed_trace.header, &parser_ptr->parsed_trace.registry);
+    status = trace_parse_object_registry(parser_ptr->trace_file, parser_ptr->parsed_trace.header, &parser_ptr->parsed_trace.objects_registry);
     
+    if (status != 0)
+    {
+        goto status_return;
+    }
+
+    status = trace_parse_event_registry(parser_ptr->trace_file, parser_ptr->parsed_trace.header, &parser_ptr->parsed_trace.events_regitry);
+
     if (status != 0)
     {
         goto status_return;
@@ -163,7 +171,8 @@ void trace_parser_close(struct trace_parser *trace)
         }
         /* Destroy the parsed control header */
         trace_parser_ctrl_destroy(&trace->parsed_trace.header);
-        trace_registry_destroy(&trace->parsed_trace.registry);
+        trace_object_registry_destroy(&trace->parsed_trace.objects_registry);
+        trace_event_registry_destroy(&trace->parsed_trace.events_regitry);
         free(trace);
     }
 
