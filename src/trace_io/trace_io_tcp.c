@@ -1,10 +1,11 @@
-#include "trace_io.h"
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "trace_io.h"
+#include "trace_io_dev.h"
 
 struct trace_io_tcp_context
 {
@@ -13,7 +14,7 @@ struct trace_io_tcp_context
     int timeout_sec;
     const char *host;
 };
-struct trace_io_dev *trace_io_from_tcp(const char *host, uint16_t port, int timeout_sec)
+TRACERet_t trace_io_from_tcp(struct trace_io_dev **io_dev, tcp_info *tcp_info)
 {
-    return NULL;
+    return TRACE_SUCCESS;
 }

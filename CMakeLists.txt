@@ -13,6 +13,7 @@ target_sources( tracelib
                 ${CMAKE_CURRENT_LIST_DIR}/common/src/trace_errno.c
                 ${CMAKE_CURRENT_LIST_DIR}/src/trace_io/trace_io_file.c
                 ${CMAKE_CURRENT_LIST_DIR}/src/trace_io/trace_io_tcp.c
+                ${CMAKE_CURRENT_LIST_DIR}/src/trace_io/trace_io.c
                 ${CMAKE_CURRENT_LIST_DIR}/src/trace_parser/trace_header.c
 
 )

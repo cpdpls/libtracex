@@ -91,7 +91,6 @@ TRACERet_t trace_parse_header(struct trace_header *header_ptr, struct trace_io_d
     if (io_dev == NULL || header_ptr == NULL)
         return TRACE_BAD_INPUT_PTR;
 
-    io_dev->io_context = NULL;
     //*header_ptr = *(struct trace_header *)raw_buffer;
 
     return 0;
