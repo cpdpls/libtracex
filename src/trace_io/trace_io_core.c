@@ -63,15 +63,43 @@ void trace_io_fs_unregister(const char *scheme)
 {
     struct trace_io_node *tmp_node;
 
-    /* Input sanitize */
+    tmp_node = registered_nodes;
+
     if (tmp_node != NULL)
     {
-        /* Loop over the cricular linked list until we find the scheme */
-        for (tmp_node = registered_nodes; tmp_node->next != registered_nodes; tmp_node = tmp_node->next)
+        do
         {
-            if (strcmp)
+            /* Node found ! Just remove it */
+            if (strcmp(scheme, tmp_node->scheme) == 0)
+            {
+                /* Remote the pointer from the linked list */
+                tmp_node->next->prev = tmp_node->prev;
+                tmp_node->prev->next = tmp_node->next;
+                tmp_node->next = NULL;
+                tmp_node->prev = NULL;
 
-        }
+                /* Free memory for the scheme string */
+                if (tmp_node->scheme != NULL)
+                {
+                    free(tmp_node->scheme);
+                    tmp_node->scheme = NULL;
+                }
+
+                /* Free memory for the node operations */
+                if (tmp_node->ops != NULL)
+                {
+                    free(tmp_node->ops);
+                    tmp_node->ops = NULL;
+                }
+
+                /* Free the node structure */
+                free(tmp_node);
+
+            }
+
+            tmp_node = tmp_node->next;
+        } while (tmp_node->next != registered_nodes);
+        
 
     }
 }
