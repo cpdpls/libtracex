@@ -6,7 +6,7 @@
 
 
 static void destroy_io_file_dev(struct trace_io_dev **dev);
-static TRACERet_t trace_io_file_read(size_t len, size_t *bytes_read, void *buf);
+static TRACERet_t trace_io_file_read(struct trace_io_dev *io_dev, size_t len, size_t *bytes_read, void *buf);
 
 
 TRACERet_t trace_io_from_file(struct trace_io_dev **io_dev, const char *path)
@@ -69,6 +69,7 @@ TRACERet_t trace_io_from_file(struct trace_io_dev **io_dev, const char *path)
     /* Assign the device type before returning from this function call */
     (*io_dev)->dev_type = DEV_FILE;
     (*io_dev)->destroy = destroy_io_file_dev;
+    (*io_dev)->read = trace_io_read;
 
     status = TRACE_SUCCESS;
     goto return_status;
@@ -88,7 +89,7 @@ return_status:
  * @param buf Destination buffer where data is placed
  * @return TRACERet_t Function call status
  */
-static TRACERet_t trace_io_file_read(size_t len, size_t *bytes_read, void *buf)
+static TRACERet_t trace_io_file_read(struct trace_io_dev *io_dev, size_t len, size_t *bytes_read, void *buf)
 {
     int read_sts;
 
