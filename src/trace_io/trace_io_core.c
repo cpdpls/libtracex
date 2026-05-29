@@ -13,6 +13,11 @@ struct trace_io_node
 static struct trace_io_node * registered_nodes = NULL;
 static void node_destroy(struct trace_io_node **node);
 
+void trace_io_fs_init(void)
+{
+    
+}
+
 TRACERet_t trace_io_fs_register(const char *scheme, const struct trace_io_fs_ops *ops)
 {
     TRACERet_t status;

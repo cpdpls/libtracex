@@ -19,6 +19,16 @@ static TRACERet_t test(void);
 
 TRACERet_t test(void)
 {
+    printf("Hello From driver test !\n");
+    return TRACE_SUCCESS;
+
+}
+
+TRACERet_t test2(void)
+{
+    printf("Hello From driver test !\n");
+    return TRACE_SUCCESS;
 
 }
 TRACE_IO_FS_DRIVER_INIT(test);
+TRACE_IO_FS_DRIVER_INIT(test2);
