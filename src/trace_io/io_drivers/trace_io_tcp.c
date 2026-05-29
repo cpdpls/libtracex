@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #include "trace_io.h"
-#include "trace_io_dev.h"
+#include "trace_io_fs.h"
 
 struct trace_io_tcp_context
 {
@@ -14,7 +14,11 @@ struct trace_io_tcp_context
     int timeout_sec;
     const char *host;
 };
-TRACERet_t trace_io_from_tcp(struct trace_io_dev **io_dev, tcp_info *tcp_info)
+
+static TRACERet_t test(void);
+
+TRACERet_t test(void)
 {
-    return TRACE_SUCCESS;
+
 }
+TRACE_IO_FS_DRIVER_INIT(test);

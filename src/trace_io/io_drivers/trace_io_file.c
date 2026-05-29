@@ -8,6 +8,13 @@
 static void destroy_io_file_dev(struct trace_io_dev **dev);
 static TRACERet_t trace_io_file_read(struct trace_io_dev *io_dev, size_t len, size_t *bytes_read, void *buf);
 
+static TRACERet_t test(void);
+
+TRACERet_t test(void)
+{
+
+}
+TRACE_IO_FS_DRIVER_INIT(test);
 
 TRACERet_t trace_io_from_file(struct trace_io_dev **io_dev, const char *path)
 {

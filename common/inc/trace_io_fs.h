@@ -9,6 +9,21 @@
 
 #include "trace_errno.h"
 
+
+#define TRACE_IO_FS_DRIVER_INIT(fn) \
+    static TRACERet_t (*__trace_io_fs_init_##fn)(void) \
+    __attribute__((used, section("trace_io_fs_init"))) = (fn)
+
+#define TRACE_IO_FS_DRIVER_EXIT(fn) \
+    static void (*__trace_io_fs_exit_##fn)(void) \
+    __attribute__((used, section("trace_io_fs_exit"))) = (fn)
+
+#define trace_io_fs_register_init_driver(__init_driver) \
+    TRACE_IO_FS_DRIVER_INIT(__init_driver)
+
+#define trace_io_fs_register_exit_driver(__exit_driver) \
+    TRACE_IO_FS_DRIVER_EXIT(__exit_driver)
+
 typedef struct trace_io_fs trace_io_fs;
 
 struct trace_io_fs_ops

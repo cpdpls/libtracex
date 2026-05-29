@@ -1,18 +1,12 @@
 #include <stdio.h>
-#include "trace_io.h"
-#include "trace.h"
+#include "trace_io_fs.h"
+
+struct trace_io_fs_ops ops;
 
 int main()
 {
-    struct trace_io_dev *dev;
-    TRACERet_t status;
-    status = trace_io_from_file(&dev, "trace.trx");
-
-    if (status != TRACE_SUCCESS)
-    {
-        printf("%s\n", tracestrerror(status));
-    }
-
-    trace_io_destroy_dev(&dev);
+    ops.close = NULL;
+    ops.open = NULL;
+    ops.read = NULL;
 
 }
