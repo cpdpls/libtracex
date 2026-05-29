@@ -11,37 +11,30 @@
 
 
 typedef TRACERet_t __init__(void);
-/* Custom sections declaration on MacOS toolchain */
+/* Custom sections declaration on MacOS platform */
 #ifdef __APPLE__
 
-// extern int start_fs_init_section __asm("section$start$__DATA$__fs_init_section");
-// extern int stop_fs_init_section  __asm("section$end$__DATA$__fs_init_section");
-
+/* Actual pointers used to call each registered fs driver */
+extern uint8_t start_fs_init __asm("section$start$__DATA$__fs_init");
+extern uint8_t stop_fs_init  __asm("section$end$__DATA$__fs_init");
 
 #define TRACE_IO_FS_DRIVER_INIT(fn) \
 static TRACERet_t (*__trace_io_fs_init_##fn)(void) \
     __attribute__((used, section("__DATA,__fs_init"))) = (fn)
 
-#define TRACE_IO_FS_DRIVER_EXIT(fn) \
-    static void (*__trace_io_fs_exit_##fn)(void) \
-    __attribute__((used, section("__DATA,__fs_init"))) = (fn)
 
-
-/* Linux section definition */
+/* Custom sections declaration on Linux platform */
 #else
+/* Actual pointers used to call each registered fs driver */
+extern 
+
 #define TRACE_IO_FS_DRIVER_INIT(fn) \
     static TRACERet_t (*__trace_io_fs_init_##fn)(void) \
-    __attribute__((used, section("trace_io_fs_init"))) = (fn)
+    __attribute__((used, section(".fs_init"))) = (fn)
 
-#define TRACE_IO_FS_DRIVER_EXIT(fn) \
-    static void (*__trace_io_fs_exit_##fn)(void) \
-    __attribute__((used, section("trace_io_fs_exit"))) = (fn)
 
 #define trace_io_fs_register_init_driver(__init_driver) \
     TRACE_IO_FS_DRIVER_INIT(__init_driver)
-
-#define trace_io_fs_register_exit_driver(__exit_driver) \
-    TRACE_IO_FS_DRIVER_EXIT(__exit_driver)
 
 #endif
 
