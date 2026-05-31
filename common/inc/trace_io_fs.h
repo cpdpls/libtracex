@@ -26,13 +26,13 @@ static TRACERet_t (*__trace_io_fs_init_##fn)(void) \
 /* Custom sections declaration on Linux platform */
 #else
 /* Actual pointers used to call each registered fs driver */
-extern 
 
 #define TRACE_IO_FS_DRIVER_INIT(fn) \
     static TRACERet_t (*__trace_io_fs_init_##fn)(void) \
-    __attribute__((used, section(".fs_init"))) = (fn)
+    __attribute__((used, section("fs_init"))) = (fn)
 
-
+extern __init__ *__start_fs_init;
+extern __init__ *__stop_fs_init;
 #define trace_io_fs_register_init_driver(__init_driver) \
     TRACE_IO_FS_DRIVER_INIT(__init_driver)
 
