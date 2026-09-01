@@ -4,3 +4,7 @@ build
 Dockerfile
 .vscode/
 .gdb_history
+vgcore*
+GPATH
+GRTAGS
+GTAGS

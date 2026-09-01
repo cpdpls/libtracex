@@ -6,7 +6,8 @@ add_subdirectory(external/AbstractIO)
 
 add_executable(tx_tracer
     main.c
-    common/src/trace_errno.c
+    src/tx_trace_open.c
+    src/tx_trace_core.c
 )
 
 target_include_directories(tx_tracer
