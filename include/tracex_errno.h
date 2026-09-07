@@ -1,0 +1,21 @@
+#ifndef __TRACEX_ERRNO_H__
+#define __TRACEX_ERRNO_H__
+
+typedef enum
+{
+    TRACEX_SUCCESS,
+    TRACEX_ALLOC_FAILURE,
+    TRACEX_BAD_INPUT_PTR,
+    TRACEX_INVALID_PARSER,
+    TRACEX_HEADER_NOT_VALID,
+    TRACEX_NEED_MORE,
+    TRACEX_NULL_LENGTH,
+    TRACEX_HEADER_BAD_OFFSET_START,
+    TRACEX_NUMBER_OF_ERRORS,
+
+} TRACEX_Ret_t;
+
+
+const char *TRACEX_strerror(TRACEX_Ret_t tracex_error);
+
+#endif

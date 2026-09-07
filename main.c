@@ -3,40 +3,43 @@
 #include <stdlib.h>
 
 
-#include "tx_trace.h"
+#include "tracex.h"
+#include "time.h"
 
 int main(void)
 {
-    struct tx_schemes_descriptor_list_t *descriptors;
-    uint64_t i;
-    TX_TRACE_INIT();
+    char buffer[200];
+    char *buff_ptr;
+    TRACEX_Ret_t status;
 
-    if (traceX_getSchemesDescriptors(&descriptors) != TX_TRACE_SUCCES)
+    FILE *test = fopen("trace.trx", "rb");
+
+    fread(buffer, 200, 1, test);
+
+    TRACEX_handler_t *parser;
+
+    parser = TRACEX_createParser();
+    srand(time(NULL));
+
+    if (parser == NULL)
     {
-        traceX_destroySchemesDescriptors(&descriptors);
-
-        TX_TRACE_EXIT();
-        return 1;
+        printf("HIGH-LEVEL allocation error !\n");
+        return 0;
     }
 
-
-    for (i = 0; i < descriptors->count; i++)
+    buff_ptr = &buffer[0];
+    do
     {
-        printf("%s\n", descriptors->schemes[i]->scheme_name);
+        // int random = (rand()) % 15;
 
-    }
-    // if (traceX_getSchemesList(&drvr_list) != TX_TRACE_SUCCES)
-    // {
-    //     return 1;
-    // }
+        // printf("Trying random :%d\n", random);
+        status = TRACEX_parse(parser, buff_ptr++, 1);
+        printf("%s\n", TRACEX_strerror(status));
 
-    // for (i = 0 ; i < drvr_list->count; i++)
-    // {
-	 
-    // }
-
-    traceX_destroySchemesDescriptors(&descriptors);
+    } while(status != TRACEX_SUCCESS);
 
 
-    TX_TRACE_EXIT();
+    TRACEX_destroyParser(&parser);
+    fclose(test);
+
 }
