@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "tracex_errno.h"
 
-typedef struct TRACEX_handler_t TRACEX_handler_t;
+typedef struct TRACEX_handler_t TRACEX_handler_t;       /* Forward declaration */
 
 enum TRACEX_dump_endianess_t
 {
@@ -14,12 +14,37 @@ enum TRACEX_dump_endianess_t
 
 struct TRACEX_header_t
 {
-    uint32_t timer_mask;
-    enum TRACEX_dump_endianess_t endianess;
-    uint8_t object_name_size;
+    const uint32_t                        timer_mask;
+    const enum TRACEX_dump_endianess_t    endianess;
+    const uint8_t                         object_name_size;
 };
 
-TRACEX_Ret_t TRACEX_checkHeaderValid(void *buffer);
-TRACEX_Ret_t TRACEX_getTimerMask(struct TRACEX_handler_t *parser, uint32_t *mask);
+/**
+ * @brief Returns wether the header has been parsed yet at any given time.
+ * 
+ * @param TRACEX_handler_t Pointer to the previously allocated handler. 
+ * @return  TRACEX_Ret_t TRACEX_SUCCESS on success, TRACEX_NEED_MORE if more bytes are required,
+ *          Other value from TRACEX_Ret_t otherwise.
+ */
+TRACEX_Ret_t TRACEX_isHeaderParsed(struct TRACEX_handler_t *handler);
 
+/**
+ * @brief Returns wether the header is a valid TraceX header.
+ * 
+ * @param TRACEX_handler_t Pointer to the previously allocated handler. 
+ * @return TRACEX_Ret_t TRACEX_Ret_t TRACEX_SUCCESS on success, TRACEX_HEADER_NOT_VALID if the header is invalid,
+ *          Other value from TRACEX_Ret_t otherwise.
+ */
+TRACEX_Ret_t TRACEX_isHeaderValid(struct TRACEX_handler_t *handler);
+
+/**
+ * @brief returns the parsed header if already parsed
+ * 
+ * @param handler Pointer to the previously allocated handler.
+ * @param header  pointer to a memory location where the parsed header will be returned
+ *                to the user.
+ * @return TRACEX_Ret_t TRACEX_SUCCESS on success, TRACEX_NEED_MORE if more bytes are required,
+ *          Other value from TRACEX_Ret_t otherwise.
+ */
+TRACEX_Ret_t TRACEX_getHeader(struct TRACEX_handler_t *handler, struct TRACEX_header_t **header);
 #endif

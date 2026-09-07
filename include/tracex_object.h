@@ -2,39 +2,54 @@
 #define __TRACEX_OBJECT_H__
 
 #include <stdint.h>
+#include "tracex_errno.h"
 
-enum TRACEX_object_id_t
+typedef struct TRACEX_handler_t TRACEX_handler_t;   /* Forward declaration */
+
+enum TRACEX_object_type_t
 {
+    E_TEST_F,
+
+};
+enum TRACEX_object_param1
+{
+    E_TEST_G,
+
+};
+enum TRACEX_object_param2
+{
+    E_TEST_H,
 
 };
 
-enum TRACEX_object_info1
+
+typedef struct TRACEX_object_t
 {
+    uint8_t                     available;          /* Flag set when the object is available */
+    enum TRACEX_object_type_t   type;               /* The type of the object */
+    uint32_t                    object_pointer;     /* Object pointer address in the dump */
+    enum TRACEX_object_param1   param1;             /* Parameter 1 of the object */
+    enum TRACEX_object_param2   param2;             /* Parameter 2 of the object */
+    uint8_t                     *object_name;       /* Object name */
+} TRACEX_object_t;
 
-};
-enum TRACEX_object_info2
+typedef struct TRACEX_object_list_t
 {
+    uint32_t                count;
+    struct TRACEX_object_t  **objects;
+} TRACEX_object_list_t;
 
-};
-enum TRACEX_object_info3
-{
 
-};
-enum TRACEX_object_info4
-{
+/**
+ * @brief Returns the parsed objects from the previous parsing.
+ * 
+ * @param handler Pointer to the previously allocated handler
+ * @param object_list Pointer location where the objects list will be returned to.
+ * @return TRACEX_Ret_t TRACEX_SUCCESS on success, TRACEX_NEED_MORE if more bytes are required,
+ *          Other value from TRACEX_Ret_t otherwise.
+ * 
+ * TODO: Make this function thread safe by using a mutex and pause the parser before returning the objects
+ */
 
-};
-
-struct TRACEX_event_t
-{
-    uint32_t     thread_pointer;
-    uint32_t     thread_priority;
-    enum TRACEX_event_id_t event_id;
-    uint32_t     time_stamp;
-    enum TRACEX_event_info1 info1;
-    enum TRACEX_event_info2 info2;
-    enum TRACEX_event_info3 info3;
-    enum TRACEX_event_info4 info4;
-};
-
+TRACEX_Ret_t TRACEX_getObjects(struct TRACEX_handler_t *handler, TRACEX_object_list_t *object_list);
 #endif

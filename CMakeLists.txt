@@ -5,10 +5,10 @@ project(tx_tracer VERSION 1.0)
 add_executable(tx_tracer
     main.c
     src/tracex_errno.c
-    src/tracex_header_int.c
+    src/tracex_header.c
     src/tracex_core.c
-    src/tracex_obj_int.c
-    src/tracex_event_int.c
+    src/tracex_obj.c
+    src/tracex_event.c
 )
 
 target_include_directories(tx_tracer

@@ -29,7 +29,6 @@ struct tracex_hdr_entry_t
     uint8_t byte_offset;
 };
 
-TRACEX_Ret_t tracex_header_add_data(struct tracex_hdr_entry_t *hdr_entry, void *buffer, size_t buff_len, uint64_t *consumed);
-TRACEX_Ret_t tracex_parse_data(struct tracex_hdr_entry_t *hdr_entry);
-TRACEX_Ret_t tracex_header_get_mask(struct tracex_hdr_entry_t *hdr_entry, uint32_t *mask);
+
+TRACEX_Ret_t tracex_parse_data(struct TRACEX_handler_t *handler, void *buffer, size_t buff_len, uint64_t *consumed);
 #endif

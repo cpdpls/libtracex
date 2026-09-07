@@ -18,7 +18,7 @@ int main(void)
 
     TRACEX_handler_t *parser;
 
-    parser = TRACEX_createParser();
+    parser = TRACEX_createHandler();
     srand(time(NULL));
 
     if (parser == NULL)
@@ -39,7 +39,7 @@ int main(void)
     } while(status != TRACEX_SUCCESS);
 
 
-    TRACEX_destroyParser(&parser);
+    TRACEX_destroyHandler(&parser);
     fclose(test);
 
 }
