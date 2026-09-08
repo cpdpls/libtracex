@@ -14,9 +14,9 @@ enum TRACEX_dump_endianess_t
 
 struct TRACEX_header_t
 {
-    const uint32_t                        timer_mask;
-    const enum TRACEX_dump_endianess_t    endianess;
-    const uint8_t                         object_name_size;
+    uint32_t                        timer_mask;
+    enum TRACEX_dump_endianess_t    endianess;
+    uint8_t                         object_name_size;
 };
 
 /**

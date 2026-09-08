@@ -58,8 +58,7 @@ typedef struct TRACEX_event_list_t
  * @param event_list Pointer location where the events list will be returned to.
  * @return TRACEX_Ret_t TRACEX_SUCCESS on success, TRACEX_NEED_MORE if more bytes are required,
  *          Other value from TRACEX_Ret_t otherwise.
- * 
- * TODO: Make this function thread safe by using a mutex and pause the parser before returning the events
+ *
  */
 
 TRACEX_Ret_t TRACEX_getEvents(struct TRACEX_handler_t *handler, TRACEX_event_list_t *event_list); 

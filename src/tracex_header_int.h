@@ -2,8 +2,13 @@
 #define __TRACEX_HEADER_INT_H__
 
 #include <stdint.h>
+#include <pthread.h>
+#include "tracex_header.h"
 
-struct tracex_hdr_int_t
+#define TRACEX_HEADER_ID_BIG_ENDIAN     0x54585442
+#define TRACEX_HEADER_ID_LITTLE_ENDIAN  0x42545854
+
+struct tracex_raw_header_t
 {
     uint32_t id;
     uint32_t timer_valid_mask;
@@ -21,14 +26,18 @@ struct tracex_hdr_int_t
 } __attribute__((__packed__));
 
 
-struct tracex_hdr_entry_t
+struct tracex_header_dump_t
 {
-    struct tracex_hdr_int_t hdr;
-    uint8_t is_header_processed;
-    uint8_t is_header_valid;
-    uint8_t byte_offset;
+    struct TRACEX_header_t      user_hdr;               /* User tracex header */
+    struct tracex_raw_header_t  raw_hdr;                /* Actual header as it is in the dump */
+    pthread_mutex_t             header_mutex;           /* Mutex used when retrieving and parsing objects */
+    uint8_t                     header_parsed;          /* Flag set when the header has been parsed */
+    uint8_t                     header_valid;           /* Flag set when the header is valid */
+    uint8_t                     byte_offset;            /* Byte offset in the header of the dump when parsing incrementally */
 };
 
+TRACEX_Ret_t tracex_init_header(struct tracex_header_dump_t *hdr_dump);
 
-TRACEX_Ret_t tracex_parse_data(struct TRACEX_handler_t *handler, void *buffer, size_t buff_len, uint64_t *consumed);
+TRACEX_Ret_t tracex_header_get_header(struct tracex_header_dump_t *dump, struct TRACEX_header_t **header);
+TRACEX_Ret_t tracex_parse_header(struct tracex_header_dump_t *dump, void *buffer, size_t buff_len, uint64_t *consumed);
 #endif

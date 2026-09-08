@@ -6,27 +6,59 @@
 #include "tracex_core.h"
 #include "tracex_event_int.h"
 #include "tracex_obj_int.h"
+#include "tracex_utils.h"
 
-static struct tracex_list handlers_list;         /* List of the current handles created */
+static struct tracex_list handlers_list;            /* List of the current handles created */
+static uint8_t is_tracex_init = 0;                  /* Flag set to detect wether tracex has been init */
 
-struct TRACEX_handler_t *TRACEX_createHandler(void)
+void TRACEX_INIT()
+{
+    /* First try to detect the endianess of the host system */
+    tracex_utils_detect_indianess();
+
+    /* TODO: Maybe init the list here ? */
+    is_tracex_init = 1;
+
+}
+
+TRACEX_Ret_t TRACEX_createHandler(struct TRACEX_handler_t **handler_ptr)
 {
     struct TRACEX_handler_t *handler;
+    TRACEX_Ret_t status;
 
+
+    /* Check if tracex has been initialized correctly */
+    if (!is_tracex_init)
+    {
+        status = TRACEX_NOT_INIT;
+        goto handle_exit;
+    }
+
+    if (handler_ptr == NULL)
+    {
+        status = TRACEX_BAD_INPUT_PTR;
+        goto handle_exit;
+    }
     handler = (struct TRACEX_handler_t*)malloc(sizeof(struct TRACEX_handler_t));
 
     if (handler == NULL)
     {
-        return NULL;
+        status = TRACEX_ALLOC_FAILURE;
+        goto handle_exit;
     }
 
     /* Faster to memset the structure to 0 */
     memset(handler, 0, sizeof(struct TRACEX_handler_t));
 
-    /* Init the different mutexes */
-    pthread_mutex_init(&handler->header_mutex, NULL);
-    pthread_mutex_init(&handler->event_mutex, NULL);
-    pthread_mutex_init(&handler->object_mutex, NULL);
+    /* Init the different dump parts */
+    
+    if (tracex_init_header(&handler->raw_dump.header) != TRACEX_SUCCESS)
+    {
+        status = TRACEX_INIT_FAILURE;
+        goto handle_error;
+    }
+
+    /* TODO: Init the objects and events here */
 
     /* If this is the very first created handler, init the list */
     if (handlers_list.next == NULL || handlers_list.prev == NULL)
@@ -34,13 +66,20 @@ struct TRACEX_handler_t *TRACEX_createHandler(void)
         tracex_list_init(&handlers_list);
     }
 
-    /* Init other lists inside the newly allocated handler */
-    tracex_list_init(&handler->structured_raw.obj_list);
-    tracex_list_init(&handler->structured_raw.event_list);
+    /* Insert the newly created handler inside the list */
     tracex_list_insert(&handler->node, &handlers_list);
 
+    *handler_ptr = handler;
+    status = TRACEX_SUCCESS;
+    goto handle_exit;
 
-    return handler;
+handle_error:
+    free(handler);
+    handler = NULL;
+
+handle_exit:
+
+    return status;
 }
 
 void TRACEX_destroyHandler(struct TRACEX_handler_t **handler)
@@ -50,12 +89,14 @@ void TRACEX_destroyHandler(struct TRACEX_handler_t **handler)
     {
         if (*handler != NULL)
         {
-            tracex_destroy_event_list(&(*handler)->structured_raw.event_list);
-            tracex_destroy_object_list(&(*handler)->structured_raw.obj_list);
-            tracex_list_delete(&(*handler)->node);
-            memset((*handler), 0, sizeof(struct TRACEX_handler_t));
-            free(*handler);
-            *handler = NULL;
+            if (tracex_is_handler_valid(*handler) == TRACEX_SUCCESS)
+            {
+                /*TODO: Destroy the objects and events dumps */
+                tracex_list_delete(&(*handler)->node);
+                memset((*handler), 0, sizeof(struct TRACEX_handler_t));
+                free(*handler);
+                *handler = NULL;
+            }
         }
     }
 
@@ -65,7 +106,7 @@ TRACEX_Ret_t TRACEX_parse(struct TRACEX_handler_t *handler, void *buffer, size_t
 {
     TRACEX_Ret_t status;
     uint64_t consumed;
-    struct tracex_hdr_entry_t *hdr_ptr;
+    struct tracex_header_dump_t *hdr_dump_ptr;
 
     if (handler == NULL || buffer == NULL)
     {
@@ -77,16 +118,23 @@ TRACEX_Ret_t TRACEX_parse(struct TRACEX_handler_t *handler, void *buffer, size_t
         return TRACEX_NULL_LENGTH;
     }
 
-    hdr_ptr = &handler->structured_raw.header;
+    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
+    {
+        return TRACEX_INVALID_HANDLER;
+    }
 
-    if (hdr_ptr->is_header_processed && !hdr_ptr->is_header_valid)
+    /*TODO: Check if the handler is valid by calling the checker function */
+
+    hdr_dump_ptr = &handler->raw_dump.header;
+
+    if (hdr_dump_ptr->header_parsed && !hdr_dump_ptr->header_valid)
     {
         return TRACEX_HEADER_NOT_VALID;
     }
 
     if (handler->state == E_HEADER_PHASE)
     {
-        status = tracex_parse_data(&handler->structured_raw.header, buffer, buffer_length, &consumed);
+        status = tracex_parse_header(&handler->raw_dump.header, buffer, buffer_length, &consumed);
 
         if (status == TRACEX_SUCCESS)
         {
@@ -94,11 +142,6 @@ TRACEX_Ret_t TRACEX_parse(struct TRACEX_handler_t *handler, void *buffer, size_t
         }
         if (status == TRACEX_NEED_MORE)
         {
-
-        }
-        else
-        {
-            handler->header_valid = 0;
 
         }
     }
@@ -121,4 +164,21 @@ TRACEX_Ret_t tracex_is_handler_valid(struct TRACEX_handler_t *handler)
     }
 
     return TRACEX_INVALID_HANDLER;
+}
+
+TRACEX_Ret_t TRACEX_getHeader(struct TRACEX_handler_t *handler, struct TRACEX_header_t **header)
+{
+
+    if (handler == NULL || header == NULL)
+    {
+        return TRACEX_BAD_INPUT_PTR;
+    }
+
+    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
+    {
+        return TRACEX_INVALID_HANDLER;
+    }
+
+    return tracex_header_get_header(&handler->raw_dump.header, header);
+
 }

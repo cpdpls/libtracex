@@ -6,36 +6,36 @@
 #include "tracex_core.h"
 #include "tracex_object.h"
 
-TRACEX_Ret_t TRACEX_getObjects(struct TRACEX_handler_t *handler, TRACEX_object_list_t *object_list)
-{
-    if (handler == NULL || object_list == NULL)
-    {
-        return TRACEX_BAD_INPUT_PTR;
-    }
+// TRACEX_Ret_t TRACEX_getObjects(struct TRACEX_handler_t *handler, TRACEX_object_list_t *object_list)
+// {
+//     if (handler == NULL || object_list == NULL)
+//     {
+//         return TRACEX_BAD_INPUT_PTR;
+//     }
 
-    /* Check the validity of the handler */
-    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
-    {
-        return TRACEX_INVALID_HANDLER;
-    }
+//     /* Check the validity of the handler */
+//     if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
+//     {
+//         return TRACEX_INVALID_HANDLER;
+//     }
 
-    /* Try to get the object mutex */
-    pthread_mutex_lock(&handler->object_mutex);
+//     /* Try to get the object mutex */
+//     pthread_mutex_lock(&handler->object_mutex);
 
-    /* Check if the at least 1 object has been parsed */
-    if (handler->structured_raw.object_count == 0)
-    {
-        /* Release the mutex before returning to the caller */
-        pthread_mutex_unlock(&handler->object_mutex);
-        return TRACEX_NEED_MORE;
-    }
-    object_list->count = handler->structured_raw.object_count;
-    object_list->objects = handler->user_dump.objects;
+//     /* Check if the at least 1 object has been parsed */
+//     if (handler->structured_raw.object_count == 0)
+//     {
+//         /* Release the mutex before returning to the caller */
+//         pthread_mutex_unlock(&handler->object_mutex);
+//         return TRACEX_NEED_MORE;
+//     }
+//     object_list->count = handler->structured_raw.object_count;
+//     object_list->objects = handler->user_dump.objects;
 
-    /* Release the mutex before returning to the caller */
-    pthread_mutex_unlock(&handler->object_mutex);
-    return TRACEX_SUCCESS;
-}
+//     /* Release the mutex before returning to the caller */
+//     pthread_mutex_unlock(&handler->object_mutex);
+//     return TRACEX_SUCCESS;
+// }
 
 void tracex_destroy_object(struct tracex_object_entry_t **object)
 {
