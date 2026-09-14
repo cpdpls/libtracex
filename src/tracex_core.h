@@ -45,6 +45,7 @@ struct TRACEX_handler_t
     // pthread_mutex_t             object_mutex;           /* Mutex used when retrieving and parsing objects */
 };
 
+
 TRACEX_Ret_t tracex_is_handler_valid(struct TRACEX_handler_t *handler);
 
 #endif

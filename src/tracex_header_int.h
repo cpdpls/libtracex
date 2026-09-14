@@ -34,10 +34,11 @@ struct tracex_header_dump_t
     uint8_t                     header_parsed;          /* Flag set when the header has been parsed */
     uint8_t                     header_valid;           /* Flag set when the header is valid */
     uint8_t                     byte_offset;            /* Byte offset in the header of the dump when parsing incrementally */
+    uint64_t                    object_registry_size;   /* Total number of possible objects in the object registry */
 };
 
 TRACEX_Ret_t tracex_init_header(struct tracex_header_dump_t *hdr_dump);
 
-TRACEX_Ret_t tracex_header_get_header(struct tracex_header_dump_t *dump, struct TRACEX_header_t **header);
-TRACEX_Ret_t tracex_parse_header(struct tracex_header_dump_t *dump, void *buffer, size_t buff_len, uint64_t *consumed);
+TRACEX_Ret_t tracex_header_get_header(struct tracex_header_dump_t *hdr_dump, struct TRACEX_header_t **header);
+TRACEX_Ret_t tracex_parse_header(struct tracex_header_dump_t *hdr_dump, void *buffer, size_t buff_len, uint64_t *consumed);
 #endif

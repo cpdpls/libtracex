@@ -10,8 +10,8 @@
 
 int main(void)
 {
-    char buffer[200];
-    char *buff_ptr;
+    size_t total_file_size;
+    char *buffer;
     TRACEX_Ret_t status;
     struct TRACEX_header_t *header;
     TRACEX_handler_t *handler;
@@ -19,7 +19,12 @@ int main(void)
     TRACEX_INIT();
     FILE *test = fopen("trace.trx", "rb");
 
-    fread(buffer, 200, 1, test);
+    fseek(test, 0L, SEEK_END);
+    total_file_size = ftell(test);
+    fseek(test, 0L, SEEK_SET);
+
+    buffer = malloc(total_file_size);
+    fread(buffer, total_file_size, 1, test);
 
 
     status = TRACEX_createHandler(&handler);
@@ -32,16 +37,8 @@ int main(void)
 
     }
 
-    buff_ptr = &buffer[0];
-    do
-    {
-        int random = ((rand()) % 15) + 1;
-
-        status = TRACEX_parse(handler, buff_ptr, random);
-        buff_ptr += random;
-        printf("%s\n", TRACEX_strerror(status));
-
-    } while(status == TRACEX_NEED_MORE);
+    status = TRACEX_parse(handler, buffer, total_file_size);
+    printf("%s\n", TRACEX_strerror(status));
 
 
     if (status == TRACEX_SUCCESS)
@@ -50,7 +47,22 @@ int main(void)
         TRACEX_print_user_header(header);
         TRACEX_print_raw_header(handler);
 
+        TRACEX_object_iterator_t *iter;
+        const TRACEX_object_t * object;
+
+        TRACEX_objectIteratorInit(handler, &iter);
+
+        while (TRACEX_objectIteratorNext(iter, &object) != TRACEX_OBJ_ITER_END)
+        {
+            //printf("%.32s\n", object->name);
+        }
+
+        TRACEX_objectIteratorEnd(&iter);
+        
+
+
     }
+    free(buffer);
     TRACEX_destroyHandler(&handler);
     fclose(test);
 
