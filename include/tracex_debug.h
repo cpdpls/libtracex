@@ -3,6 +3,7 @@
 
 #include "tracex_header.h"
 
-void TRACEX_print_user_header(const struct TRACEX_header_t *header);
-void TRACEX_print_raw_header(const struct TRACEX_handler_t *handler);
+void TRACEX_debug_print_user_header(const struct TRACEX_header_t *header);
+void TRACEX_debug_print_raw_header(const struct TRACEX_handler_t *handler);
+void TRACEX_debug_print_objects(const struct TRACEX_handler_t *handler);
 #endif

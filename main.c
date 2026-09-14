@@ -17,7 +17,7 @@ int main(void)
     TRACEX_handler_t *handler;
 
     TRACEX_INIT();
-    FILE *test = fopen("trace.trx", "rb");
+    FILE *test = fopen("r15b_tracex_dump.trx", "rb");
 
     fseek(test, 0L, SEEK_END);
     total_file_size = ftell(test);
@@ -44,8 +44,8 @@ int main(void)
     if (status == TRACEX_SUCCESS)
     {
         status = TRACEX_getHeader(handler, &header);
-        TRACEX_print_user_header(header);
-        TRACEX_print_raw_header(handler);
+        TRACEX_debug_print_user_header(header);
+        TRACEX_debug_print_raw_header(handler);
 
         TRACEX_object_iterator_t *iter;
         const TRACEX_object_t * object;
@@ -58,6 +58,8 @@ int main(void)
         }
 
         TRACEX_objectIteratorEnd(&iter);
+
+        TRACEX_debug_print_objects(handler);
         
 
 

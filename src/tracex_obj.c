@@ -8,7 +8,36 @@
 #include "tracex_core.h"
 #include "tracex_header_int.h"
 
-static TRACEX_Ret_t alloc_new_object_entry(struct tracex_object_entry_t **obj, size_t obj_name_size);
+const char  *tracex_object_type_strings[] =
+{
+    "INVALID",
+    "THREAD",
+    "TIMER",
+    "QUEUE",
+    "SEMAPHORE",
+    "MUTEX",
+    "EVENT FLAGS GROUP",
+    "BLOCK POOL",
+    "BYTE POOL",
+    "MEDIA",
+    "FILE",
+    "IP",
+    "PACKET POOL",
+    "TCP SOCKET",
+    "UDP SOCKET",
+    "RESERVED",
+    "USB HOST STACK DEVICE",
+    "USB HOST STACK INTERFACE",
+    "USB HOST ENDPOINT",
+    "USB HOST CLASS",
+    "USB DEV",
+    "USB DEV INTERFACE",
+    "USB DEV ENDPOINT",
+    "USB DEV CLASS",
+
+};
+
+static TRACEX_Ret_t alloc_new_object_entry(struct tracex_object_entry_t **obj);
 static TRACEX_Ret_t parse_incrementally(struct tracex_object_dump_t *dump, void *buffer, size_t buffer_len, size_t *consumed);
 static TRACEX_Ret_t init_dump(struct tracex_object_dump_t *dump);
 static TRACEX_Ret_t process_object(struct tracex_object_dump_t *dump);
@@ -82,12 +111,21 @@ TRACEX_Ret_t tracex_parse_objects(struct tracex_object_dump_t *obj_dump, void *b
 
             status = process_object(obj_dump);
 
+            if (status == TRACEX_ALLOC_FAILURE)
+            {
+                goto handle_exit;
+            }
+            
+            if (status == TRACEX_SUCCESS)
+            {
+                obj_dump->tot_object_count++;
+            }
+
+            status = TRACEX_SUCCESS;
+
             /* Check if we have parsed the whole object registry*/
             if (obj_dump->curr_object_count == obj_dump->hdr_dump_ptr->object_registry_size)
             {
-                /* Add to the total of objects */
-                obj_dump->tot_object_count += obj_dump->curr_object_count;
-
                 /* Reset the current session total object registry count */
                 obj_dump->curr_object_count = 0;
 
@@ -106,7 +144,7 @@ TRACEX_Ret_t tracex_parse_objects(struct tracex_object_dump_t *obj_dump, void *b
 
 handle_exit:
     pthread_mutex_unlock(&obj_dump->object_mutex);
-    return TRACEX_SUCCESS;
+    return status;
 
 
 }
@@ -122,13 +160,11 @@ void tracex_destroy_object(struct tracex_object_entry_t **object)
                 free((*object)->obj.name);
                 (*object)->obj.name = NULL;
             }
-
             if ((*object)->node.next != NULL && (*object)->node.prev != NULL)
             {
                 tracex_list_delete(&(*object)->node);
                 (*object)->node.next = NULL;
                 (*object)->node.prev = NULL;
-
             }
 
             free(*object);
@@ -157,9 +193,8 @@ void tracex_destroy_object_list(struct tracex_list *head)
 
 }
 
-static TRACEX_Ret_t alloc_new_object_entry(struct tracex_object_entry_t **obj, size_t obj_name_size)
+static TRACEX_Ret_t alloc_new_object_entry(struct tracex_object_entry_t **obj)
 {
-    TRACEX_Ret_t status;
     
     struct tracex_object_entry_t *tmp_obj;
 
@@ -167,28 +202,13 @@ static TRACEX_Ret_t alloc_new_object_entry(struct tracex_object_entry_t **obj, s
     tmp_obj = (struct tracex_object_entry_t*)malloc(sizeof(struct tracex_object_entry_t));
     if(tmp_obj == NULL)
     {
-        status = TRACEX_ALLOC_FAILURE;
-        goto handle_exit;
+        return TRACEX_ALLOC_FAILURE;
     }
 
-    /* Allocate memory for the object name */
-    tmp_obj->obj.name = (uint8_t*)malloc(sizeof(uint8_t)*obj_name_size);
-    if (tmp_obj->obj.name == NULL)
-    {
-        status = TRACEX_ALLOC_FAILURE;
-        goto handle_alloc_error;
-    }
-
+    /* Zero out the struct for safety */
+    memset(tmp_obj, 0, sizeof(struct tracex_object_entry_t));
     *obj = tmp_obj;
-    status = TRACEX_SUCCESS;
-    goto handle_exit;
-
-handle_alloc_error:
-    tracex_destroy_object(&tmp_obj);
-
-handle_exit:
-    return status;
-
+    return TRACEX_SUCCESS;
 
 }
 
@@ -206,26 +226,25 @@ static TRACEX_Ret_t parse_incrementally(struct tracex_object_dump_t *dump, void 
     /* This is a new object, try to allocate memory for it */
     if (dump->curr_obj_offset == 0 && dump->obj_fsm == E_OBJ_PARSE_OTHERS)
     {
-        if (alloc_new_object_entry(&dump->current_object, dump->hdr_dump_ptr->raw_hdr.obj_registry_name_size) != TRACEX_SUCCESS)
+        dump->current_raw_obj.obj_name = (uint8_t*)malloc(sizeof(uint8_t) * dump->hdr_dump_ptr->raw_hdr.obj_registry_name_size);
+        if (dump->current_raw_obj.obj_name == NULL)
         {
-            bytes_to_copy = 0;
-            status =  TRACEX_ALLOC_FAILURE;
-            goto handle_exit;
+            status = TRACEX_ALLOC_FAILURE;
         }
-
+        bytes_to_copy = 0;
     }
     
     /* Are we at the beginning of the parsing ? (The whole struct without the object name) */
     if (dump->obj_fsm == E_OBJ_PARSE_OTHERS)
     {
         /* Start address is the start of the object struct + the previous offset */
-        start_address = (void*)dump->current_object;
+        start_address = (void*)&dump->current_raw_obj;
 
         /* Check if the buffer length added with the previous offset is bigger than the object struct - the size of the object name pointer */
-        if (buffer_len + dump->curr_obj_offset >= (sizeof(TRACEX_object_t) + sizeof(uint8_t*)))
+        if (buffer_len + dump->curr_obj_offset >= (sizeof(struct tracex_obj_raw_t) + sizeof(uint8_t*)))
         {
             /* Copy all the structure fields until the start of the object name pointer in the struct (last field) */
-            bytes_to_copy = (sizeof(TRACEX_object_t) - sizeof(uint8_t*)) - dump->curr_obj_offset;
+            bytes_to_copy = (sizeof(struct tracex_obj_raw_t) - sizeof(uint8_t*)) - dump->curr_obj_offset;
 
             /* Reset the offset for the next loop */
             dump->curr_obj_offset = 0;
@@ -249,8 +268,9 @@ static TRACEX_Ret_t parse_incrementally(struct tracex_object_dump_t *dump, void 
     /* We reached the point where we need to copy the object name */
     else if (dump->obj_fsm == E_OBJ_PARSE_NAME)
     {
+
         /* Base address is the object name field inside the struct */
-        start_address = (void*) dump->current_object->obj.name + dump->curr_obj_offset;
+        start_address = (void*) dump->current_raw_obj.obj_name + dump->curr_obj_offset;
 
         /* Check if the buffer length added with the previous offset is bigger than the object name length */
         if (buffer_len + dump->curr_obj_offset >= dump->hdr_dump_ptr->raw_hdr.obj_registry_name_size)
@@ -301,15 +321,19 @@ static TRACEX_Ret_t process_object(struct tracex_object_dump_t *dump)
 {
     TRACEX_Ret_t status;
     struct tracex_object_entry_t *entry;
-    TRACEX_object_t *new_obj_raw;
+    struct tracex_object_entry_t *user_object;
 
-    new_obj_raw = &dump->current_object->obj;
+    if ( dump->current_raw_obj.obj_available == 1 || (dump->current_raw_obj.obj_type == TRACEX_OBJECT_TYPE_NOT_VALID || dump->current_raw_obj.obj_type > TRACEX_OBJECT_TYPE_USB_DEV_CLASS))
+    {
+        status = TRACEX_OBJECT_INVALID;
+        goto handle_exit;
 
+    }
     /* Loop on the current objects */
     tracex_list_for_each_entry(entry, &dump->obj_list, node)
     {
         /* This might be a destroyed object in the parsing, just ignore it the new object entry then*/
-        if (entry->obj.pointer == new_obj_raw->pointer)
+        if (entry->obj.pointer == dump->current_raw_obj.obj_pointer)
         {
             status = TRACEX_OBJECT_DUPLICATE;
             goto handle_exit;
@@ -317,13 +341,35 @@ static TRACEX_Ret_t process_object(struct tracex_object_dump_t *dump)
         
     }
 
+    if (alloc_new_object_entry(&user_object) != TRACEX_SUCCESS)
+    {
+        status =  TRACEX_ALLOC_FAILURE;
+        goto handle_error;
+    }
+
+
+    /*TODO: Assign the correct endianess */
+    user_object->obj.available = dump->current_raw_obj.obj_available;
+    user_object->obj.type = dump->current_raw_obj.obj_type;
+    user_object->obj.thread_priority = ((dump->current_raw_obj.obj_res1 & 0x3) << 8) |
+                                        dump->current_raw_obj.obj_res2;
+    user_object->obj.pointer = dump->current_raw_obj.obj_pointer;
+    user_object->obj.objectParams.param_1 = dump->current_raw_obj.obj_param_1;
+    user_object->obj.objectParams.param_2 = dump->current_raw_obj.obj_param_2;
+    user_object->obj.name = dump->current_raw_obj.obj_name;
+
     /* Add the object to the list */
-    tracex_list_insert(&dump->current_object->node, &dump->obj_list);
+    tracex_list_insert(&user_object->node, &dump->obj_list);
 
     status = TRACEX_SUCCESS;
 
+    goto handle_exit;
+
 handle_error:
-    /*TODO: destroy user object here */
+    /* Free the allocated object name */
+    free(dump->current_raw_obj.obj_name);
+    dump->current_raw_obj.obj_name = NULL;
+
 handle_exit:
     return status;
 
@@ -410,4 +456,25 @@ void tracex_object_iter_end(TRACEX_object_iterator_t **iter)
             *iter = NULL;
         }
     }
+}
+
+const uint8_t *TRACEX_objectTypeToString(enum TRACEX_ObjectType type)
+{
+    const char *string_type;
+
+    if (type >= TRACEX_OBJECT_TYPE_USB_DEV_CLASS)
+    {
+        string_type = tracex_object_type_strings[0];
+    }
+    else if (type >= TRACEX_OBJECT_TYPE_RESERVED && type < TRACEX_OBJECT_TYPE_USB_HOST_STACK_DEV)
+    {
+        string_type = tracex_object_type_strings[TRACEX_OBJECT_TYPE_RESERVED];
+    }
+    else
+    {
+        string_type = tracex_object_type_strings[type];
+    }
+
+    return string_type;
+
 }

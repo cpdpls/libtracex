@@ -16,7 +16,7 @@ enum tracex_obj_fsm_t
 
 struct tracex_obj_raw_t
 {
-    uint8_t  obj_vailable;
+    uint8_t  obj_available;
     uint8_t  obj_type;
     uint8_t  obj_res1;
     uint8_t  obj_res2;
@@ -40,8 +40,7 @@ struct tracex_object_dump_t
     struct tracex_list              obj_list;               /* List of parsed objects */
     uint64_t                        tot_object_count;       /* Total count of objects */
     uint64_t                        curr_object_count;      /* Total count of objects for the current parsing */
-    struct tracex_obj_raw_t         current_raw_obj;
-    struct tracex_object_entry_t    *current_object;        /* Saved current object when parsing incrementally */
+    struct tracex_obj_raw_t         current_raw_obj;        /* Saved current object when parsing incrementally */
     uint8_t                         curr_obj_offset;        /* Saved current object byte count when parsing the fields incrementally */
     
     /* Because the objects structure has a variable object name that is not known
