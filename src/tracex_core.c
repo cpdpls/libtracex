@@ -26,6 +26,26 @@ void TRACEX_INIT()
 
 }
 
+TRACEX_Ret_t TRACEX_registerCallbacks(struct TRACEX_handler_t *handler, TRACEX_Callbacks_t *callbacks)
+{
+    if (callbacks == NULL || handler == NULL)
+    {
+        return TRACEX_BAD_INPUT_PTR;
+    }
+
+    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
+    {
+        return TRACEX_INVALID_HANDLER;
+    }
+
+    handler->raw_dump.header.parserCallback = callbacks->HeaderParsed;
+    handler->raw_dump.events.parserCallback = callbacks->EventParsed;
+    handler->raw_dump.objs.parserCallback = callbacks->ObjectParsed;
+
+    return TRACEX_SUCCESS;
+
+}
+
 TRACEX_Ret_t TRACEX_createHandler(struct TRACEX_handler_t **handler_ptr)
 {
     struct TRACEX_handler_t *handler;
@@ -58,15 +78,21 @@ TRACEX_Ret_t TRACEX_createHandler(struct TRACEX_handler_t **handler_ptr)
     /* Init the different dump parts */
     if ((status = tracex_init_header(&handler->raw_dump.header)) != TRACEX_SUCCESS)
     {
+        status = TRACEX_INIT_FAILURE;
         goto handle_error;
     }
 
     if ((status = tracex_init_objects(&handler->raw_dump.objs, &handler->raw_dump.header)) != TRACEX_SUCCESS)
     {
+        status = TRACEX_INIT_FAILURE;
         goto handle_error;
     }
 
-    /* TODO: Init the events here */
+    if ((status = tracex_init_events(&handler->raw_dump.events, &handler->raw_dump.header)) != TRACEX_SUCCESS)
+    {
+        status = TRACEX_INIT_FAILURE;
+        goto handle_error;
+    }
 
     /* Insert the newly created handler inside the list */
     tracex_list_insert(&handler->node, &handlers_list);
@@ -93,8 +119,8 @@ void TRACEX_destroyHandler(struct TRACEX_handler_t **handler)
         {
             if (tracex_is_handler_valid(*handler) == TRACEX_SUCCESS)
             {
-                /*TODO: Destroy the objects and events dumps */
-                tracex_destroy_object_list(&(*handler)->raw_dump.objs.obj_list);
+                tracex_destroy_object_list(&(*handler)->raw_dump.objs);
+                tracex_destroy_event_list(&(*handler)->raw_dump.events);
                 tracex_list_delete(&(*handler)->node);
                 memset((*handler), 0, sizeof(struct TRACEX_handler_t));
                 free(*handler);
@@ -109,11 +135,14 @@ TRACEX_Ret_t TRACEX_parse(struct TRACEX_handler_t *handler, void *buffer, size_t
 {
     TRACEX_Ret_t status;
     uint64_t consumed;
+
+
     struct tracex_header_dump_t *hdr_dump_ptr;
+    consumed = 0;
 
     if (handler == NULL || buffer == NULL)
     {
-        status = TRACEX_BAD_INPUT_PTR ;
+        status = TRACEX_BAD_INPUT_PTR;
         goto handle_exit;
     }
 
@@ -146,13 +175,7 @@ TRACEX_Ret_t TRACEX_parse(struct TRACEX_handler_t *handler, void *buffer, size_t
         {
             /* Increment the total bytes processed from here */
             handler->raw_bytes_count += consumed;
-
-            /* Get the total number of objects in the object registry */
-            hdr_dump_ptr->object_registry_size = tracex_object_compute_total_objects(
-                hdr_dump_ptr->raw_hdr.obj_registry_start_pointer,
-                hdr_dump_ptr->raw_hdr.obj_registry_end_pointer,
-                hdr_dump_ptr->raw_hdr.obj_registry_name_size);
-
+            
             /* Go to the next phase, which is parsing the objects */
             handler->state = E_OBJECT_PHASE;
 
@@ -160,7 +183,7 @@ TRACEX_Ret_t TRACEX_parse(struct TRACEX_handler_t *handler, void *buffer, size_t
             if (buffer_length - consumed == 0)
             {
                 status = TRACEX_NEED_MORE;
-                goto handle_success;
+                goto handle_exit;
             }
             /*  Enough bytes for the next phase, increment the buffer pointer 
             *   And substract the buffer length with the just consumed total
@@ -169,7 +192,6 @@ TRACEX_Ret_t TRACEX_parse(struct TRACEX_handler_t *handler, void *buffer, size_t
             {
                 buffer += consumed;
                 buffer_length -= consumed;
-                consumed = 0;
             }
         }
     }
@@ -181,16 +203,16 @@ TRACEX_Ret_t TRACEX_parse(struct TRACEX_handler_t *handler, void *buffer, size_t
 
         if (status == TRACEX_SUCCESS)
         {
-            handler->raw_bytes_count += consumed;
-
             handler->state = E_EVENT_PHASE;
         }
+        
+        handler->raw_bytes_count += consumed;
 
         /* If the remaining for the next phase is 0, ask for more */
         if (buffer_length - consumed == 0)
         {
             status = TRACEX_NEED_MORE;
-            goto handle_success;
+            goto handle_exit;
         }
         /*  Enough bytes for the next phase, increment the buffer pointer 
         *   And substract the buffer length with the just consumed total
@@ -203,8 +225,21 @@ TRACEX_Ret_t TRACEX_parse(struct TRACEX_handler_t *handler, void *buffer, size_t
 
 
     }
+    
+    if (handler->state == E_EVENT_PHASE)
+    {
+        status = tracex_parse_events(&handler->raw_dump.events, buffer, buffer_length, &consumed);
 
-handle_success:
+        if (status == TRACEX_SUCCESS)
+        {
+            handler->state = E_OBJECT_PHASE;
+        }
+
+        handler->raw_bytes_count += consumed;
+        buffer += consumed;
+        buffer_length -= consumed;
+    }
+
 handle_exit:
     return status;
 }
@@ -239,6 +274,36 @@ TRACEX_Ret_t TRACEX_getHeader(struct TRACEX_handler_t *handler, struct TRACEX_he
 
     return tracex_header_get_header(&handler->raw_dump.header, header);
 
+}
+
+TRACEX_Ret_t TRACEX_isHeaderParsed(struct TRACEX_handler_t *handler)
+{
+    if (handler == NULL)
+    {
+        return TRACEX_BAD_INPUT_PTR;
+    }
+
+    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
+    {
+        return TRACEX_INVALID_HANDLER;
+    }
+
+    return tracex_is_header_parsed(&handler->raw_dump.header);
+}
+
+TRACEX_Ret_t TRACEX_isHeaderValid(struct TRACEX_handler_t *handler)
+{
+    if (handler == NULL)
+    {
+        return TRACEX_BAD_INPUT_PTR;
+    }
+
+    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
+    {
+        return TRACEX_INVALID_HANDLER;
+    }
+
+    return tracex_is_header_valid(&handler->raw_dump.header);
 }
 
 TRACEX_Ret_t TRACEX_objectIteratorInit(TRACEX_handler_t *handler, TRACEX_object_iterator_t **iterator)

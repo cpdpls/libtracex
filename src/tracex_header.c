@@ -53,13 +53,55 @@ TRACEX_Ret_t tracex_header_get_header(struct tracex_header_dump_t *hdr_dump, str
 
 }
 
+TRACEX_Ret_t tracex_is_header_parsed(struct tracex_header_dump_t *hdr_dump)
+{
+    /* Try to get the object mutex */
+    pthread_mutex_lock(&hdr_dump->header_mutex);
+
+    if (!hdr_dump->header_parsed)
+    {
+        /* Release the mutex before returning to the caller */
+        pthread_mutex_unlock(&hdr_dump->header_mutex);
+        return TRACEX_NEED_MORE;
+    }
+
+    /* Release the mutex before returning to the caller */
+    pthread_mutex_unlock(&hdr_dump->header_mutex);
+    return TRACEX_SUCCESS;
+}
+
+TRACEX_Ret_t tracex_is_header_valid(struct tracex_header_dump_t *hdr_dump)
+{
+    /* Try to get the object mutex */
+    pthread_mutex_lock(&hdr_dump->header_mutex);
+
+    if (!hdr_dump->header_parsed)
+    {
+        /* Release the mutex before returning to the caller */
+        pthread_mutex_unlock(&hdr_dump->header_mutex);
+        return TRACEX_NEED_MORE;
+    }
+
+    if (!hdr_dump->header_valid)
+    {
+        /* Release the mutex before returning to the caller */
+        pthread_mutex_unlock(&hdr_dump->header_mutex);
+        return TRACEX_HEADER_NOT_VALID;
+    }
+
+    /* Release the mutex before returning to the caller */
+    pthread_mutex_unlock(&hdr_dump->header_mutex);
+    return TRACEX_SUCCESS;
+
+}
 
 TRACEX_Ret_t tracex_parse_header(struct tracex_header_dump_t *hdr_dump, void *buffer, size_t buff_len, uint64_t *consumed)
 {
     TRACEX_Ret_t status;
 
     pthread_mutex_lock(&hdr_dump->header_mutex);
-
+    
+    *consumed = 0;
     status = parse_incrementally(hdr_dump, buffer, buff_len, consumed);
 
     if (status == TRACEX_SUCCESS)
@@ -73,8 +115,23 @@ TRACEX_Ret_t tracex_parse_header(struct tracex_header_dump_t *hdr_dump, void *bu
         }
         else
         {
+            /* Get the total number of objects in the object registry */
+            hdr_dump->object_registry_size = tracex_object_compute_registry_size(
+                hdr_dump->raw_hdr.obj_registry_start_pointer,
+                hdr_dump->raw_hdr.obj_registry_end_pointer,
+                hdr_dump->raw_hdr.obj_registry_name_size);
+            
+            /* Get the total number of events in the event trace buffer */
+            hdr_dump->event_registry_size = tracex_event_compute_registry_size(
+                hdr_dump->raw_hdr.buff_start_pointer,
+                hdr_dump->raw_hdr.buff_end_pointer);
+
             hdr_dump->header_valid = 1;
         }
+
+        /* Call the user provided callback */
+        if (hdr_dump->parserCallback != NULL)
+            hdr_dump->parserCallback(&hdr_dump->user_hdr, status);
     }
      
     goto handle_exit;
@@ -112,21 +169,20 @@ static TRACEX_Ret_t process_header(struct tracex_header_dump_t *hdr_dump)
 
     if (hdr_dump->raw_hdr.obj_registry_name_size == 0)
     {
-        status = TRACEX_HEADER_NOT_VALID;
+        status = TRACEX_OBJECT_REGISTRY_INVALID;
         goto handle_exit;
     }
 
     /* Check if the object registry is valid */
     if (tracex_object_check_registry_valid(hdr->obj_registry_start_pointer, hdr->obj_registry_end_pointer, hdr->obj_registry_name_size) != TRACEX_SUCCESS)
     {
-        status = TRACEX_HEADER_NOT_VALID;
+        status = TRACEX_OBJECT_REGISTRY_INVALID;
         goto handle_exit;
     }
 
-    /*TODO: Do the same for the events as we did for the object registry */
-    if (hdr_dump->raw_hdr.buff_end_pointer == hdr_dump->raw_hdr.buff_start_pointer)
+    if (tracex_event_check_registry_valid(hdr->buff_start_pointer, hdr->buff_end_pointer) != TRACEX_SUCCESS)
     {
-        status = TRACEX_HEADER_NOT_VALID;
+        status = TRACEX_EVENT_TRACE_BUFFER_INVALID;
         goto handle_exit;
     }
 
@@ -144,6 +200,7 @@ static TRACEX_Ret_t parse_incrementally(struct tracex_header_dump_t *hdr_dump, v
     TRACEX_Ret_t status;
     size_t bytes_to_copy;
 
+    bytes_to_copy = 0;
     if (hdr_dump->byte_offset >= sizeof(struct tracex_raw_header_t))
     {
         status = TRACEX_HEADER_BAD_OFFSET_START;
@@ -162,7 +219,6 @@ static TRACEX_Ret_t parse_incrementally(struct tracex_header_dump_t *hdr_dump, v
 
     memcpy(((void*)&hdr_dump->raw_hdr)+ hdr_dump->byte_offset, buffer, bytes_to_copy);
 
-    *consumed = bytes_to_copy;
     hdr_dump->byte_offset += bytes_to_copy;
 
 
@@ -179,5 +235,6 @@ static TRACEX_Ret_t parse_incrementally(struct tracex_header_dump_t *hdr_dump, v
     }
 
 handle_exit:
+    *consumed = bytes_to_copy;
     return status;
 }

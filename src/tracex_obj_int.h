@@ -36,7 +36,7 @@ struct tracex_object_entry_t
 
 struct tracex_object_dump_t
 {
-    uint8_t                         dump_init;              /* Flag set when the dump has been initialized */
+    void (*parserCallback)(TRACEX_object_t *object, TRACEX_Ret_t status); /* Callback to use when a new object has been parsed */
     struct tracex_list              obj_list;               /* List of parsed objects */
     uint64_t                        tot_object_count;       /* Total count of objects */
     uint64_t                        curr_object_count;      /* Total count of objects for the current parsing */
@@ -63,11 +63,11 @@ struct tracex_obj_iterator
 };
 
 TRACEX_Ret_t tracex_object_check_registry_valid(uint32_t start, uint32_t stop, uint32_t obj_name_length);
-uint64_t tracex_object_compute_total_objects(uint32_t start, uint32_t stop, uint32_t obj_name_length);
+uint64_t tracex_object_compute_registry_size(uint32_t start, uint32_t stop, uint32_t obj_name_length);
 TRACEX_Ret_t tracex_init_objects(struct tracex_object_dump_t *obj_dump, struct tracex_header_dump_t *hdr_dump);
 TRACEX_Ret_t tracex_parse_objects(struct tracex_object_dump_t *obj_dump, void *buffer, size_t buff_len, uint64_t *consumed);
 void tracex_destroy_object(struct tracex_object_entry_t **object);
-void tracex_destroy_object_list(struct tracex_list *head);
+void tracex_destroy_object_list(struct tracex_object_dump_t *obj_dump);
 
 TRACEX_Ret_t tracex_object_iterator_init(struct tracex_object_dump_t *obj_dump, TRACEX_object_iterator_t **iter);
 TRACEX_Ret_t tracex_object_iter_next(TRACEX_object_iterator_t *iter, const TRACEX_object_t **object);

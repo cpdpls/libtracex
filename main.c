@@ -1,71 +1,94 @@
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <signal.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "tracex.h"
-#include "time.h"
 #include "tracex_debug.h"
 
 
+TRACEX_handler_t *handler;
+
+void eventParsedCB(TRACEX_event_t *event, TRACEX_Ret_t status);
+void headerParsedCB(struct TRACEX_header_t *header, TRACEX_Ret_t status);
+void objectParsedCB(TRACEX_object_t *object, TRACEX_Ret_t status);
+
 int main(void)
 {
-    size_t total_file_size;
-    char *buffer;
+    struct sockaddr_in server;
+    int lfd;
+    int bytes_read;
     TRACEX_Ret_t status;
-    struct TRACEX_header_t *header;
-    TRACEX_handler_t *handler;
+    char buffer[500];
+    TRACEX_Callbacks_t callbacks;
 
+    callbacks.EventParsed = eventParsedCB;
+    callbacks.HeaderParsed = headerParsedCB;
+    callbacks.ObjectParsed = objectParsedCB;
+    
     TRACEX_INIT();
-    FILE *test = fopen("r15b_tracex_dump.trx", "rb");
 
-    fseek(test, 0L, SEEK_END);
-    total_file_size = ftell(test);
-    fseek(test, 0L, SEEK_SET);
+    lfd = socket(AF_INET, SOCK_STREAM, 0);
+    server.sin_family = AF_INET;
+    server.sin_port = htons(5555);
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    buffer = malloc(total_file_size);
-    fread(buffer, total_file_size, 1, test);
+    if (connect(lfd, (struct sockaddr *)&server, sizeof server) == -1)
+    {
+        printf("Failed to connect to the server !\n");
+        return -1;
+    }
 
 
     status = TRACEX_createHandler(&handler);
-    srand(time(NULL));
 
     if (status != TRACEX_SUCCESS)
     {
         printf("%s\n", TRACEX_strerror(status));
-        return 0;
-
+        return -1;
     }
 
-    status = TRACEX_parse(handler, buffer, total_file_size);
-    printf("%s\n", TRACEX_strerror(status));
+    if (TRACEX_registerCallbacks(handler, &callbacks) != TRACEX_SUCCESS)
+    {
+        printf("%s\n", TRACEX_strerror(status));
+        return -1;
+    }
+
+    do
+    {
+        bytes_read = recv(lfd, buffer, sizeof(buffer), 0);
+
+        status = TRACEX_parse(handler, buffer, bytes_read);
+
+    }while (status == TRACEX_NEED_MORE && bytes_read >= 0);
+
+    
+
+    TRACEX_destroyHandler(&handler);
+
+}
 
 
+void eventParsedCB(TRACEX_event_t *event, TRACEX_Ret_t status)
+{
+
+}
+void headerParsedCB(struct TRACEX_header_t *header, TRACEX_Ret_t status)
+{
     if (status == TRACEX_SUCCESS)
     {
-        status = TRACEX_getHeader(handler, &header);
-        TRACEX_debug_print_user_header(header);
         TRACEX_debug_print_raw_header(handler);
-
-        TRACEX_object_iterator_t *iter;
-        const TRACEX_object_t * object;
-
-        TRACEX_objectIteratorInit(handler, &iter);
-
-        while (TRACEX_objectIteratorNext(iter, &object) != TRACEX_OBJ_ITER_END)
-        {
-            //printf("%.32s\n", object->name);
-        }
-
-        TRACEX_objectIteratorEnd(&iter);
-
-        TRACEX_debug_print_objects(handler);
-        
-
-
     }
-    free(buffer);
-    TRACEX_destroyHandler(&handler);
-    fclose(test);
+
+}
+void objectParsedCB(TRACEX_object_t *object, TRACEX_Ret_t status)
+{
+    if (status == TRACEX_SUCCESS)
+    {
+        TRACEX_debug_print_single_object(object);
+    }
 
 }

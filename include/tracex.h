@@ -10,6 +10,14 @@
 
 typedef struct TRACEX_handler_t TRACEX_handler_t;
 
+
+typedef struct
+{
+    void (*HeaderParsed)(struct TRACEX_header_t *header, TRACEX_Ret_t status);
+    void (*ObjectParsed)(TRACEX_object_t *object, TRACEX_Ret_t status);
+    void (*EventParsed)(TRACEX_event_t *event, TRACEX_Ret_t status);
+
+} TRACEX_Callbacks_t;
 /**
  * @brief   Function that performs internal initialization. Must always be called before any other
  *          API is called
@@ -31,6 +39,7 @@ void TRACEX_INIT();
  */
 TRACEX_Ret_t TRACEX_parse(TRACEX_handler_t *handler, void *buffer, size_t buffer_length);
 
+TRACEX_Ret_t TRACEX_registerCallbacks(struct TRACEX_handler_t *handler, TRACEX_Callbacks_t *callbacks);
 /**
  * @brief Creates a TRACEX_handler_t, which is the core context for the other API's.
  * 

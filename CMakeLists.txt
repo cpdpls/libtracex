@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 4.0)
 
 project(tx_tracer VERSION 1.0)
 
+set(CMAKE_C_FLAGS_RELEASE "-O3")
+
 add_executable(tx_tracer
     main.c
     src/tracex_errno.c

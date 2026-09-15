@@ -33,7 +33,7 @@ enum TRACEX_event_info4
 
 };
 
-struct TRACEX_event_t
+typedef struct
 {
     uint32_t                            thread_pointer;     /* Thread pointer when the event happened*/
     uint32_t                            thread_priority;    /* Thread priority */
@@ -43,23 +43,8 @@ struct TRACEX_event_t
     enum TRACEX_event_info2             info2;              /* Info 2 of the event */
     enum TRACEX_event_info3             info3;              /* Info 3 of the event */
     enum TRACEX_event_info4             info4;              /* Info 4 of the event */
-};
 
-typedef struct TRACEX_event_list_t
-{
-    uint32_t                count;
-    struct TRACEX_event_t  **events;
-} TRACEX_event_list_t;
 
-/**
- * @brief Returns the parsed events from the previous parsing.
- * 
- * @param handler Pointer to the previously allocated handler
- * @param event_list Pointer location where the events list will be returned to.
- * @return TRACEX_Ret_t TRACEX_SUCCESS on success, TRACEX_NEED_MORE if more bytes are required,
- *          Other value from TRACEX_Ret_t otherwise.
- *
- */
+} TRACEX_event_t;
 
-TRACEX_Ret_t TRACEX_getEvents(struct TRACEX_handler_t *handler, TRACEX_event_list_t *event_list); 
 #endif

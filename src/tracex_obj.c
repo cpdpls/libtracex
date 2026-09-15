@@ -58,9 +58,9 @@ TRACEX_Ret_t tracex_object_check_registry_valid(uint32_t start, uint32_t stop, u
     return TRACEX_SUCCESS;
 }
 
-uint64_t tracex_object_compute_total_objects(uint32_t start, uint32_t stop, uint32_t obj_name_length)
+uint64_t tracex_object_compute_registry_size(uint32_t start, uint32_t stop, uint32_t obj_name_length)
 {
-    return ((stop - start) / ((sizeof(TRACEX_object_t) - sizeof(uint8_t*)) + obj_name_length));
+    return ((stop - start) / ((sizeof(struct tracex_obj_raw_t) - sizeof(uint8_t*)) + obj_name_length));
 }
 
 TRACEX_Ret_t tracex_init_objects(struct tracex_object_dump_t *obj_dump, struct tracex_header_dump_t *hdr_dump)
@@ -88,10 +88,12 @@ TRACEX_Ret_t tracex_parse_objects(struct tracex_object_dump_t *obj_dump, void *b
     bytes_left = buff_len;
 
     
+    *consumed = 0;
+
     while (bytes_left != 0)
     {
         bytes_consumed = 0;
-        status = parse_incrementally(obj_dump, buffer, buff_len, &bytes_consumed);
+        status = parse_incrementally(obj_dump, buffer, bytes_left, &bytes_consumed);
 
         /* Sanitize for an error */
         if (status != TRACEX_SUCCESS && status != TRACEX_NEED_MORE)
@@ -99,7 +101,7 @@ TRACEX_Ret_t tracex_parse_objects(struct tracex_object_dump_t *obj_dump, void *b
             goto handle_exit;
         }
 
-        /* Increment the number of bytes consumed for the called */
+        /* Increment the number of bytes consumed for the caller */
         *consumed += bytes_consumed;
 
         /* We parsed a full object, let's now process it and add it to the list */
@@ -121,7 +123,7 @@ TRACEX_Ret_t tracex_parse_objects(struct tracex_object_dump_t *obj_dump, void *b
                 obj_dump->tot_object_count++;
             }
 
-            status = TRACEX_SUCCESS;
+            status = TRACEX_NEED_MORE;
 
             /* Check if we have parsed the whole object registry*/
             if (obj_dump->curr_object_count == obj_dump->hdr_dump_ptr->object_registry_size)
@@ -129,6 +131,7 @@ TRACEX_Ret_t tracex_parse_objects(struct tracex_object_dump_t *obj_dump, void *b
                 /* Reset the current session total object registry count */
                 obj_dump->curr_object_count = 0;
 
+                status = TRACEX_SUCCESS;
                 goto handle_exit;
             }
 
@@ -137,7 +140,6 @@ TRACEX_Ret_t tracex_parse_objects(struct tracex_object_dump_t *obj_dump, void *b
 
         /*Adjust the loop counter and the buffer position with it's size */
         buffer += bytes_consumed;
-        buff_len -= bytes_consumed;
         bytes_left -= bytes_consumed;
 
     }
@@ -173,7 +175,7 @@ void tracex_destroy_object(struct tracex_object_entry_t **object)
     }
 }
 
-void tracex_destroy_object_list(struct tracex_list *head)
+void tracex_destroy_object_list(struct tracex_object_dump_t *obj_dump)
 {
     /*TODO: Change this function to get paramer a struct tracex_object_dump_t*/
     /* So rename it to tracex_destroy_object_dump */
@@ -181,9 +183,9 @@ void tracex_destroy_object_list(struct tracex_list *head)
     struct tracex_object_entry_t *entry;
     struct tracex_object_entry_t *next;
     
-    if (head != NULL)
+    if (&obj_dump->obj_list != NULL)
     {
-        tracex_list_for_each_entry_safe(entry, next, head, node)
+        tracex_list_for_each_entry_safe(entry, next, &obj_dump->obj_list, node)
         {
             tracex_destroy_object(&entry);
         }
@@ -222,26 +224,28 @@ static TRACEX_Ret_t parse_incrementally(struct tracex_object_dump_t *dump, void 
     
     /* Keep track of the previous FSM */
     last_fsm = dump->obj_fsm;
+    bytes_to_copy = 0;
 
-    /* This is a new object, try to allocate memory for it */
+    /* Check if this is a new object and try to allocate memory for it */
     if (dump->curr_obj_offset == 0 && dump->obj_fsm == E_OBJ_PARSE_OTHERS)
     {
+        /* Zero out the structure */
+        memset(&dump->current_raw_obj, 0, sizeof(struct tracex_obj_raw_t));
         dump->current_raw_obj.obj_name = (uint8_t*)malloc(sizeof(uint8_t) * dump->hdr_dump_ptr->raw_hdr.obj_registry_name_size);
         if (dump->current_raw_obj.obj_name == NULL)
         {
             status = TRACEX_ALLOC_FAILURE;
         }
-        bytes_to_copy = 0;
     }
     
     /* Are we at the beginning of the parsing ? (The whole struct without the object name) */
     if (dump->obj_fsm == E_OBJ_PARSE_OTHERS)
     {
         /* Start address is the start of the object struct + the previous offset */
-        start_address = (void*)&dump->current_raw_obj;
+        start_address = (void*)&dump->current_raw_obj + dump->curr_obj_offset;
 
         /* Check if the buffer length added with the previous offset is bigger than the object struct - the size of the object name pointer */
-        if (buffer_len + dump->curr_obj_offset >= (sizeof(struct tracex_obj_raw_t) + sizeof(uint8_t*)))
+        if (buffer_len + dump->curr_obj_offset >= (sizeof(struct tracex_obj_raw_t) - sizeof(uint8_t*)))
         {
             /* Copy all the structure fields until the start of the object name pointer in the struct (last field) */
             bytes_to_copy = (sizeof(struct tracex_obj_raw_t) - sizeof(uint8_t*)) - dump->curr_obj_offset;
@@ -278,9 +282,6 @@ static TRACEX_Ret_t parse_incrementally(struct tracex_object_dump_t *dump, void 
             /* We have enough bytes to copy the full object name */
             bytes_to_copy = dump->hdr_dump_ptr->raw_hdr.obj_registry_name_size - dump->curr_obj_offset;
 
-            /* Reset the offset for the next loop */
-            dump->curr_obj_offset = 0;
-
         }
         /* Otherwise it's a partial copy, it's not enough to copy the full struct */
         else
@@ -288,19 +289,22 @@ static TRACEX_Ret_t parse_incrementally(struct tracex_object_dump_t *dump, void 
             /* We can't copy the full name at once, so copy only what we can */
             bytes_to_copy = buffer_len;
 
-            /* Increment the offset for the next iteration or function call */
-            dump->curr_obj_offset += bytes_to_copy;
         }
+        /* Increment the offset for the next iteration or function call */
+        dump->curr_obj_offset += bytes_to_copy;
     }
 
     /* Perform the copy */
     memcpy(start_address, buffer, bytes_to_copy);
 
     /* Check if we reached the end of the parsing of an object */
-    if (last_fsm == E_OBJ_PARSE_NAME && dump->obj_fsm == E_OBJ_PARSE_NAME && dump->curr_obj_offset == 0)
+    if (last_fsm == E_OBJ_PARSE_NAME && dump->obj_fsm == E_OBJ_PARSE_NAME && dump->curr_obj_offset == dump->hdr_dump_ptr->raw_hdr.obj_registry_name_size)
     {
         /* Reset the FSM in order to parse the object fields again on the next call */
         dump->obj_fsm = E_OBJ_PARSE_OTHERS;
+        
+        /* Reset the offset for the next call  */
+        dump->curr_obj_offset = 0;
         status = TRACEX_SUCCESS;
     }
     /* We need more bytes to parse an object */
@@ -312,7 +316,6 @@ static TRACEX_Ret_t parse_incrementally(struct tracex_object_dump_t *dump, void 
     
 handle_exit:
     *consumed = bytes_to_copy;
-    pthread_mutex_unlock(&dump->object_mutex);
     return status;
 
 }
@@ -326,7 +329,7 @@ static TRACEX_Ret_t process_object(struct tracex_object_dump_t *dump)
     if ( dump->current_raw_obj.obj_available == 1 || (dump->current_raw_obj.obj_type == TRACEX_OBJECT_TYPE_NOT_VALID || dump->current_raw_obj.obj_type > TRACEX_OBJECT_TYPE_USB_DEV_CLASS))
     {
         status = TRACEX_OBJECT_INVALID;
-        goto handle_exit;
+        goto handle_error;
 
     }
     /* Loop on the current objects */
@@ -336,11 +339,12 @@ static TRACEX_Ret_t process_object(struct tracex_object_dump_t *dump)
         if (entry->obj.pointer == dump->current_raw_obj.obj_pointer)
         {
             status = TRACEX_OBJECT_DUPLICATE;
-            goto handle_exit;
+            goto handle_error;
         }
         
     }
 
+    /*TODO: If we fail, we need to decrement the number of parsed bytes */
     if (alloc_new_object_entry(&user_object) != TRACEX_SUCCESS)
     {
         status =  TRACEX_ALLOC_FAILURE;
@@ -371,6 +375,9 @@ handle_error:
     dump->current_raw_obj.obj_name = NULL;
 
 handle_exit:
+    /* Call the user provided callback */
+    if (dump->parserCallback != NULL)
+        dump->parserCallback(&user_object->obj, status);
     return status;
 
 }

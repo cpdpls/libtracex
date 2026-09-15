@@ -24,7 +24,7 @@ struct tracex_raw_dump_t
 {
     struct tracex_header_dump_t     header;                 /* Header of the tracex dump*/
     struct tracex_object_dump_t     objs;                   /* Objects of the tracex dump */
-    struct tracex_event_entry_t     events;                 /* Events of the tracex dump */
+    struct tracex_event_dump_t      events;                 /* Events of the tracex dump */
 };
 
 struct TRACEX_user_dump_t

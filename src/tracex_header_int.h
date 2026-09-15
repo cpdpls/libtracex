@@ -28,6 +28,7 @@ struct tracex_raw_header_t
 
 struct tracex_header_dump_t
 {
+    void (*parserCallback)(struct TRACEX_header_t *header, TRACEX_Ret_t status);      /* Callback to use when the header has been parsed */
     struct TRACEX_header_t      user_hdr;               /* User tracex header */
     struct tracex_raw_header_t  raw_hdr;                /* Actual header as it is in the dump */
     pthread_mutex_t             header_mutex;           /* Mutex used when retrieving and parsing objects */
@@ -35,10 +36,12 @@ struct tracex_header_dump_t
     uint8_t                     header_valid;           /* Flag set when the header is valid */
     uint8_t                     byte_offset;            /* Byte offset in the header of the dump when parsing incrementally */
     uint64_t                    object_registry_size;   /* Total number of possible objects in the object registry */
+    uint64_t                    event_registry_size;    /* Total number of posssible events in the event registry */
 };
 
 TRACEX_Ret_t tracex_init_header(struct tracex_header_dump_t *hdr_dump);
-
+TRACEX_Ret_t tracex_is_header_parsed(struct tracex_header_dump_t *hdr_dump);
+TRACEX_Ret_t tracex_is_header_valid(struct tracex_header_dump_t *hdr_dump);
 TRACEX_Ret_t tracex_header_get_header(struct tracex_header_dump_t *hdr_dump, struct TRACEX_header_t **header);
 TRACEX_Ret_t tracex_parse_header(struct tracex_header_dump_t *hdr_dump, void *buffer, size_t buff_len, uint64_t *consumed);
 #endif
