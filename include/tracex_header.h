@@ -30,32 +30,4 @@ struct tracex_header
     uint32_t res4;
 } __attribute__((__packed__));
 
-/**
- * @brief Returns wether the header has been parsed yet at any given time.
- * 
- * @param tracex_handler Pointer to the previously allocated handler. 
- * @return  tracex_ret_t TRACEX_SUCCESS on success, TRACEX_NEED_MORE if more bytes are required,
- *          Other value from tracex_ret_t otherwise.
- */
-tracex_ret_t TRACEX_isHeaderParsed(struct tracex_handler *handler);
-
-/**
- * @brief Returns wether the header is a valid TraceX header.
- * 
- * @param tracex_handler Pointer to the previously allocated handler. 
- * @return tracex_ret_t tracex_ret_t TRACEX_SUCCESS on success, TRACEX_HEADER_NOT_VALID if the header is invalid,
- *          Other value from tracex_ret_t otherwise.
- */
-tracex_ret_t TRACEX_isHeaderValid(struct tracex_handler *handler);
-
-/**
- * @brief returns the parsed header if already parsed
- * 
- * @param handler Pointer to the previously allocated handler.
- * @param header  pointer to a memory location where the parsed header will be returned
- *                to the user.
- * @return tracex_ret_t TRACEX_SUCCESS on success, TRACEX_NEED_MORE if more bytes are required,
- *          Other value from tracex_ret_t otherwise.
- */
-tracex_ret_t TRACEX_getHeader(struct tracex_handler *handler, struct tracex_header **header);
 #endif

@@ -123,14 +123,11 @@ void tracex_event_destroy_list(struct tracex_event_context *ctx)
     struct tracex_event_entry *entry;
     struct tracex_event_entry *next;
     
-    if (&ctx->event_list != NULL)
+    tracex_list_for_each_entry_safe(entry, next, &ctx->event_list, node)
     {
-        tracex_list_for_each_entry_safe(entry, next, &ctx->event_list, node)
-        {
-            destroy_event_entry(&entry);
-        }
-
+        destroy_event_entry(&entry);
     }
+
 }
 
 static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *buffer, size_t buffer_len, size_t *consumed)
@@ -190,8 +187,6 @@ handle_exit:
 
 static tracex_ret_t process_event(struct tracex_event_context *ctx)
 {
-    tracex_ret_t status;
-
     /*TODO: Revert to the correct endianess */
 
 
@@ -199,14 +194,12 @@ static tracex_ret_t process_event(struct tracex_event_context *ctx)
     tracex_list_insert(&ctx->curr_entry->node, &ctx->event_list);
 
     
-    status = TRACEX_SUCCESS;
     
-handle_exit:
     /* Call the user provided callback */
     if (ctx->user_callback != NULL)
-        ctx->user_callback(&ctx->curr_entry->event, status);
+        ctx->user_callback(&ctx->curr_entry->event, TRACEX_SUCCESS);
 
-    return status;
+    return TRACEX_SUCCESS;
 }
 
 static tracex_ret_t alloc_new_event_entry(struct tracex_event_entry **entry_ptr)

@@ -60,9 +60,9 @@ void TRACEX_debug_print_objects(const struct tracex_handler *handler)
     object_counter = 0;
     tracex_list_for_each_entry(entry, &handler->objs_ctx.obj_list, node)
     {
-        TRACEX_DEBUG_OBJ("| BEGIN OBJECT ENTRY (%u) |\n", object_counter);
+        TRACEX_DEBUG_OBJ("| BEGIN OBJECT ENTRY (%lu) |\n", object_counter);
         TRACEX_debug_print_single_object(&entry->obj);
-        TRACEX_DEBUG_OBJ("| END OBJECT ENTRY (%u) |\n\n", object_counter++);
+        TRACEX_DEBUG_OBJ("| END OBJECT ENTRY (%lu) |\n\n", object_counter++);
     }
 
 }
@@ -91,9 +91,9 @@ void TRACEX_debug_print_events(const struct tracex_handler *handler)
     event_counter = 0;
     tracex_list_for_each_entry(entry, &handler->event_ctx.event_list, node)
     {
-        TRACEX_DEBUG_EVENT("| BEGIN EVENT ENTRY (%u) |\n", event_counter);
+        TRACEX_DEBUG_EVENT("| BEGIN EVENT ENTRY (%lu) |\n", event_counter);
         TRACEX_debug_print_single_event(&entry->event);
-        TRACEX_DEBUG_EVENT("| END EVENT ENTRY (%u) |\n\n", event_counter++);
+        TRACEX_DEBUG_EVENT("| END EVENT ENTRY (%lu) |\n\n", event_counter++);
     }
 
 }

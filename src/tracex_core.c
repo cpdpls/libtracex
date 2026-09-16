@@ -117,7 +117,6 @@ tracex_ret_t tracex_register_callbacks(tracex_handler_t *handler, struct tracex_
 
 void tracex_destroy_handler(tracex_handler_t **handler)
 {
-    struct tracex_event_entry_t *iter_event;
     if (handler != NULL)
     {
         if (*handler != NULL)
@@ -136,7 +135,7 @@ void tracex_destroy_handler(tracex_handler_t **handler)
 
 }
 
-tracex_ret_t TRACEX_parse(struct tracex_handler *handler, void *buffer, size_t buffer_length)
+tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t buffer_length)
 {
     tracex_ret_t status;
     uint64_t consumed;
@@ -144,6 +143,8 @@ tracex_ret_t TRACEX_parse(struct tracex_handler *handler, void *buffer, size_t b
 
     struct tracex_header_context *hdr_ctx;
     consumed = 0;
+
+    status = TRACEX_NEED_MORE;
 
     if (handler == NULL || buffer == NULL)
     {
@@ -264,52 +265,6 @@ tracex_ret_t tracex_is_handler_valid(struct tracex_handler *handler)
     return TRACEX_INVALID_HANDLER;
 }
 
-tracex_ret_t TRACEX_getHeader(struct tracex_handler *handler, struct tracex_header **header)
-{
-
-    if (handler == NULL || header == NULL)
-    {
-        return TRACEX_BAD_INPUT_PTR;
-    }
-
-    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
-    {
-        return TRACEX_INVALID_HANDLER;
-    }
-
-    return tracex_header_get(&handler->hdr_ctx, header);
-
-}
-
-tracex_ret_t TRACEX_isHeaderParsed(struct tracex_handler *handler)
-{
-    if (handler == NULL)
-    {
-        return TRACEX_BAD_INPUT_PTR;
-    }
-
-    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
-    {
-        return TRACEX_INVALID_HANDLER;
-    }
-
-    return tracex_header_check_parsed(&handler->hdr_ctx);
-}
-
-tracex_ret_t TRACEX_isHeaderValid(struct tracex_handler *handler)
-{
-    if (handler == NULL)
-    {
-        return TRACEX_BAD_INPUT_PTR;
-    }
-
-    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
-    {
-        return TRACEX_INVALID_HANDLER;
-    }
-
-    return tracex_header_check_valid(&handler->hdr_ctx);
-}
 
 tracex_ret_t tracex_object_iterator_init(tracex_handler *handler, TRACEX_object_iterator_t **iterator)
 {

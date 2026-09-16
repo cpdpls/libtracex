@@ -137,13 +137,12 @@ void tracex_object_destroy_list(struct tracex_object_context *ctx)
     struct tracex_object_entry *entry;
     struct tracex_object_entry *next;
     
-    if (&ctx->obj_list != NULL)
+    
+    tracex_list_for_each_entry_safe(entry, next, &ctx->obj_list, node)
     {
-        tracex_list_for_each_entry_safe(entry, next, &ctx->obj_list, node)
-        {
-            destroy_object_entry(&entry);
-        }
+        destroy_object_entry(&entry);
     }
+    
 
 }
 

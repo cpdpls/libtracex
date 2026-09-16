@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 #include "tracex.h"
-// #include "tracex_debug.h"
+#include "tracex_debug.h"
 
 
 tracex_handler *handler;
@@ -40,19 +40,18 @@ int main(void)
         exit(-1);
     }
 
-    if (tracex_register_callbacks(handler, &callbacks) != TRACEX_SUCCESS)
-    {
-        printf("%s\n", TRACEX_strerror(status));
-        exit(-1);
-    }
+    // if (tracex_register_callbacks(handler, &callbacks) != TRACEX_SUCCESS)
+    // {
+    //     printf("%s\n", TRACEX_strerror(status));
+    //     exit(-1);
+    // }
     
     file(1);
     tracex_destroy_handler(&handler);
 
-    
+    return 0;
 
 }
-
 
 void eventParsedCB(struct tracex_event *event, tracex_ret_t status)
 {
@@ -103,7 +102,7 @@ void network()
     {
         bytes_read = recv(lfd, buffer, sizeof(buffer), 0);
 
-        status = TRACEX_parse(handler, buffer, bytes_read);
+        status = tracex_parse(handler, buffer, bytes_read);
 
     }while (status == TRACEX_NEED_MORE && bytes_read >= 0);
 
@@ -157,7 +156,7 @@ void file(char random)
         }
 
         //printf("Parsing %d\n", bytes_to_parse);
-        status = TRACEX_parse(handler, buffer, bytes_to_parse);
+        status = tracex_parse(handler, buffer, bytes_to_parse);
         buffer += bytes_to_parse;
 
     } while (status == TRACEX_NEED_MORE);
