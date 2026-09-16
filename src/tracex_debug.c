@@ -5,11 +5,13 @@
 #include "tracex_core.h"
 #include "tracex_obj_int.h"
 #include "tracex_object.h"
+#include "tracex_event_int.h"
 
 #define TRACEX_DEBUG_HDR(fmt, args...) fprintf(stdout, "TRACEX-HEADER >> " fmt, ##args)
 #define TRACEX_DEBUG_OBJ(fmt, args...) fprintf(stdout, "TRACEX-OBJECT >> " fmt, ##args)
+#define TRACEX_DEBUG_EVENT(fmt, args...) fprintf(stdout, "TRACEX-EVENT >> " fmt, ##args)
 
-static void tracex_debug_print_object_params(TRACEX_object_t *object);
+static void tracex_debug_print_object_params(const TRACEX_object_t *object);
 
 void TRACEX_debug_print_user_header(const struct TRACEX_header_t *header)
 {
@@ -69,12 +71,9 @@ void TRACEX_debug_print_objects(const struct TRACEX_handler_t *handler)
         TRACEX_DEBUG_OBJ("| END OBJECT ENTRY (%u) |\n\n", object_counter++);
     }
 
-
-
 }
 
-
-static void tracex_debug_print_object_params(TRACEX_object_t *object)
+static void tracex_debug_print_object_params(const TRACEX_object_t *object)
 {
 
     switch( object->type)
@@ -150,7 +149,7 @@ static void tracex_debug_print_object_params(TRACEX_object_t *object)
 }
 
 
-void TRACEX_debug_print_single_object(TRACEX_object_t *entry)
+void TRACEX_debug_print_single_object(const TRACEX_object_t *entry)
 {
     TRACEX_DEBUG_OBJ("---- %.32s ----\n", entry->name);
     TRACEX_DEBUG_OBJ("Available : %u\n", entry->available);
@@ -168,5 +167,35 @@ void TRACEX_debug_print_single_object(TRACEX_object_t *entry)
     TRACEX_DEBUG_OBJ("Object Pointer : 0x%.4x\n", entry->pointer);
     tracex_debug_print_object_params(entry);
     TRACEX_DEBUG_OBJ("Name : %.32s\n\n", entry->name);
+
+}
+
+void TRACEX_debug_print_single_event(const TRACEX_event_t *entry)
+{
+    TRACEX_DEBUG_EVENT("Event ID : %u\n", entry->event_id);
+    TRACEX_DEBUG_EVENT("Thread Pointer : 0x%.4x\n", entry->thread_pointer);
+    TRACEX_DEBUG_EVENT("Thread Priority : 0x%.4x\n", entry->thread_priority);
+    TRACEX_DEBUG_EVENT("Time-Stamp : %u\n", entry->thread_priority);
+    TRACEX_DEBUG_EVENT("Info 1 : %u\n", entry->info1);
+    TRACEX_DEBUG_EVENT("Info 2 : %u\n", entry->info2);
+    TRACEX_DEBUG_EVENT("Info 3 : %u\n", entry->info3);
+    TRACEX_DEBUG_EVENT("Info 4 : %u\n", entry->info4);
+
+}
+void TRACEX_debug_print_events(const struct TRACEX_handler_t *handler)
+{
+    struct tracex_event_entry_t *entry;
+    uint64_t event_counter;
+
+    assert(handler != NULL);
+    assert(handler->raw_dump.events.tot_event_count > 0);
+
+    event_counter = 0;
+    tracex_list_for_each_entry(entry, &handler->raw_dump.events.event_list, node)
+    {
+        TRACEX_DEBUG_EVENT("| BEGIN EVENT ENTRY (%u) |\n", event_counter);
+        TRACEX_debug_print_single_event(&entry->event);
+        TRACEX_DEBUG_EVENT("| END EVENT ENTRY (%u) |\n\n", event_counter++);
+    }
 
 }

@@ -21,14 +21,14 @@ def handle_client(client_socket):
     bytes_left = Path("r15b_all_int.trx").stat().st_size
     with open("r15b_all_int.trx", mode="rb") as f:
         while 1:
-            bytes_count = random.randint(10, 100)
+            bytes_count = random.randint(1000, 4000)
             bytes_s = f.read(bytes_count)
             if not bytes_s:
                 break
             client_socket.send(bytes_s)
             bytes_left = bytes_left - bytes_count
             print ("Sended {} | left {}".format(bytes_count, bytes_left))
-            time.sleep(0.1)
+            time.sleep(0.001)
 while True: 
     # When a client connects we receive the 
     # client socket into the client variable, and 
