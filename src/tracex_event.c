@@ -26,10 +26,12 @@ tracex_ret_t tracex_event_init(struct tracex_event_context *ctx)
     return TRACEX_SUCCESS;
 }
 
-tracex_ret_t tracex_event_compute_registry_size(struct tracex_event_context *ctx, uint32_t start, uint32_t stop)
+tracex_ret_t tracex_event_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop)
 {
     tracex_ret_t status;
     uint64_t event_buffer_entries;
+
+    event_buffer_entries = 0;
 
     /*TODO: Maybe find other checks in here */
     if (stop == start)
@@ -47,12 +49,10 @@ tracex_ret_t tracex_event_compute_registry_size(struct tracex_event_context *ctx
         goto handle_exit;
     }
 
-    /* Assign the total possible number of events in the buffer */
-    ctx->registry_size = event_buffer_entries;
-
     status = TRACEX_SUCCESS;
 
 handle_exit:
+    *registry_size = event_buffer_entries;
     return status;
 }
 

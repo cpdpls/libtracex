@@ -160,7 +160,7 @@ static tracex_ret_t process_header(struct tracex_header_context *ctx)
 
     /* Check if the object registry is valid */
     if (tracex_object_compute_registry_size(
-            ctx->obj_entry,
+            &ctx->obj_registry_size,
             hdr->obj_registry_start_ptr,
             hdr->obj_registry_end_ptr,
             hdr->obj_registry_name_size) != TRACEX_SUCCESS)
@@ -170,7 +170,7 @@ static tracex_ret_t process_header(struct tracex_header_context *ctx)
     }
 
     if (tracex_event_compute_registry_size(
-            ctx->event_entry,
+            &ctx->event_registry_size,
             hdr->event_buff_start_ptr,
             hdr->event_buff_end_ptr) != TRACEX_SUCCESS)
     {

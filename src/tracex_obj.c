@@ -11,7 +11,7 @@
 
 static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void *buffer, size_t buffer_len, size_t *consumed);
 static tracex_ret_t process_object(struct tracex_object_context *ctx);
-static tracex_ret_t alloc_new_object_entry(struct tracex_object_entry **object_ptr, size_t name_length);
+static tracex_ret_t alloc_new_object_entry(struct tracex_object_entry **object_ptr, uint16_t name_length);
 static void destroy_object_entry(struct tracex_object_entry **object);
 
 tracex_ret_t tracex_object_init(struct tracex_object_context *ctx)
@@ -29,11 +29,12 @@ tracex_ret_t tracex_object_init(struct tracex_object_context *ctx)
     return TRACEX_SUCCESS;
 }
 
-tracex_ret_t tracex_object_compute_registry_size(struct tracex_object_context *ctx, uint32_t start, uint32_t stop, uint32_t name_size)
+tracex_ret_t tracex_object_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop, uint32_t name_size)
 {
     tracex_ret_t status;
     uint64_t object_entries;
 
+    object_entries = 0;
     if (stop == start)
     {
         status = TRACEX_OBJECT_REGISTRY_INVALID;
@@ -50,11 +51,8 @@ tracex_ret_t tracex_object_compute_registry_size(struct tracex_object_context *c
 
     status = TRACEX_SUCCESS;
 
-    /* Assign the name object length and the total number of object entries */
-    ctx->name_size = name_size;
-    ctx->registry_size = object_entries;
-
 handle_exit:
+    *registry_size = object_entries;
     return status;
 }
 
@@ -387,7 +385,7 @@ handle_exit:
 
 }
 
-static tracex_ret_t alloc_new_object_entry(struct tracex_object_entry **object_ptr, size_t name_length)
+static tracex_ret_t alloc_new_object_entry(struct tracex_object_entry **object_ptr, uint16_t name_length)
 {
     tracex_ret_t status;
     struct tracex_object_entry *tmp_entry;

@@ -21,8 +21,8 @@ struct tracex_header_context
     uint8_t                         header_valid;           /* Flag set when the header is valid */
     uint8_t                         byte_offset;            /* Byte offset in the header of the dump when parsing incrementally */
     enum tracex_dump_endianess      endianess;              /* Endianess of the raw dump */
-    struct tracex_object_context    *obj_entry;             /* Pointer to the associated object entry */
-    struct tracex_event_context     *event_entry;           /* Pointer to the associated event entry */
+    uint64_t                        obj_registry_size;      /* Total number of possible objects in the object registry */
+    uint64_t                        event_registry_size;    /* Total number of possible objects in the object registry */
 };
 
 tracex_ret_t tracex_header_init(struct tracex_header_context *ctx);

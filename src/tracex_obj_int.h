@@ -33,7 +33,7 @@ struct tracex_object_context
     uint64_t                        tot_count;                                  /* Total count of objects */
     pthread_mutex_t                 mutex;                                      /* Mutex used when retrieving and parsing objects */
     uint64_t                        registry_size;                              /* Total number of possible objects in the object registry */
-    uint64_t                        name_size;                                  /* Max object name length of an object */
+    uint16_t                        name_size;                                  /* Max object name length of an object */
 
     /* Because the objects structure has a variable object name that is not known
         until the header has been parser, we need to allocate the pointer *obj_name when creating the object.
@@ -53,7 +53,7 @@ struct tracex_obj_iterator
 };
 
 tracex_ret_t tracex_object_init(struct tracex_object_context *ctx);
-tracex_ret_t tracex_object_compute_registry_size(struct tracex_object_context *ctx, uint32_t start, uint32_t stop, uint32_t name_size);
+tracex_ret_t tracex_object_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop, uint32_t name_size);
 tracex_ret_t tracex_object_parse(struct tracex_object_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
 void tracex_object_destroy_list(struct tracex_object_context *ctx);
 

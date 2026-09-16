@@ -75,10 +75,6 @@ tracex_ret_t tracex_create_new_handler(tracex_handler_t **new_handler)
         goto handle_error;
     }
 
-    /* Assign the needed context pointers */
-    handler->hdr_ctx.obj_entry = &handler->objs_ctx;
-    handler->hdr_ctx.event_entry = &handler->event_ctx;
-
     /* Insert the newly created handler inside the list */
     tracex_list_insert(&handler->node, &created_handlers_list);
 
@@ -181,7 +177,12 @@ tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t b
         {
             /* Increment the total bytes processed from here */
             handler->raw_bytes_count += consumed;
-            
+
+            /* Assign the needed missing values for the next phases */
+            handler->objs_ctx.name_size = handler->hdr_ctx.header.obj_registry_name_size;
+            handler->objs_ctx.registry_size = handler->hdr_ctx.obj_registry_size;
+            handler->event_ctx.registry_size = handler->hdr_ctx.event_registry_size;
+
             /* Go to the next phase, which is parsing the objects */
             handler->state = E_OBJECT_PHASE;
 
