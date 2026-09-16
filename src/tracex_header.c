@@ -7,13 +7,13 @@
 #include "tracex_errno.h"
 #include "tracex_obj_int.h"
 
-static TRACEX_Ret_t process_header(struct tracex_header_dump_t *hdr_dump);
-static TRACEX_Ret_t parse_incrementally(struct tracex_header_dump_t *hdr_dump, void *buffer, size_t buff_len, uint64_t *consumed);
+static tracex_ret_t process_header(struct tracex_header_context *ctx);
+static tracex_ret_t parse_incrementally(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
 
-TRACEX_Ret_t tracex_init_header(struct tracex_header_dump_t *hdr_dump)
+tracex_ret_t tracex_header_init(struct tracex_header_context *ctx)
 {
 
-    if (pthread_mutex_init(&hdr_dump->header_mutex, NULL) != 0)
+    if (pthread_mutex_init(&ctx->header_mutex, NULL) != 0)
     {
         return TRACEX_INIT_FAILURE;
     }
@@ -21,145 +21,130 @@ TRACEX_Ret_t tracex_init_header(struct tracex_header_dump_t *hdr_dump)
     return TRACEX_SUCCESS;
 }
 
-TRACEX_Ret_t tracex_header_get_header(struct tracex_header_dump_t *hdr_dump, struct TRACEX_header_t **header)
+tracex_ret_t tracex_header_check_parsed(struct tracex_header_context *ctx)
 {
     /* Try to get the object mutex */
-    pthread_mutex_lock(&hdr_dump->header_mutex);
+    pthread_mutex_lock(&ctx->header_mutex);
 
-    /* Check if the header has already been parsed */
-    if (!hdr_dump->header_parsed)
+    if (!ctx->header_parsed)
     {
         /* Release the mutex before returning to the caller */
-        pthread_mutex_unlock(&hdr_dump->header_mutex);
+        pthread_mutex_unlock(&ctx->header_mutex);
+        return TRACEX_NEED_MORE;
+    }
+
+    /* Release the mutex before returning to the caller */
+    pthread_mutex_unlock(&ctx->header_mutex);
+    return TRACEX_SUCCESS;
+}
+
+tracex_ret_t tracex_header_check_valid(struct tracex_header_context *ctx)
+{
+    /* Try to get the object mutex */
+    pthread_mutex_lock(&ctx->header_mutex);
+
+    if (!ctx->header_parsed)
+    {
+        /* Release the mutex before returning to the caller */
+        pthread_mutex_unlock(&ctx->header_mutex);
+        return TRACEX_NEED_MORE;
+    }
+
+    if (!ctx->header_valid)
+    {
+        /* Release the mutex before returning to the caller */
+        pthread_mutex_unlock(&ctx->header_mutex);
+        return TRACEX_HEADER_NOT_VALID;
+    }
+
+    /* Release the mutex before returning to the caller */
+    pthread_mutex_unlock(&ctx->header_mutex);
+    return TRACEX_SUCCESS;
+
+}
+
+tracex_ret_t tracex_header_get(struct tracex_header_context *ctx, struct tracex_header **header)
+{
+    /* Try to get the object mutex */
+    pthread_mutex_lock(&ctx->header_mutex);
+
+    /* Check if the header has already been parsed */
+    if (!ctx->header_parsed)
+    {
+        /* Release the mutex before returning to the caller */
+        pthread_mutex_unlock(&ctx->header_mutex);
         return TRACEX_NEED_MORE;
     }
 
     /* Check if the header has been marked as invalid */
-    if (hdr_dump->header_parsed && !hdr_dump->header_valid)
+    if (ctx->header_parsed && !ctx->header_valid)
     {
         /* Release the mutex before returning to the caller */
-        pthread_mutex_unlock(&hdr_dump->header_mutex);
+        pthread_mutex_unlock(&ctx->header_mutex);
         return TRACEX_HEADER_NOT_VALID;
     }
 
     /* Header is valid, return it to the user */
-    *header = &hdr_dump->user_hdr;
+    *header = &ctx->header;
 
     /* Release the mutex before returning to the caller */
-    pthread_mutex_unlock(&hdr_dump->header_mutex);
+    pthread_mutex_unlock(&ctx->header_mutex);
 
     return TRACEX_SUCCESS;
 
 
 }
 
-TRACEX_Ret_t tracex_is_header_parsed(struct tracex_header_dump_t *hdr_dump)
+tracex_ret_t tracex_header_parse(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed)
 {
-    /* Try to get the object mutex */
-    pthread_mutex_lock(&hdr_dump->header_mutex);
+    tracex_ret_t status;
 
-    if (!hdr_dump->header_parsed)
-    {
-        /* Release the mutex before returning to the caller */
-        pthread_mutex_unlock(&hdr_dump->header_mutex);
-        return TRACEX_NEED_MORE;
-    }
-
-    /* Release the mutex before returning to the caller */
-    pthread_mutex_unlock(&hdr_dump->header_mutex);
-    return TRACEX_SUCCESS;
-}
-
-TRACEX_Ret_t tracex_is_header_valid(struct tracex_header_dump_t *hdr_dump)
-{
-    /* Try to get the object mutex */
-    pthread_mutex_lock(&hdr_dump->header_mutex);
-
-    if (!hdr_dump->header_parsed)
-    {
-        /* Release the mutex before returning to the caller */
-        pthread_mutex_unlock(&hdr_dump->header_mutex);
-        return TRACEX_NEED_MORE;
-    }
-
-    if (!hdr_dump->header_valid)
-    {
-        /* Release the mutex before returning to the caller */
-        pthread_mutex_unlock(&hdr_dump->header_mutex);
-        return TRACEX_HEADER_NOT_VALID;
-    }
-
-    /* Release the mutex before returning to the caller */
-    pthread_mutex_unlock(&hdr_dump->header_mutex);
-    return TRACEX_SUCCESS;
-
-}
-
-TRACEX_Ret_t tracex_parse_header(struct tracex_header_dump_t *hdr_dump, void *buffer, size_t buff_len, uint64_t *consumed)
-{
-    TRACEX_Ret_t status;
-
-    pthread_mutex_lock(&hdr_dump->header_mutex);
+    pthread_mutex_lock(&ctx->header_mutex);
     
     *consumed = 0;
-    status = parse_incrementally(hdr_dump, buffer, buff_len, consumed);
+    status = parse_incrementally(ctx, buffer, buff_len, consumed);
 
     if (status == TRACEX_SUCCESS)
     {
         /* We should have now parsed a full header */
-        status = process_header(hdr_dump);
+        status = process_header(ctx);
 
         if (status != TRACEX_SUCCESS)
-        {
-            hdr_dump->header_valid = 0;
-        }
+            ctx->header_valid = 0;
         else
-        {
-            /* Get the total number of objects in the object registry */
-            hdr_dump->object_registry_size = tracex_object_compute_registry_size(
-                hdr_dump->raw_hdr.obj_registry_start_pointer,
-                hdr_dump->raw_hdr.obj_registry_end_pointer,
-                hdr_dump->raw_hdr.obj_registry_name_size);
-            
-            /* Get the total number of events in the event trace buffer */
-            hdr_dump->event_registry_size = tracex_event_compute_registry_size(
-                hdr_dump->raw_hdr.buff_start_pointer,
-                hdr_dump->raw_hdr.buff_end_pointer);
-
-            hdr_dump->header_valid = 1;
-        }
+            ctx->header_valid = 1;
 
         /* Call the user provided callback */
-        if (hdr_dump->parserCallback != NULL)
-            hdr_dump->parserCallback(&hdr_dump->user_hdr, status);
+        if (ctx->user_callback != NULL)
+            ctx->user_callback(&ctx->header, status);
     }
      
     goto handle_exit;
     
 /* Release the mutex before returning to the caller */    
 handle_exit:
-    pthread_mutex_unlock(&hdr_dump->header_mutex);
+    pthread_mutex_unlock(&ctx->header_mutex);
     return status;
 
 }
 
-static TRACEX_Ret_t process_header(struct tracex_header_dump_t *hdr_dump)
+static tracex_ret_t process_header(struct tracex_header_context *ctx)
 {
-    TRACEX_Ret_t status;
-    struct tracex_raw_header_t *hdr;
+    tracex_ret_t status;
+    struct tracex_header *hdr;
     uint8_t *id;
 
-    hdr = &hdr_dump->raw_hdr;
+    hdr = &ctx->header;
 
     id = (uint8_t*)&hdr->id;
 
     if (id[0] == 0x54 && id[1] == 0x58 && id[2] == 0x54 && id[3]== 0x42)
     {
-        hdr_dump->user_hdr.endianess = E_TRACEX_BIG_ENDIAN;
+        ctx->endianess = E_TRACEX_BIG_ENDIAN;
     }
     else if (id[0] == 0x42 && id[1] == 0x54 && id[2] == 0x58 && id[3]== 0x54)
     {
-        hdr_dump->user_hdr.endianess = E_TRACEX_LITTLE_ENDIAN;
+        ctx->endianess = E_TRACEX_LITTLE_ENDIAN;
     }
     else
     {
@@ -167,27 +152,31 @@ static TRACEX_Ret_t process_header(struct tracex_header_dump_t *hdr_dump)
         goto handle_exit;
     }
 
-    if (hdr_dump->raw_hdr.obj_registry_name_size == 0)
+    if (hdr->obj_registry_name_size == 0)
     {
         status = TRACEX_OBJECT_REGISTRY_INVALID;
         goto handle_exit;
     }
 
     /* Check if the object registry is valid */
-    if (tracex_object_check_registry_valid(hdr->obj_registry_start_pointer, hdr->obj_registry_end_pointer, hdr->obj_registry_name_size) != TRACEX_SUCCESS)
+    if (tracex_object_compute_registry_size(
+            ctx->obj_entry,
+            hdr->obj_registry_start_ptr,
+            hdr->obj_registry_end_ptr,
+            hdr->obj_registry_name_size) != TRACEX_SUCCESS)
     {
         status = TRACEX_OBJECT_REGISTRY_INVALID;
         goto handle_exit;
     }
 
-    if (tracex_event_check_registry_valid(hdr->buff_start_pointer, hdr->buff_end_pointer) != TRACEX_SUCCESS)
+    if (tracex_event_compute_registry_size(
+            ctx->event_entry,
+            hdr->event_buff_start_ptr,
+            hdr->event_buff_end_ptr) != TRACEX_SUCCESS)
     {
         status = TRACEX_EVENT_TRACE_BUFFER_INVALID;
         goto handle_exit;
     }
-
-    hdr_dump->user_hdr.object_name_size = hdr->obj_registry_name_size;
-    hdr_dump->user_hdr.timer_mask = hdr->timer_valid_mask;
 
     status = TRACEX_SUCCESS;
 
@@ -195,21 +184,21 @@ handle_exit:
     return status;
 }
 
-static TRACEX_Ret_t parse_incrementally(struct tracex_header_dump_t *hdr_dump, void *buffer, size_t buff_len, uint64_t *consumed)
+static tracex_ret_t parse_incrementally(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed)
 {
-    TRACEX_Ret_t status;
+    tracex_ret_t status;
     size_t bytes_to_copy;
 
     bytes_to_copy = 0;
-    if (hdr_dump->byte_offset >= sizeof(struct tracex_raw_header_t))
+    if (ctx->byte_offset >= sizeof(struct tracex_header))
     {
         status = TRACEX_HEADER_BAD_OFFSET_START;
         goto handle_exit;
     }
 
-    if (buff_len + hdr_dump->byte_offset >= sizeof(struct tracex_raw_header_t))
+    if (buff_len + ctx->byte_offset >= sizeof(struct tracex_header))
     {
-        bytes_to_copy = sizeof(struct tracex_raw_header_t) - hdr_dump->byte_offset;
+        bytes_to_copy = sizeof(struct tracex_header) - ctx->byte_offset;
     }
     else
     {
@@ -217,14 +206,14 @@ static TRACEX_Ret_t parse_incrementally(struct tracex_header_dump_t *hdr_dump, v
 
     }
 
-    memcpy(((void*)&hdr_dump->raw_hdr)+ hdr_dump->byte_offset, buffer, bytes_to_copy);
+    memcpy(((void*)&ctx->header)+ ctx->byte_offset, buffer, bytes_to_copy);
 
-    hdr_dump->byte_offset += bytes_to_copy;
+    ctx->byte_offset += bytes_to_copy;
 
 
-    if (hdr_dump->byte_offset >= sizeof(struct tracex_raw_header_t))
+    if (ctx->byte_offset >= sizeof(struct tracex_header))
     {
-        hdr_dump->header_parsed = 1;
+        ctx->header_parsed = 1;
         status = TRACEX_SUCCESS;
     }
 

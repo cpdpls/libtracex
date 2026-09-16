@@ -24,7 +24,7 @@ const char  *tracex_errno_strings[] =
     "TRACEX UNKNOWN ERROR",
 };
 
-const char *TRACEX_strerror(TRACEX_Ret_t tracex_error)
+const char *TRACEX_strerror(tracex_ret_t tracex_error)
 {
 
     const char *error_string;

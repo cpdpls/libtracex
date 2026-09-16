@@ -6,8 +6,8 @@
 #define tracex_offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 
 #define tracex_container_of(ptr, type, member) ({				\
-  void *__mptr = (void *)(ptr);					\
-  ((type *)(__mptr - tracex_offsetof(type, member))); })
+  const typeof( ((type *)0)->member ) *__mptr = (ptr); \
+    (type *)( (char *)__mptr - tracex_offsetof(type, member) ); })
 
 #define tracex_list_entry(ptr, type, member) \
 	tracex_container_of(ptr, type, member)

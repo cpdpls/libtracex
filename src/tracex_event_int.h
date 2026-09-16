@@ -4,42 +4,29 @@
 #include <stdint.h>
 #include "tracex_list.h"
 #include "tracex_event.h"
+#include "tracex_errno.h"
 
-struct tracex_event_raw_t
+struct tracex_event_entry
 {
-    uint32_t     tx_trace_buffer_entry_thread_pointer;
-    uint32_t     tx_trace_buffer_entry_thread_priority;
-    uint32_t     tx_trace_buffer_entry_event_id;
-    uint32_t     tx_trace_buffer_entry_time_stamp;
-    uint32_t     tx_trace_buffer_entry_information_field_1;
-    uint32_t     tx_trace_buffer_entry_information_field_2;
-    uint32_t     tx_trace_buffer_entry_information_field_3;
-    uint32_t     tx_trace_buffer_entry_information_field_4;
-
-}__attribute__((__packed__));
-
-struct tracex_event_entry_t
-{
-    TRACEX_event_t              event;                  /* Parsed event from the raw dump */
-    struct tracex_list          node;                   /* Next event node */
+    struct tracex_event     event;                  /* Parsed event from the raw dump */
+    struct tracex_list      node;                   /* Next event node */
 };
 
-struct tracex_event_dump_t
+struct tracex_event_context
 {
-    void (*parserCallback)(TRACEX_event_t *event, TRACEX_Ret_t status);    /* Callback to use when a new event had been parsed */
-    struct tracex_list          event_list;             /* List of parsed events */
-    uint64_t                    curr_event_count;       /* Total count of events for the current parssing */
-    struct tracex_event_raw_t   current_raw_event;      /* Saved current event when parsing incrementally */
-    uint64_t                    tot_event_count;        /* Total count of events */
-    uint64_t                    curr_event_offset;      /* Saved current events byte count when parsing incrementally */
-    pthread_mutex_t             event_mutex;            /* Mutex used when retrieving and parsing events */
-    struct tracex_header_dump_t *hdr_dump_ptr;          /* Pointer to the header the events belongs too. Used in order to get the event trace buffer length */
+    void (*user_callback)(struct tracex_event *event, tracex_ret_t status);    /* Callback to use when a new event had been parsed */
+    struct tracex_list          event_list;     /* List of parsed events */
+    uint64_t                    curr_count;     /* Total count of events for the current parssing session */
+    struct tracex_event_entry   *curr_entry;    /* Saved current event when parsing incrementally */
+    uint64_t                    curr_offset;    /* Saved current events byte count when parsing incrementally */
+    uint64_t                    tot_count;      /* Total count of events */
+    pthread_mutex_t             mutex;          /* Mutex used when retrieving and parsing events */
+    uint64_t                    registry_size;  /* Total number of posssible events in the event registry */
+
 };
 
-uint64_t tracex_event_compute_registry_size(uint32_t start, uint32_t stop);
-TRACEX_Ret_t tracex_event_check_registry_valid(uint32_t start, uint32_t stop);
-TRACEX_Ret_t tracex_init_events(struct tracex_event_dump_t *event_dump, struct tracex_header_dump_t *hdr_dump);
-TRACEX_Ret_t tracex_parse_events(struct tracex_event_dump_t *event_dump, void *buffer, size_t buff_len, uint64_t *consumed);
-void tracex_destroy_event(struct tracex_event_entry_t **entry);
-void tracex_destroy_event_list(struct tracex_event_dump_t *event_dump);
+tracex_ret_t tracex_event_init(struct tracex_event_context *ctx);
+tracex_ret_t tracex_event_compute_registry_size(struct tracex_event_context *ctx, uint32_t start, uint32_t stop);
+tracex_ret_t tracex_event_parse(struct tracex_event_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
+void tracex_event_destroy_list(struct tracex_event_context *ctx);
 #endif

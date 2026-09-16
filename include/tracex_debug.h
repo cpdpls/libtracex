@@ -5,10 +5,9 @@
 #include "tracex_object.h"
 #include "tracex_event.h"
 
-void TRACEX_debug_print_user_header(const struct TRACEX_header_t *header);
-void TRACEX_debug_print_raw_header(const struct TRACEX_handler_t *handler);
-void TRACEX_debug_print_single_object(const TRACEX_object_t *entry);
-void TRACEX_debug_print_objects(const struct TRACEX_handler_t *handler);
-void TRACEX_debug_print_single_event(const TRACEX_event_t *entry);
-void TRACEX_debug_print_events(const struct TRACEX_handler_t *handler);
+void TRACEX_debug_print_raw_header(const struct tracex_header *header);
+void TRACEX_debug_print_single_object(const struct tracex_object *entry);
+void TRACEX_debug_print_objects(const struct tracex_handler *handler);
+void TRACEX_debug_print_single_event(const struct tracex_event *entry);
+void TRACEX_debug_print_events(const struct tracex_handler *handler);
 #endif

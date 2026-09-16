@@ -10,29 +10,29 @@
 #include <stdlib.h>
 
 #include "tracex.h"
-#include "tracex_debug.h"
+// #include "tracex_debug.h"
 
 
-TRACEX_handler_t *handler;
+tracex_handler *handler;
 
-void eventParsedCB(TRACEX_event_t *event, TRACEX_Ret_t status);
-void headerParsedCB(struct TRACEX_header_t *header, TRACEX_Ret_t status);
-void objectParsedCB(TRACEX_object_t *object, TRACEX_Ret_t status);
+void eventParsedCB(struct tracex_event *event, tracex_ret_t status);
+void headerParsedCB(struct tracex_header *header, tracex_ret_t status);
+void objectParsedCB(struct tracex_object *object, tracex_ret_t status);
 void network();
 void file(char random);
 
 int main(void)
 {
-    TRACEX_Ret_t status;
-    TRACEX_Callbacks_t callbacks;
+    tracex_ret_t status;
+    struct tracex_callbacks callbacks;
 
-    callbacks.EventParsed = eventParsedCB;
-    callbacks.HeaderParsed = headerParsedCB;
-    callbacks.ObjectParsed = objectParsedCB;
+    callbacks.on_event_parsed = eventParsedCB;
+    callbacks.on_header_parsed = headerParsedCB;
+    callbacks.on_object_parsed = objectParsedCB;
 
-    TRACEX_INIT();
+    tracex_init();
 
-    status = TRACEX_createHandler(&handler);
+    status = tracex_create_new_handler(&handler);
 
     if (status != TRACEX_SUCCESS)
     {
@@ -40,21 +40,21 @@ int main(void)
         exit(-1);
     }
 
-    if (TRACEX_registerCallbacks(handler, &callbacks) != TRACEX_SUCCESS)
+    if (tracex_register_callbacks(handler, &callbacks) != TRACEX_SUCCESS)
     {
         printf("%s\n", TRACEX_strerror(status));
         exit(-1);
     }
     
-    network();
-    TRACEX_destroyHandler(&handler);
+    file(1);
+    tracex_destroy_handler(&handler);
 
     
 
 }
 
 
-void eventParsedCB(TRACEX_event_t *event, TRACEX_Ret_t status)
+void eventParsedCB(struct tracex_event *event, tracex_ret_t status)
 {
     if (status == TRACEX_SUCCESS)
     {
@@ -62,15 +62,15 @@ void eventParsedCB(TRACEX_event_t *event, TRACEX_Ret_t status)
     }
 
 }
-void headerParsedCB(struct TRACEX_header_t *header, TRACEX_Ret_t status)
+void headerParsedCB(struct tracex_header *header, tracex_ret_t status)
 {
     if (status == TRACEX_SUCCESS)
     {
-        TRACEX_debug_print_raw_header(handler);
+        TRACEX_debug_print_raw_header(header);
     }
 
 }
-void objectParsedCB(TRACEX_object_t *object, TRACEX_Ret_t status)
+void objectParsedCB(struct tracex_object *object, tracex_ret_t status)
 {
     if (status == TRACEX_SUCCESS)
     {
@@ -84,7 +84,7 @@ void network()
     struct sockaddr_in server;
     int lfd;
     int bytes_read;
-    TRACEX_Ret_t status;
+    tracex_ret_t status;
     char buffer[500];
     
 
@@ -115,7 +115,7 @@ void file(char random)
     char *buffer;
     char *orig_buff;
     size_t trace_size;
-    TRACEX_Ret_t status;
+    tracex_ret_t status;
     size_t bytes_to_parse;
 
     if (random)
@@ -156,7 +156,7 @@ void file(char random)
             bytes_to_parse = trace_size;
         }
 
-        printf("Parsing %d\n", bytes_to_parse);
+        //printf("Parsing %d\n", bytes_to_parse);
         status = TRACEX_parse(handler, buffer, bytes_to_parse);
         buffer += bytes_to_parse;
 

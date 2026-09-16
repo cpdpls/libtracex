@@ -23,9 +23,9 @@ typedef enum
     TRACEX_EVENT_TRACE_BUFFER_INVALID,
     TRACEX_NUMBER_OF_ERRORS,
 
-} TRACEX_Ret_t;
+} tracex_ret_t;
 
 
-const char *TRACEX_strerror(TRACEX_Ret_t tracex_error);
+const char *TRACEX_strerror(tracex_ret_t tracex_error);
 
 #endif
