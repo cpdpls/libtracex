@@ -25,9 +25,9 @@ struct tracex_header_context
     uint64_t                        event_registry_size;    /* Total number of possible objects in the object registry */
 };
 
-tracex_ret_t tracex_header_init(struct tracex_header_context *ctx);
-tracex_ret_t tracex_header_check_parsed(struct tracex_header_context *ctx);
-tracex_ret_t tracex_header_check_valid(struct tracex_header_context *ctx);
-tracex_ret_t tracex_header_get(struct tracex_header_context *ctx, struct tracex_header **header);
-tracex_ret_t tracex_header_parse(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
+tracex_ret_t tracex_header_int_init(struct tracex_header_context *ctx);
+tracex_ret_t tracex_header_int_check_parsed(struct tracex_header_context *ctx);
+tracex_ret_t tracex_header_int_check_valid(struct tracex_header_context *ctx);
+tracex_ret_t tracex_header_int_get(struct tracex_header_context *ctx, struct tracex_header **header);
+tracex_ret_t tracex_header_int_parse(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
 #endif

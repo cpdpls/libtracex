@@ -57,19 +57,19 @@ tracex_ret_t tracex_create_new_handler(tracex_handler_t **new_handler)
     memset(handler, 0, sizeof(struct tracex_handler));
 
     /* Init the different contexts parts */
-    if ((status = tracex_header_init(&handler->hdr_ctx)) != TRACEX_SUCCESS)
+    if ((status = tracex_header_int_init(&handler->hdr_ctx)) != TRACEX_SUCCESS)
     {
         status = TRACEX_INIT_FAILURE;
         goto handle_error;
     }
 
-    if ((status = tracex_object_init(&handler->objs_ctx)) != TRACEX_SUCCESS)
+    if ((status = tracex_object_int_init(&handler->objs_ctx)) != TRACEX_SUCCESS)
     {
         status = TRACEX_INIT_FAILURE;
         goto handle_error;
     }
 
-    if ((status = tracex_event_init(&handler->event_ctx)) != TRACEX_SUCCESS)
+    if ((status = tracex_event_int_init(&handler->event_ctx)) != TRACEX_SUCCESS)
     {
         status = TRACEX_INIT_FAILURE;
         goto handle_error;
@@ -119,8 +119,8 @@ void tracex_destroy_handler(tracex_handler_t **handler)
         {
             if (tracex_is_handler_valid(*handler) == TRACEX_SUCCESS)
             {
-                tracex_object_destroy_list(&(*handler)->objs_ctx);
-                tracex_event_destroy_list(&(*handler)->event_ctx);
+                tracex_object_int_destroy_list(&(*handler)->objs_ctx);
+                tracex_event_int_destroy_list(&(*handler)->event_ctx);
                 tracex_list_delete(&(*handler)->node);
                 memset((*handler), 0, sizeof(struct tracex_handler));
                 free(*handler);
@@ -171,7 +171,7 @@ tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t b
     /* Are we in the beginning of the parsing, AKA parsing the header ? */
     if (handler->state == E_HEADER_PHASE)
     {
-        status = tracex_header_parse(hdr_ctx, buffer, buffer_length, &consumed);
+        status = tracex_header_int_parse(hdr_ctx, buffer, buffer_length, &consumed);
 
         if (status == TRACEX_SUCCESS)
         {
@@ -206,7 +206,7 @@ tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t b
     /* We are now trying to parse the objects */
     if (handler->state == E_OBJECT_PHASE)
     {
-        status = tracex_object_parse(&handler->objs_ctx, buffer, buffer_length, &consumed);
+        status = tracex_object_int_parse(&handler->objs_ctx, buffer, buffer_length, &consumed);
 
         if (status == TRACEX_SUCCESS)
         {
@@ -235,7 +235,7 @@ tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t b
     
     if (handler->state == E_EVENT_PHASE)
     {
-        status = tracex_event_parse(&handler->event_ctx, buffer, buffer_length, &consumed);
+        status = tracex_event_int_parse(&handler->event_ctx, buffer, buffer_length, &consumed);
 
         if (status == TRACEX_SUCCESS)
         {

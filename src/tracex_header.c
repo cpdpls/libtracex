@@ -10,7 +10,7 @@
 static tracex_ret_t process_header(struct tracex_header_context *ctx);
 static tracex_ret_t parse_incrementally(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
 
-tracex_ret_t tracex_header_init(struct tracex_header_context *ctx)
+tracex_ret_t tracex_header_int_init(struct tracex_header_context *ctx)
 {
 
     if (pthread_mutex_init(&ctx->header_mutex, NULL) != 0)
@@ -21,7 +21,7 @@ tracex_ret_t tracex_header_init(struct tracex_header_context *ctx)
     return TRACEX_SUCCESS;
 }
 
-tracex_ret_t tracex_header_check_parsed(struct tracex_header_context *ctx)
+tracex_ret_t tracex_header_int_check_parsed(struct tracex_header_context *ctx)
 {
     /* Try to get the object mutex */
     pthread_mutex_lock(&ctx->header_mutex);
@@ -38,7 +38,7 @@ tracex_ret_t tracex_header_check_parsed(struct tracex_header_context *ctx)
     return TRACEX_SUCCESS;
 }
 
-tracex_ret_t tracex_header_check_valid(struct tracex_header_context *ctx)
+tracex_ret_t tracex_header_int_check_valid(struct tracex_header_context *ctx)
 {
     /* Try to get the object mutex */
     pthread_mutex_lock(&ctx->header_mutex);
@@ -63,7 +63,7 @@ tracex_ret_t tracex_header_check_valid(struct tracex_header_context *ctx)
 
 }
 
-tracex_ret_t tracex_header_get(struct tracex_header_context *ctx, struct tracex_header **header)
+tracex_ret_t tracex_header_int_get(struct tracex_header_context *ctx, struct tracex_header **header)
 {
     /* Try to get the object mutex */
     pthread_mutex_lock(&ctx->header_mutex);
@@ -95,7 +95,7 @@ tracex_ret_t tracex_header_get(struct tracex_header_context *ctx, struct tracex_
 
 }
 
-tracex_ret_t tracex_header_parse(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed)
+tracex_ret_t tracex_header_int_parse(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed)
 {
     tracex_ret_t status;
 
@@ -159,7 +159,7 @@ static tracex_ret_t process_header(struct tracex_header_context *ctx)
     }
 
     /* Check if the object registry is valid */
-    if (tracex_object_compute_registry_size(
+    if (tracex_object_int_compute_registry_size(
             &ctx->obj_registry_size,
             hdr->obj_registry_start_ptr,
             hdr->obj_registry_end_ptr,
@@ -169,7 +169,7 @@ static tracex_ret_t process_header(struct tracex_header_context *ctx)
         goto handle_exit;
     }
 
-    if (tracex_event_compute_registry_size(
+    if (tracex_event_int_compute_registry_size(
             &ctx->event_registry_size,
             hdr->event_buff_start_ptr,
             hdr->event_buff_end_ptr) != TRACEX_SUCCESS)
