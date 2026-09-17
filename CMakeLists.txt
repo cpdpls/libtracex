@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 4.0)
 
 project(tx_tracer VERSION 1.0)
 
-set(CMAKE_C_FLAGS "-O3 -Wall -Wextra")
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
