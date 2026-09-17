@@ -7,10 +7,11 @@
 #include "tracex_core.h"
 
 
-static void destroy_event_entry(struct tracex_event_entry **entry);
 static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *buffer, size_t buffer_len, size_t *consumed);
 static tracex_ret_t process_event(struct tracex_event_context *ctx);
-static tracex_ret_t alloc_new_event_entry(struct tracex_event_entry **entry_ptr);
+static tracex_ret_t alloc_new_event_array_block(struct tracex_event_array_block **block, uint64_t elements);
+static void destroy_event_array_block(struct tracex_event_array_block **block);
+static void destroy_event_array_block_list(struct tracex_list *list);
 
 tracex_ret_t tracex_event_int_init(struct tracex_event_context *ctx)
 {
@@ -19,9 +20,9 @@ tracex_ret_t tracex_event_int_init(struct tracex_event_context *ctx)
         return TRACEX_INIT_FAILURE;
     }
 
-    /* Assign the pointer to the total event registry size */
-
+    /* Init the different used lists */
     tracex_list_init(&ctx->event_list);
+    tracex_list_init(&ctx->array_block_list);
 
     return TRACEX_SUCCESS;
 }
@@ -84,23 +85,43 @@ tracex_ret_t tracex_event_int_parse(struct tracex_event_context *ctx, void *buff
         /* We parsed a full event, let's now process it and add it to the list */
         if (status == TRACEX_SUCCESS)
         {
-            /* Increment the number of events parsed for the current sessions*/
-            ctx->curr_count++;
-
             status = process_event(ctx);
             
             if (status == TRACEX_SUCCESS)
             {
-                ctx->tot_count++;
+                /* Increment the true valid counter and the total one*/
+                ctx->cycle_valid_count++;
+                ctx->total_events++;
+                
+                /* Update the current entry pointer inside the current block of events array */
+                ctx->curr_entry = &ctx->current_block->entries[ctx->cycle_valid_count];
             }
+
+            /* Increment the number of events parsed for the current sessions even if not valid */
+            ctx->cycle_count++;
 
             status = TRACEX_NEED_MORE;
 
             /* Check if we have parsed the whole event registry */
-            if (ctx->curr_count == ctx->registry_size)
+            if (ctx->cycle_count == ctx->registry_size)
             {
+                /* Shrink the entries to the true parsed events count */
+                ctx->current_block->entries = (struct tracex_event_entry *)realloc(ctx->current_block->entries, sizeof(struct tracex_event_entry) * ctx->cycle_valid_count);
+                if (ctx->current_block->entries == NULL)
+                {
+                    /* TODO: If we fail, we might need to decrement the number of total events parsed */
+                    /* Additionally, we need to remote the total of bytes processed. */
+                    /* Maybe also change the buffer to be **buffer, so that we can decrement that and give */
+                    /* The user the positibility to try again ... */
+
+                    ctx->total_events -= ctx->cycle_valid_count;
+                    status = TRACEX_ALLOC_FAILURE;
+                    goto handle_exit;
+                }
                 /* Reset the current session total event registry count */
-                ctx->curr_count = 0;
+                ctx->cycle_count = 0;
+                ctx->cycle_valid_count = 0;
+
                 status = TRACEX_SUCCESS;
                 goto handle_exit;
             }
@@ -120,13 +141,17 @@ handle_exit:
 
 void tracex_event_int_destroy_list(struct tracex_event_context *ctx)
 {
-    struct tracex_event_entry *entry;
-    struct tracex_event_entry *next;
+    struct tracex_event_entry *entry_event;
+    struct tracex_event_entry *next_event;
     
-    tracex_list_for_each_entry_safe(entry, next, &ctx->event_list, node)
+    tracex_list_for_each_entry_safe(entry_event, next_event, &ctx->event_list, node)
     {
-        destroy_event_entry(&entry);
+        tracex_list_delete(&entry_event->node);
+        entry_event->node.next = NULL;
+        entry_event->node.prev = NULL;
     }
+
+    destroy_event_array_block_list(&ctx->array_block_list);
 
 }
 
@@ -138,13 +163,20 @@ static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *
 
     bytes_to_copy = 0;
 
-    /* Check if this is a new event and zero out the structure */
-    if (ctx->curr_offset == 0)
+    /* Check if we are at the beginning of a parsing cycle */
+    if (ctx->cycle_count == 0)
     {
-        if ((status = alloc_new_event_entry(&ctx->curr_entry)) != TRACEX_SUCCESS)
+        /* Allocate a new block that contains an array of elements  */
+        if ((status = alloc_new_event_array_block(&ctx->current_block, ctx->registry_size)) != TRACEX_SUCCESS)
         {
             goto handle_exit;
         }
+
+        /* Add the newly created block of events array inside the list */
+        tracex_list_insert(&ctx->current_block->node ,&ctx->array_block_list);
+
+        /* Set the current entry to point to the start of the newly created block */
+        ctx->curr_entry = &ctx->current_block->entries[0];
     }
 
     /* Set the start address + the previous offset */
@@ -193,8 +225,6 @@ static tracex_ret_t process_event(struct tracex_event_context *ctx)
     /* Add the event to the list */
     tracex_list_insert(&ctx->curr_entry->node, &ctx->event_list);
 
-    
-    
     /* Call the user provided callback */
     if (ctx->user_callback != NULL)
         ctx->user_callback(&ctx->curr_entry->event, TRACEX_SUCCESS);
@@ -202,41 +232,72 @@ static tracex_ret_t process_event(struct tracex_event_context *ctx)
     return TRACEX_SUCCESS;
 }
 
-static tracex_ret_t alloc_new_event_entry(struct tracex_event_entry **entry_ptr)
+static tracex_ret_t alloc_new_event_array_block(struct tracex_event_array_block **block, uint64_t elements)
 {
     tracex_ret_t status;
-    struct tracex_event_entry *tmp_entry;
+    struct tracex_event_array_block *tmp_block;
 
-    /* Allocate a new event */
-    tmp_entry = (struct tracex_event_entry*)malloc(sizeof(struct tracex_event_entry));
-    if (tmp_entry == NULL)
+    /* Allocate a new block of block */
+    tmp_block = (struct tracex_event_array_block*)malloc(sizeof(struct tracex_event_array_block));
+    if (tmp_block == NULL)
     {
-        status =  TRACEX_ALLOC_FAILURE;
+        status = TRACEX_ALLOC_FAILURE;
         goto handle_exit;
     }
 
-    /* Zero out the struct for safety */
-    memset(tmp_entry, 0, sizeof(struct tracex_event_entry));
+    /* Zero out the block elements for safety */
+    memset(tmp_block, 0, sizeof(struct tracex_event_array_block));
+
+    /* Allocate the actual array of entries */
+    tmp_block->entries = (struct tracex_event_entry*)malloc(sizeof(struct tracex_event_entry) * elements);
+    if (tmp_block->entries == NULL)
+    {
+        status = TRACEX_ALLOC_FAILURE;
+        goto handle_error;
+    }
+
+    /* Zero out the array of events for safety */
+    memset(tmp_block->entries, 0, sizeof(struct tracex_event_entry) * elements);
+
     status = TRACEX_SUCCESS;
 
+    goto handle_exit;
+
+
+handle_error:
+    destroy_event_array_block(&tmp_block);
+
 handle_exit:
-    *entry_ptr = tmp_entry;
+    *block = tmp_block;
     return status;
 
 }
 
-static void destroy_event_entry(struct tracex_event_entry **entry)
+static void destroy_event_array_block(struct tracex_event_array_block **block)
 {
-    if (entry != NULL)
+    if (block != NULL)
     {
-        if (*entry != NULL)
+        if (*block != NULL)
         {
-            tracex_list_delete(&(*entry)->node);
-            (*entry)->node.next = NULL;
-            (*entry)->node.prev = NULL;
+            free((*block)->entries);
+            (*block)->entries = NULL;
+            tracex_list_delete(&(*block)->node);
+            (*block)->node.next = NULL;
+            (*block)->node.prev = NULL;
 
-            free (*entry);
-            *entry = NULL;
+            free((*block));
+            (*block) = NULL;
         }
+    }
+}
+
+static void destroy_event_array_block_list(struct tracex_list *list)
+{
+    struct tracex_event_array_block *entry;
+    struct tracex_event_array_block *next;
+
+    tracex_list_for_each_entry_safe(entry, next, list, node)
+    {
+        destroy_event_array_block(&entry);
     }
 }

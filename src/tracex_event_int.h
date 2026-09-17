@@ -12,16 +12,26 @@ struct tracex_event_entry
     struct tracex_list      node;                   /* Next event node */
 };
 
+struct tracex_event_array_block
+{
+    struct tracex_event_entry *entries;
+    struct tracex_list      node;
+
+};
+
 struct tracex_event_context
 {
     void (*user_callback)(struct tracex_event *event, tracex_ret_t status);    /* Callback to use when a new event had been parsed */
-    struct tracex_list          event_list;     /* List of parsed events */
-    uint64_t                    curr_count;     /* Total count of events for the current parssing session */
-    struct tracex_event_entry   *curr_entry;    /* Saved current event when parsing incrementally */
-    uint64_t                    curr_offset;    /* Saved current events byte count when parsing incrementally */
-    uint64_t                    tot_count;      /* Total count of events */
-    pthread_mutex_t             mutex;          /* Mutex used when retrieving and parsing events */
-    uint64_t                    registry_size;  /* Total number of posssible events in the event registry */
+    struct tracex_list              event_list;         /* List of parsed events */
+    struct tracex_list              array_block_list;   /* List of allocated arrays of events */
+    uint64_t                        cycle_count;        /* Total count of events for the current session */
+    uint64_t                        cycle_valid_count;  /* Actual total count of events that are valid for the current */
+    struct tracex_event_array_block *current_block;     /* Current working ptr to a block of event entries */
+    struct tracex_event_entry       *curr_entry;        /* Saved current event when parsing incrementally */
+    uint64_t                        curr_offset;        /* Saved current events byte count when parsing incrementally */
+    uint64_t                        total_events;       /* Total count of events */
+    pthread_mutex_t                 mutex;              /* Mutex used when retrieving and parsing events */
+    uint64_t                        registry_size;      /* Total number of posssible events in the event registry */
 
 };
 

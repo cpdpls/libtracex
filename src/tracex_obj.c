@@ -256,6 +256,7 @@ static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void 
 
         if ((status = alloc_new_object_entry(&ctx->current_entry, ctx->name_size)) != TRACEX_SUCCESS)
         {
+            /* Dealloc */
             goto handle_exit;
         }
     }
