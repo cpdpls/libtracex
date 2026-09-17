@@ -7,8 +7,6 @@
 #include "tracex_header_int.h"
 #include "tracex_errno.h"
 
-#define TRACEX_OBJECT_TYPE_NOT_VALID    0u
-#define TRACEX_OBJECT_MAX_TYPE          28u
 
 enum tracex_obj_fsm
 {
@@ -17,10 +15,25 @@ enum tracex_obj_fsm
 };
 
 
+struct tracex_object_int
+{
+    uint8_t  available;
+    uint8_t  type;
+    uint8_t  res1;
+    uint8_t  res2;
+    uint32_t pointer;
+    uint32_t param_1;
+    uint32_t param_2;
+    uint8_t  *name;
+
+}__attribute__((__packed__));
+
+
 struct tracex_object_entry
 {
-    struct tracex_object            obj;        /* Parsed object from the raw dump */
-    struct tracex_list              node;       /* Next object node */
+    struct tracex_object_int        raw_obj;        /* Parsed object from the raw dump */
+    struct tracex_object            usr_obj;        /* Parsed user object */
+    tracex_node                     node;           /* Next object node */
 };
 
 struct tracex_object_context

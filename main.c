@@ -46,7 +46,7 @@ int main(void)
     //     exit(-1);
     // }
     
-    file(1);
+    network();
     tracex_destroy_handler(&handler);
 
     return 0;

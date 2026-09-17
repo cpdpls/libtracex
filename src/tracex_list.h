@@ -37,6 +37,8 @@ struct tracex_list {
     struct tracex_list *next;
 };
 
+typedef struct tracex_list tracex_node;
+
 
 static inline int tracex_list_is_head(const struct tracex_list *list, const struct tracex_list *head)
 {
