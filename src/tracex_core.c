@@ -8,19 +8,12 @@
 #include "tracex_obj_int.h"
 #include "tracex_utils.h"
 
-static struct tracex_list created_handlers_list;    /* List of the current handles created */
 static uint8_t tracex_init_done = 0;                /* Flag set to detect wether tracex has been init */
 
 void tracex_init(void)
 {
     /* First try to detect the endianess of the host system */
     tracex_utils_detect_indianess();
-
-    /*  Init the global list of created handlers */
-    if (created_handlers_list.next == NULL || created_handlers_list.prev == NULL)
-    {
-        tracex_list_init(&created_handlers_list);
-    }
 
     tracex_init_done = 1;
 
@@ -75,9 +68,6 @@ tracex_ret_t tracex_create_new_handler(tracex_handler_t **new_handler)
         goto handle_error;
     }
 
-    /* Insert the newly created handler inside the list */
-    tracex_list_insert(&handler->node, &created_handlers_list);
-
     *new_handler = handler;
     status = TRACEX_SUCCESS;
     goto handle_exit;
@@ -98,11 +88,6 @@ tracex_ret_t tracex_register_callbacks(tracex_handler_t *handler, struct tracex_
         return TRACEX_BAD_INPUT_PTR;
     }
 
-    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
-    {
-        return TRACEX_INVALID_HANDLER;
-    }
-
     handler->hdr_ctx.user_callback = callbacks->on_header_parsed;
     handler->objs_ctx.user_callback = callbacks->on_object_parsed;
     handler->event_ctx.user_callback = callbacks->on_event_parsed;
@@ -117,15 +102,13 @@ void tracex_destroy_handler(tracex_handler_t **handler)
     {
         if (*handler != NULL)
         {
-            if (tracex_is_handler_valid(*handler) == TRACEX_SUCCESS)
-            {
-                tracex_object_int_destroy_list(&(*handler)->objs_ctx);
-                tracex_event_int_destroy_list(&(*handler)->event_ctx);
-                tracex_list_delete(&(*handler)->node);
-                memset((*handler), 0, sizeof(struct tracex_handler));
-                free(*handler);
-                *handler = NULL;
-            }
+            
+            tracex_object_int_destroy_list(&(*handler)->objs_ctx);
+            tracex_event_int_destroy_list(&(*handler)->event_ctx);
+            memset((*handler), 0, sizeof(struct tracex_handler));
+            free(*handler);
+            *handler = NULL;
+            
         }
     }
 
@@ -154,11 +137,6 @@ tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t b
         goto handle_exit;
     }
 
-    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
-    {
-        status = TRACEX_INVALID_HANDLER;
-        goto handle_exit;
-    }
 
     hdr_ctx = &handler->hdr_ctx;
 
@@ -251,33 +229,12 @@ handle_exit:
     return status;
 }
 
-tracex_ret_t tracex_is_handler_valid(struct tracex_handler *handler)
-{
-    struct tracex_handler *iter;
-
-    tracex_list_for_each_entry(iter, &created_handlers_list, node)
-    {
-        if (iter == handler)
-        {
-            return TRACEX_SUCCESS;
-        }
-    }
-
-    return TRACEX_INVALID_HANDLER;
-}
-
-
 tracex_ret_t tracex_object_iterator_init(tracex_handler *handler, TRACEX_object_iterator_t **iterator)
 {
 
     if (handler == NULL || iterator == NULL)
     {
         return TRACEX_BAD_INPUT_PTR;
-    }
-
-    if (tracex_is_handler_valid(handler) != TRACEX_SUCCESS)
-    {
-        return TRACEX_INVALID_HANDLER;
     }
 
     return tracex_object_int_iterator_init(&handler->objs_ctx, iterator);

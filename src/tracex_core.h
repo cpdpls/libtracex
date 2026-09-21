@@ -31,6 +31,4 @@ struct tracex_handler
 };
 
 
-tracex_ret_t tracex_is_handler_valid(struct tracex_handler *handler);
-
 #endif
