@@ -7,35 +7,7 @@
 #include "tracex_errno.h"
 #include "tracex_core.h"
 #include "tracex_header_int.h"
-
-const char  *tracex_object_type_strings[] =
-{
-    "INVALID",
-    "THREAD",
-    "TIMER",
-    "QUEUE",
-    "SEMAPHORE",
-    "MUTEX",
-    "EVENT FLAGS GROUP",
-    "BLOCK POOL",
-    "BYTE POOL",
-    "MEDIA",
-    "FILE",
-    "IP",
-    "PACKET POOL",
-    "TCP SOCKET",
-    "UDP SOCKET",
-    "RESERVED",
-    "USB HOST STACK DEVICE",
-    "USB HOST STACK INTERFACE",
-    "USB HOST ENDPOINT",
-    "USB HOST CLASS",
-    "USB DEV",
-    "USB DEV INTERFACE",
-    "USB DEV ENDPOINT",
-    "USB DEV CLASS",
-
-};
+#include "tracex_obj_str.h"
 
 static void convert_from_raw_to_user(struct tracex_object_entry *entry, uint16_t name_size);
 static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void *buffer, size_t buffer_len, size_t *consumed);
@@ -269,14 +241,23 @@ void tracex_object_int_iterator_end(TRACEX_object_iterator_t **iterator)
 
 static void convert_from_raw_to_user(struct tracex_object_entry *entry, uint16_t name_size)
 {
-    entry->usr_obj.available = entry->raw_obj.available;
+    struct tracex_object_params_str params;
+    /* Assign the correct endianess */
+    
+    params = tracex_object_param_to_str(entry->raw_obj.type);
+
     entry->usr_obj.type = entry->raw_obj.type;
+
     entry->usr_obj.res1 = entry->raw_obj.res1;
     entry->usr_obj.res2 = entry->raw_obj.res2;
     entry->usr_obj.pointer = entry->raw_obj.pointer;
-    entry->usr_obj.objectParams.param_1 = entry->raw_obj.param_1;
-    entry->usr_obj.objectParams.param_2 = entry->raw_obj.param_2;
+    entry->usr_obj.params.raw.param1 = entry->raw_obj.param_1;
+    entry->usr_obj.params.raw.param2 = entry->raw_obj.param_2;
+    entry->usr_obj.objectTypeLabel = tracex_object_type_to_str(entry->usr_obj.type);
 
+    entry->usr_obj.param1Label = params.param1_label;
+    entry->usr_obj.param2Label = params.param2_label;
+    
     memcpy(entry->usr_obj.name, entry->raw_obj.name, name_size);
 
 }
@@ -388,14 +369,19 @@ static tracex_ret_t process_object(struct tracex_object_context *ctx)
     tracex_ret_t status;
     struct tracex_object_entry *entry;
 
+    /* This checks if the object is invalid (0) or is outside the range of object type */
+    /* Or if the object is in the reserved area (15-20) */
     if (ctx->current_entry->raw_obj.available == 1 ||
-        (ctx->current_entry->raw_obj.type == TRACEX_OBJECT_TYPE_NOT_VALID ||
-        ctx->current_entry->raw_obj.type > TRACEX_OBJECT_TYPE_MAX))
+        ((ctx->current_entry->raw_obj.type == TRACEX_OBJECT_TYPE_NOT_VALID) ||
+        (ctx->current_entry->raw_obj.type > TRACEX_OBJECT_TYPE_MAX) ||
+        ((ctx->current_entry->raw_obj.type > TRACEX_OBJECT_TYPE_UDP_SOCKET) &&
+        (ctx->current_entry->raw_obj.type < TRACEX_OBJECT_TYPE_USB_HOST_STACK_DEV))))
     {
         status = TRACEX_OBJECT_INVALID;
         goto handle_exit;
 
     }
+
     /* Loop on the current objects */
     tracex_list_for_each_entry(entry, &ctx->obj_list, node)
     {
@@ -420,8 +406,8 @@ handle_exit:
 
     if (status == TRACEX_SUCCESS) {
         /* Call the user provided callback */
-        if (ctx->user_callback != NULL)
-            ctx->user_callback(&ctx->current_entry->usr_obj, status);
+        if (ctx->on_object_parsed != NULL)
+            ctx->on_object_parsed(ctx->cb_data, &ctx->current_entry->usr_obj, status);
     } else {
         destroy_object_entry(&ctx->current_entry);
     }
@@ -506,24 +492,4 @@ static void destroy_object_entry(struct tracex_object_entry **object)
             (*object) = NULL;
         }
     }
-}
-
-const uint8_t *tracex_object_convert_type_to_string(enum tracex_object_type type)
-{
-    const char *string_type;
-
-    if (type >= TRACEX_OBJECT_TYPE_USB_DEV_CLASS)
-    {
-        string_type = tracex_object_type_strings[0];
-    }
-    else if (type >= TRACEX_OBJECT_TYPE_RESERVED && type < TRACEX_OBJECT_TYPE_USB_HOST_STACK_DEV)
-    {
-        string_type = tracex_object_type_strings[TRACEX_OBJECT_TYPE_RESERVED];
-    }
-    else
-    {
-        string_type = tracex_object_type_strings[type];
-    }
-
-    return string_type;
 }

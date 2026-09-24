@@ -1,3 +1,0 @@
-[submodule "external/AbstractIO"]
-	path = external/AbstractIO
-	url = git@github.com:cpdpls/AbstractIO.git

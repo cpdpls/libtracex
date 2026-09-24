@@ -115,8 +115,8 @@ tracex_ret_t tracex_header_int_parse(struct tracex_header_context *ctx, void *bu
             ctx->header_valid = 1;
 
         /* Call the user provided callback */
-        if (ctx->user_callback != NULL)
-            ctx->user_callback(&ctx->header, status);
+        if (ctx->on_header_parsed != NULL)
+            ctx->on_header_parsed(ctx->cb_data, &ctx->header, status);
     }
      
     goto handle_exit;

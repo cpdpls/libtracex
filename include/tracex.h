@@ -13,9 +13,9 @@ typedef struct tracex_handler tracex_handler_t;
 
 struct tracex_callbacks
 {
-    void (*on_header_parsed)(struct tracex_header *header, tracex_ret_t status);
-    void (*on_object_parsed)(struct tracex_object *object, tracex_ret_t status);
-    void (*on_event_parsed)(struct tracex_event *event, tracex_ret_t status);
+    void (*on_header_parsed)(tracex_handler_t *handler, struct tracex_header *header, tracex_ret_t status);
+    void (*on_object_parsed)(tracex_handler_t *handler, struct tracex_object *object, tracex_ret_t status);
+    void (*on_event_parsed)(tracex_handler_t *handler, struct tracex_event *event, tracex_ret_t status);
 };
 
 

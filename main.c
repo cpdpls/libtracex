@@ -8,6 +8,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "tracex.h"
 #include "tracex_debug.h"
@@ -15,9 +16,9 @@
 
 tracex_handler *handler;
 
-void eventParsedCB(struct tracex_event *event, tracex_ret_t status);
-void headerParsedCB(struct tracex_header *header, tracex_ret_t status);
-void objectParsedCB(struct tracex_object *object, tracex_ret_t status);
+void eventParsedCB(tracex_handler_t *handler, struct tracex_event *event, tracex_ret_t status);
+void headerParsedCB(tracex_handler_t *handler, struct tracex_header *header, tracex_ret_t status);
+void objectParsedCB(tracex_handler_t *handler, struct tracex_object *object, tracex_ret_t status);
 void network();
 void file(char random);
 
@@ -40,11 +41,11 @@ int main(void)
         exit(-1);
     }
 
-    // if (tracex_register_callbacks(handler, &callbacks) != TRACEX_SUCCESS)
-    // {
-    //     printf("%s\n", TRACEX_strerror(status));
-    //     exit(-1);
-    // }
+    if (tracex_register_callbacks(handler, &callbacks) != TRACEX_SUCCESS)
+    {
+        printf("%s\n", TRACEX_strerror(status));
+        exit(-1);
+    }
     
     network();
     tracex_destroy_handler(&handler);
@@ -53,7 +54,7 @@ int main(void)
 
 }
 
-void eventParsedCB(struct tracex_event *event, tracex_ret_t status)
+void eventParsedCB(tracex_handler_t *handler, struct tracex_event *event, tracex_ret_t status)
 {
     if (status == TRACEX_SUCCESS)
     {
@@ -61,7 +62,7 @@ void eventParsedCB(struct tracex_event *event, tracex_ret_t status)
     }
 
 }
-void headerParsedCB(struct tracex_header *header, tracex_ret_t status)
+void headerParsedCB(tracex_handler_t *handler, struct tracex_header *header, tracex_ret_t status)
 {
     if (status == TRACEX_SUCCESS)
     {
@@ -69,7 +70,7 @@ void headerParsedCB(struct tracex_header *header, tracex_ret_t status)
     }
 
 }
-void objectParsedCB(struct tracex_object *object, tracex_ret_t status)
+void objectParsedCB(tracex_handler_t *handler, struct tracex_object *object, tracex_ret_t status)
 {
     if (status == TRACEX_SUCCESS)
     {
@@ -105,6 +106,8 @@ void network()
         status = tracex_parse(handler, buffer, bytes_read);
 
     }while (status == TRACEX_NEED_MORE && bytes_read >= 0);
+
+    close(lfd);
 
 }
 
@@ -155,7 +158,6 @@ void file(char random)
             bytes_to_parse = trace_size;
         }
 
-        //printf("Parsing %d\n", bytes_to_parse);
         status = tracex_parse(handler, buffer, bytes_to_parse);
         buffer += bytes_to_parse;
 

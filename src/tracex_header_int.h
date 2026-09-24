@@ -14,7 +14,8 @@
 
 struct tracex_header_context
 {
-    void (*user_callback)(struct tracex_header *header, tracex_ret_t status);      /* Callback to use when the header has been parsed */
+    void (*on_header_parsed)(void *cb_data, struct tracex_header *header, tracex_ret_t status);      /* Callback to use when the header has been parsed */
+    void                            *cb_data;
     struct tracex_header            header;                 /* User tracex header */
     pthread_mutex_t                 header_mutex;           /* Mutex used when retrieving and parsing objects */
     uint8_t                         header_parsed;          /* Flag set when the header has been parsed */

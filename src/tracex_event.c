@@ -41,7 +41,7 @@ tracex_ret_t tracex_event_int_compute_registry_size(uint64_t *registry_size, uin
     }
 
     /* Compute the total possible event entries inside the buffer */
-    event_buffer_entries = (stop - start) / sizeof(struct tracex_event);
+    event_buffer_entries = (stop - start) / sizeof(struct tracex_event_int);
 
     if (event_buffer_entries == 0)
     {
@@ -148,27 +148,28 @@ static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *
     }
 
     /* Set the start address + the previous offset */
-    start_address = (void*)&ctx->curr_entry->event + ctx->curr_offset;
+    start_address = (void*)&ctx->curr_entry->raw_event + ctx->curr_offset;
 
     /* Check if the buffer length added with the previous offset if bigger than a whole event struct */
-    if (buffer_len + ctx->curr_offset >= sizeof(struct tracex_event))
+    if (buffer_len + ctx->curr_offset >= sizeof(struct tracex_event_int))
     {
         /* Copy What is left to be copied */
-        bytes_to_copy = sizeof(struct tracex_event) - ctx->curr_offset; 
+        bytes_to_copy = sizeof(struct tracex_event_int) - ctx->curr_offset; 
     }
 
     /* Otherwise, there is not enough byte to parse a full event so copy what we can */
     else
     {
         bytes_to_copy = buffer_len;
-        ctx->curr_offset += bytes_to_copy;
     }
+
+    ctx->curr_offset += bytes_to_copy;
 
     /* Perform the copy */
     memcpy(start_address, buffer, bytes_to_copy);
 
     /* Check if we reached the end of the parsing of a full event */
-    if (ctx->curr_offset + bytes_to_copy == sizeof(struct tracex_event))
+    if (ctx->curr_offset == sizeof(struct tracex_event_int))
     {
         /* Reset the current offset */
         ctx->curr_offset = 0;
@@ -187,19 +188,34 @@ handle_exit:
 
 static tracex_ret_t process_event(struct tracex_event_context *ctx)
 {
+    tracex_ret_t status;
+
     /*TODO: Revert to the correct endianess */
 
+    /* Check if this is an empty invalid event */
+    if (ctx->curr_entry->raw_event.thread_pointer == 0 || 
+        ctx->curr_entry->raw_event.thread_priority == 0)
+    {
+        status = TRACEX_EVENT_INVALID;
+        goto handle_exit;
+
+    }
 
     /* Add the event to the list */
     tracex_list_insert(&ctx->curr_entry->node, &ctx->event_list);
 
+    status = TRACEX_SUCCESS;
     
-    
-    /* Call the user provided callback */
-    if (ctx->user_callback != NULL)
-        ctx->user_callback(&ctx->curr_entry->event, TRACEX_SUCCESS);
 
-    return TRACEX_SUCCESS;
+handle_exit:
+    if (status == TRACEX_SUCCESS) {
+        /* Call the user provided callback */
+        if (ctx->on_event_parsed != NULL)
+            ctx->on_event_parsed(ctx->cb_data, &ctx->curr_entry->user_event, TRACEX_SUCCESS);
+    } else {
+        destroy_event_entry(&ctx->curr_entry);
+    }
+    return status;
 }
 
 static tracex_ret_t alloc_new_event_entry(struct tracex_event_entry **entry_ptr)
@@ -231,9 +247,14 @@ static void destroy_event_entry(struct tracex_event_entry **entry)
     {
         if (*entry != NULL)
         {
-            tracex_list_delete(&(*entry)->node);
-            (*entry)->node.next = NULL;
-            (*entry)->node.prev = NULL;
+            /* Check if the entry has been inserted in the list and delete it from it */
+            if ((*entry)->node.next != NULL && (*entry)->node.prev != NULL)
+            {
+                tracex_list_delete(&(*entry)->node);
+                (*entry)->node.next = NULL;
+                (*entry)->node.prev = NULL;
+
+            }
 
             free (*entry);
             *entry = NULL;

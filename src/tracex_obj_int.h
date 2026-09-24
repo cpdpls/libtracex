@@ -38,7 +38,8 @@ struct tracex_object_entry
 
 struct tracex_object_context
 {
-    void (*user_callback)(struct tracex_object *object, tracex_ret_t status);   /* Callback to use when a new object has been parsed */
+    void (*on_object_parsed)(void *cb_data, struct tracex_object *object, tracex_ret_t status);   /* Callback to use when a new object has been parsed */
+    void                            *cb_data;
     struct tracex_list              obj_list;                                   /* List of parsed objects */
     uint64_t                        curr_count;                                 /* Total count of objects for the current parsing */
     struct tracex_object_entry      *current_entry;                             /* Saved current object when parsing incrementally */

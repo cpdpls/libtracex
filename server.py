@@ -3,6 +3,9 @@ import threading
 import random
 from pathlib import Path
 import time
+from alive_progress import alive_bar
+
+file_path = "r15b_tracex_dump.trx"
 
 bind_ip = "0.0.0.0" 
 bind_port = 5555
@@ -18,17 +21,21 @@ print(f"[+] Listening on port {bind_ip} : {bind_port}")
 
 #client handling thread
 def handle_client(client_socket):
-    bytes_left = Path("r15b_all_int.trx").stat().st_size
-    with open("r15b_all_int.trx", mode="rb") as f:
-        while 1:
-            bytes_count = random.randint(1000, 4000)
-            bytes_s = f.read(bytes_count)
-            if not bytes_s:
-                break
-            client_socket.send(bytes_s)
-            bytes_left = bytes_left - bytes_count
-            print ("Sended {} | left {}".format(bytes_count, bytes_left))
-            time.sleep(0.001)
+    bytes_left = Path(file_path).stat().st_size
+    with alive_bar(Path(file_path).stat().st_size) as bar:
+        with open(file_path, mode="rb") as f:
+            while 1:
+                    bytes_count = random.randint(1000, 4000)
+                    if bytes_count > bytes_left:
+                        bytes_count = bytes_left
+                    bytes_s = f.read(bytes_count)
+                    if not bytes_s:
+                        break
+                    client_socket.send(bytes_s)
+                    bytes_left = bytes_left - bytes_count
+                    bar.text(f'Sending data to server ...')
+                    bar(bytes_count)
+                    time.sleep(0.001)
 while True: 
     # When a client connects we receive the 
     # client socket into the client variable, and 

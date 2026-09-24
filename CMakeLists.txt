@@ -5,6 +5,8 @@ project(tx_tracer VERSION 1.0)
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+add_subdirectory(extern/cjson)
+
 add_executable(tx_tracer
     main.c
     src/tracex_errno.c
@@ -14,10 +16,16 @@ add_executable(tx_tracer
     src/tracex_event.c
     src/tracex_debug.c
     src/tracex_utils.c
+    src/tracex_obj_str.c
 )
 
 target_include_directories(tx_tracer
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_link_libraries(tx_tracer
+    PRIVATE
+    cjson
 )

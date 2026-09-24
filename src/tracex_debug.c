@@ -6,6 +6,7 @@
 #include "tracex_obj_int.h"
 #include "tracex_object.h"
 #include "tracex_event_int.h"
+#include "tracex_obj_str.h"
 
 #define TRACEX_DEBUG_HDR(fmt, args...) fprintf(stdout, "TRACEX-HEADER >> " fmt, ##args)
 #define TRACEX_DEBUG_OBJ(fmt, args...) fprintf(stdout, "TRACEX-OBJECT >> " fmt, ##args)
@@ -38,9 +39,9 @@ void TRACEX_debug_print_raw_header(const struct tracex_header *header)
 
 void TRACEX_debug_print_single_object(const struct tracex_object *entry)
 {
+
     TRACEX_DEBUG_OBJ("---- %.32s ----\n", entry->name);
-    TRACEX_DEBUG_OBJ("Available : %u\n", entry->available);
-    TRACEX_DEBUG_OBJ("Type : %s\n", tracex_object_convert_type_to_string(entry->type));
+    TRACEX_DEBUG_OBJ("Type : %s\n", tracex_object_type_to_str(entry->type));
     if (entry->type == TRACEX_OBJECT_TYPE_THREAD)
     {
         TRACEX_DEBUG_OBJ("Thread Priority : %u\n", entry->thread_priority);
@@ -52,7 +53,8 @@ void TRACEX_debug_print_single_object(const struct tracex_object *entry)
 
     }
     TRACEX_DEBUG_OBJ("Object Pointer : 0x%.4x\n", entry->pointer);
-    tracex_debug_print_object_params(entry);
+    TRACEX_DEBUG_OBJ("%s : 0x%.4x\n", entry->param1Label, entry->params.raw.param1);
+    TRACEX_DEBUG_OBJ("%s : 0x%.4x\n", entry->param2Label, entry->params.raw.param2);
     TRACEX_DEBUG_OBJ("Name : %.32s\n\n", entry->name);
 }
 
@@ -80,8 +82,8 @@ void TRACEX_debug_print_single_event(const struct tracex_event *entry)
 {
     TRACEX_DEBUG_EVENT("Event ID : %u\n", entry->event_id);
     TRACEX_DEBUG_EVENT("Thread Pointer : 0x%.4x\n", entry->thread_pointer);
-    TRACEX_DEBUG_EVENT("Thread Priority : 0x%.4x\n", entry->thread_priority);
-    TRACEX_DEBUG_EVENT("Time-Stamp : %u\n", entry->thread_priority);
+    TRACEX_DEBUG_EVENT("Thread Priority : 0x%.4x\n", entry->thread_param.thread_priority);
+    TRACEX_DEBUG_EVENT("Time-Stamp : %u\n", entry->time_stamp);
     TRACEX_DEBUG_EVENT("Info 1 : %u\n", entry->info1);
     TRACEX_DEBUG_EVENT("Info 2 : %u\n", entry->info2);
     TRACEX_DEBUG_EVENT("Info 3 : %u\n", entry->info3);
@@ -100,7 +102,7 @@ void TRACEX_debug_print_events(const struct tracex_handler *handler)
     tracex_list_for_each_entry(entry, &handler->event_ctx.event_list, node)
     {
         TRACEX_DEBUG_EVENT("| BEGIN EVENT ENTRY (%lu) |\n", event_counter);
-        TRACEX_debug_print_single_event(&entry->event);
+        TRACEX_debug_print_single_event(&entry->user_event);
         TRACEX_DEBUG_EVENT("| END EVENT ENTRY (%lu) |\n\n", event_counter++);
     }
 
@@ -109,74 +111,6 @@ void TRACEX_debug_print_events(const struct tracex_handler *handler)
 static void tracex_debug_print_object_params(const struct tracex_object *object)
 {
 
-    switch( object->type)
-    {
-        case TRACEX_OBJECT_TYPE_THREAD:
-            TRACEX_DEBUG_OBJ("Stack Start : 0x%.4x\n", object->objectParams.thread.stack_start);
-            TRACEX_DEBUG_OBJ("Stack size : %u\n", object->objectParams.thread.stack_size);
-            break;
 
-    case TRACEX_OBJECT_TYPE_TIMER:
-            TRACEX_DEBUG_OBJ("Initial Ticks : %u\n", object->objectParams.timer.initial_ticks);
-            TRACEX_DEBUG_OBJ("Rescheduled Ticks : %u\n", object->objectParams.timer.reschedule_ticks);
-            break;
-
-    case TRACEX_OBJECT_TYPE_QUEUE:
-        TRACEX_DEBUG_OBJ("Queue Size : %u\n", object->objectParams.queue.queue_size);
-        TRACEX_DEBUG_OBJ("Message Size : %u\n", object->objectParams.queue.message_size);
-        break;
-
-    case TRACEX_OBJECT_TYPE_SEMAPHORE:
-        TRACEX_DEBUG_OBJ("Initial Instances : %u\n", object->objectParams.semaphore.initial_instances);
-        break;
-
-    case TRACEX_OBJECT_TYPE_MUTEX:
-        TRACEX_DEBUG_OBJ("Inheritance Flag : %u\n", object->objectParams.mutex.inheritance_flag);
-        break;
-    
-    case TRACEX_OBJECT_TYPE_BLOCK_POOL:
-        TRACEX_DEBUG_OBJ("Total Blocks : %u\n", object->objectParams.blockPool.total_blocks);
-        TRACEX_DEBUG_OBJ("Block Size : %u\n", object->objectParams.blockPool.block_size);
-        break;
-
-    case TRACEX_OBJECT_TYPE_BYTE_POOL:
-        TRACEX_DEBUG_OBJ("Total Bytes : %u\n", object->objectParams.bytePool.total_bytes);
-        break;
-
-    case TRACEX_OBJECT_TYPE_MEDIA:
-        TRACEX_DEBUG_OBJ("FAT Cache Size : %u\n", object->objectParams.media.fat_cache_size);
-        TRACEX_DEBUG_OBJ("Sector Cache Size : %u\n", object->objectParams.media.sector_cache_size);
-        break;
-
-    case TRACEX_OBJECT_TYPE_IP:
-        TRACEX_DEBUG_OBJ("Stack Start : %u\n", object->objectParams.ip.stack_start);
-        TRACEX_DEBUG_OBJ("Stack size : %u\n", object->objectParams.ip.stack_size);
-        break;
-
-    case TRACEX_OBJECT_TYPE_PACKET_POOL:
-        TRACEX_DEBUG_OBJ("Packet Size : %u\n", object->objectParams.packetPool.packet_size);
-        TRACEX_DEBUG_OBJ("Number Of Packets : %u\n", object->objectParams.packetPool.number_of_packets);
-        break;
-
-    /*TODO: Show the IP Address in string format */
-    case TRACEX_OBJECT_TYPE_TCP_SOCKET:
-        TRACEX_DEBUG_OBJ("IP Address : %u\n", object->objectParams.tcpSocket.ip_addr);
-        TRACEX_DEBUG_OBJ("Window Size : %u\n", object->objectParams.tcpSocket.window_size);
-        break;
-    case TRACEX_OBJECT_TYPE_UDP_SOCKET:
-        TRACEX_DEBUG_OBJ("IP Address : %u\n", object->objectParams.udpSocket.ip_addr);
-        TRACEX_DEBUG_OBJ("Max RX Queue : %u\n", object->objectParams.udpSocket.rx_queue_max);
-        break;
-    
-    case TRACEX_OBJECT_TYPE_EVENT_FLAGS_GROUP:
-    case TRACEX_OBJECT_TYPE_FILE:
-        break;
-    
-    default:
-        TRACEX_DEBUG_OBJ("Generic Param 1 : %u\n", object->objectParams.param_1);
-        TRACEX_DEBUG_OBJ("Generic Param 2: %u\n", object->objectParams.param_2);
-        break;
-
-    }
 
 }

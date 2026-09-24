@@ -7,8 +7,15 @@
 #include "tracex_event_int.h"
 #include "tracex_obj_int.h"
 #include "tracex_utils.h"
+#include "tracex_header.h"
+#include "tracex_event.h"
+#include "tracex_object.h"
 
 static uint8_t tracex_init_done = 0;                /* Flag set to detect wether tracex has been init */
+
+static void core_on_header_parsed_callback(void *cb_data, struct tracex_header *header, tracex_ret_t status);
+static void core_on_object_parsed_callback(void *cb_data, struct tracex_object *object, tracex_ret_t status);
+static void core_on_event_parsed_callback(void *cb_data, struct tracex_event *event, tracex_ret_t status);
 
 void tracex_init(void)
 {
@@ -88,9 +95,20 @@ tracex_ret_t tracex_register_callbacks(tracex_handler_t *handler, struct tracex_
         return TRACEX_BAD_INPUT_PTR;
     }
 
-    handler->hdr_ctx.user_callback = callbacks->on_header_parsed;
-    handler->objs_ctx.user_callback = callbacks->on_object_parsed;
-    handler->event_ctx.user_callback = callbacks->on_event_parsed;
+    /* Assign the user provided callbacks internally to the handler regardless of their pointer value */
+    handler->user_callbacks.on_header_parsed = callbacks->on_header_parsed;
+    handler->user_callbacks.on_object_parsed = callbacks->on_object_parsed;
+    handler->user_callbacks.on_event_parsed = callbacks->on_event_parsed;
+
+    /* Check each individual callback to be different that NULL and assign the internal callback, otherwise NULL */
+    handler->hdr_ctx.on_header_parsed = callbacks->on_header_parsed != NULL ? core_on_header_parsed_callback : NULL;
+    handler->objs_ctx.on_object_parsed = callbacks->on_object_parsed != NULL ? core_on_object_parsed_callback : NULL;
+    handler->event_ctx.on_event_parsed = callbacks->on_event_parsed != NULL ? core_on_event_parsed_callback : NULL;
+
+    /* Assign the handler as a callback data */
+    handler->hdr_ctx.cb_data = (void*)handler;
+    handler->objs_ctx.cb_data = (void*)handler;
+    handler->event_ctx.cb_data = (void*)handler;
 
     return TRACEX_SUCCESS;
 
@@ -258,4 +276,37 @@ void tracex_object_iterator_end(TRACEX_object_iterator_t **iterator)
         tracex_object_int_iterator_end(iterator);
     }
 
+}
+
+static void core_on_header_parsed_callback(void *cb_data, struct tracex_header *header, tracex_ret_t status)
+{
+    struct tracex_handler *tmp_handler;
+
+    tmp_handler = TO_HANDLER(cb_data);
+
+    /* Call the user callback if not NULL */
+    if (tmp_handler->user_callbacks.on_header_parsed != NULL)
+        tmp_handler->user_callbacks.on_header_parsed(tmp_handler, header, status);
+
+}
+static void core_on_object_parsed_callback(void *cb_data, struct tracex_object *object, tracex_ret_t status)
+{
+    struct tracex_handler *tmp_handler;
+
+    tmp_handler = TO_HANDLER(cb_data);
+
+    /* Call the user callback if not NULL */
+    if (tmp_handler->user_callbacks.on_object_parsed != NULL)
+        tmp_handler->user_callbacks.on_object_parsed(tmp_handler, object, status);
+
+}
+static void core_on_event_parsed_callback(void *cb_data, struct tracex_event *event, tracex_ret_t status)
+{
+    struct tracex_handler *tmp_handler;
+
+    tmp_handler = TO_HANDLER(cb_data);
+
+    /* Call the user callback if not NULL */
+    if (tmp_handler->user_callbacks.on_event_parsed != NULL)
+        tmp_handler->user_callbacks.on_event_parsed(tmp_handler, event, status);
 }
