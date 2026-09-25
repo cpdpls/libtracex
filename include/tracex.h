@@ -19,8 +19,8 @@ struct tracex_callbacks
 };
 
 
-void tracex_init(void);
-
+tracex_ret_t tracex_init(void);
+void tracex_deinit(void);
 tracex_ret_t tracex_create_new_handler(tracex_handler_t **new_handler);
 tracex_ret_t tracex_register_callbacks(tracex_handler_t *handler, struct tracex_callbacks *callbacks);
 tracex_ret_t tracex_parse(tracex_handler_t *handler, void *buffer, size_t buffer_length);

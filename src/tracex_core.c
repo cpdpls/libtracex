@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <stdio.h>
 
+#include "cJSON.h"
 #include "tracex_errno.h"
 #include "tracex_core.h"
 #include "tracex_event_int.h"
@@ -10,20 +12,56 @@
 #include "tracex_header.h"
 #include "tracex_event.h"
 #include "tracex_object.h"
+#include "tracex_obj_str.h"
 
-static uint8_t tracex_init_done = 0;                /* Flag set to detect wether tracex has been init */
+struct tracex_core_object_labels_json {
+    cJSON   *array;
+    cJSON   *value;                
+    cJSON   *name;
+    cJSON   *param1;
+    cJSON   *param2;
+};
+
+struct tracex_core_object_json {
+    struct tracex_core_object_labels_json   obj_types;
+    cJSON                                   *root;
+    cJSON                                   *tmp_item;  
+
+};
+
+uint8_t tracex_init_done;       /* Flag set to detect wether tracex has been init */
+
 
 static void core_on_header_parsed_callback(void *cb_data, struct tracex_header *header, tracex_ret_t status);
 static void core_on_object_parsed_callback(void *cb_data, struct tracex_object *object, tracex_ret_t status);
 static void core_on_event_parsed_callback(void *cb_data, struct tracex_event *event, tracex_ret_t status);
+static tracex_ret_t load_json_objects_labels(void);
+static tracex_ret_t parse_json_objects_labels(cJSON **root);
 
-void tracex_init(void)
+tracex_ret_t tracex_init(void)
 {
+    tracex_ret_t status;
+
     /* First try to detect the endianess of the host system */
     tracex_utils_detect_indianess();
 
-    tracex_init_done = 1;
+    /*  Let's first try to parse the object json in order to get the names
+     *  for the types of object names and the parameters name
+    */
 
+    status = load_json_objects_labels();
+
+    if (status == TRACEX_SUCCESS) {
+        tracex_init_done = 1;
+    }
+
+    return status;
+
+}
+
+void tracex_deinit(void)
+{
+    tracex_object_destroy_labels();
 }
 
 /*TODO: Since we are using a global variable for the list of created handlers, let's also use a mutex for when creating new onces */
@@ -309,4 +347,133 @@ static void core_on_event_parsed_callback(void *cb_data, struct tracex_event *ev
     /* Call the user callback if not NULL */
     if (tmp_handler->user_callbacks.on_event_parsed != NULL)
         tmp_handler->user_callbacks.on_event_parsed(tmp_handler, event, status);
+}
+
+static tracex_ret_t load_json_objects_labels(void)
+{
+    tracex_ret_t status;
+    struct tracex_core_object_json jsons;
+    struct tracex_object_labels obj_labels;
+    
+
+    status = parse_json_objects_labels(&jsons.root);
+
+    if (status != TRACEX_SUCCESS) {
+        goto handle_return;
+    }
+
+
+    /* Check if the key exists */
+    jsons.obj_types.array = cJSON_GetObjectItemCaseSensitive(jsons.root, "objectTypesNames");
+    if (jsons.obj_types.array == NULL) {
+        status = TRACEX_JSON_FAILURE;
+        goto handle_return;
+    }
+
+    /* Now, get the size of the array inside the json parsed file */
+    /* And check for an empty array and return an error */
+    if (cJSON_GetArraySize(jsons.obj_types.array) == 0) {
+        status = TRACEX_JSON_FAILURE;
+        goto handle_return;
+
+    }
+
+    /* Iterate on all the element of the arary */
+    cJSON_ArrayForEach(jsons.tmp_item, jsons.obj_types.array) {
+
+        /* Get the value field */
+        jsons.obj_types.value = cJSON_GetObjectItemCaseSensitive(jsons.tmp_item, "value");
+        obj_labels.object_id = jsons.obj_types.value->valueint;
+        
+        /* Get the name string value */
+        jsons.obj_types.name = cJSON_GetObjectItemCaseSensitive(jsons.tmp_item, "name");
+        obj_labels.object_type_str = cJSON_GetStringValue(jsons.obj_types.name);
+
+        /* Get the different params */
+        jsons.obj_types.param1 = cJSON_GetObjectItemCaseSensitive(jsons.tmp_item, "param1");
+        jsons.obj_types.param2 = cJSON_GetObjectItemCaseSensitive(jsons.tmp_item, "param2");
+
+        obj_labels.params_str.param1_label = cJSON_GetStringValue(jsons.obj_types.param1);
+        obj_labels.params_str.param2_label = cJSON_GetStringValue(jsons.obj_types.param2);
+
+
+        tracex_object_labels_add(&obj_labels);
+    }
+
+    status = TRACEX_SUCCESS;
+    goto handle_return;
+    
+
+handle_return:
+
+    if (jsons.root != NULL) {
+        cJSON_Delete(jsons.root);
+    }
+    return status;
+    
+}
+
+static tracex_ret_t parse_json_objects_labels(cJSON **root)
+{
+    tracex_ret_t status;
+    FILE *file_ptr;
+    size_t file_size;
+    char *tmp_buff;
+
+    /* Try to open the actual file */
+    file_ptr = fopen("data/objects.json", "rb");
+
+    if (file_ptr == NULL) {
+        status = TRACEX_JSON_FAILURE;
+        goto handle_return;
+    }
+
+    /* Get the file size */
+    fseek(file_ptr, 0, SEEK_END);
+    file_size = ftell(file_ptr);
+    fseek(file_ptr, 0, SEEK_SET);
+
+    /* Check if not empty */
+    if (file_size == 0) {
+        status = TRACEX_JSON_FAILURE;
+        goto handle_return;
+    }
+
+
+    /* Allocate the whole buffer and load the file inside that */
+    tmp_buff = (char*)malloc(sizeof(char) *file_size);
+
+    if (tmp_buff == NULL) {
+        status = TRACEX_ALLOC_FAILURE;
+        goto handle_return;
+    }
+
+    if (fread(tmp_buff, 1, file_size, file_ptr) != file_size) {
+        status = TRACEX_JSON_FAILURE;
+        goto handle_return;
+    }
+
+    /* Parse the actual json object file */
+    *root = cJSON_ParseWithLength(tmp_buff, file_size);
+
+    if (*root == NULL) {
+        status = TRACEX_JSON_FAILURE;
+        goto handle_return;
+    }
+
+    status = TRACEX_SUCCESS;
+
+handle_return:
+
+    if (tmp_buff != NULL) {
+        free(tmp_buff);
+        tmp_buff = NULL;
+    }
+
+    if (file_ptr != NULL) {
+        fclose(file_ptr);
+        file_ptr = NULL;
+    }
+
+    return status;
 }

@@ -5,7 +5,10 @@ project(tx_tracer VERSION 1.0)
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-add_subdirectory(extern/cjson)
+set(ENABLE_CJSON_TEST OFF CACHE BOOL "Enable building cJSON test" FORCE)
+add_compile_definitions(ENABLE_CJSON_TEST=Off)
+
+add_subdirectory(external/cjson)
 
 add_executable(tx_tracer
     main.c
@@ -23,6 +26,7 @@ target_include_directories(tx_tracer
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/cjson
 )
 
 target_link_libraries(tx_tracer

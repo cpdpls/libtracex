@@ -47,8 +47,10 @@ int main(void)
         exit(-1);
     }
     
-    network();
+    file(1);
     tracex_destroy_handler(&handler);
+
+    tracex_deinit();
 
     return 0;
 
@@ -58,7 +60,7 @@ void eventParsedCB(tracex_handler_t *handler, struct tracex_event *event, tracex
 {
     if (status == TRACEX_SUCCESS)
     {
-        TRACEX_debug_print_single_event(event);
+        // TRACEX_debug_print_single_event(event);
     }
 
 }
@@ -96,7 +98,7 @@ void network()
     if (connect(lfd, (struct sockaddr *)&server, sizeof server) == -1)
     {
         printf("Failed to connect to the server !\n");
-        exit(-1);
+        return;
     }
 
     do

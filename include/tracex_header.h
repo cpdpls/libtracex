@@ -17,7 +17,7 @@ struct tracex_header
 {
     uint32_t id;
     uint32_t timestamp_mask;
-    uint32_t trace_base_add;
+    uint32_t trace_base_addr;
     uint32_t obj_registry_start_ptr;
     uint16_t res1;
     uint16_t obj_registry_name_size;

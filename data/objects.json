@@ -1,0 +1,178 @@
+{
+  "objectTypesNames": [
+    {
+      "value": 0,
+      "name": "Not Valid",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 1,
+      "name": "Thread",
+      "param1": "Stack Start",
+      "param2": "Stack Size"
+    },
+    {
+      "value": 2,
+      "name": "Timer",
+      "param1": "Initial Ticks",
+      "param2": "Reschedule Ticks"
+    },
+    {
+      "value": 3,
+      "name": "Queue",
+      "param1": "Queue Size",
+      "param2": "Message Size"
+    },
+    {
+      "value": 4,
+      "name": "Semaphore",
+      "param1": "Initial Instances",
+      "param2": "None"
+    },
+    {
+      "value": 5,
+      "name": "Mutex",
+      "param1": "Inheritance Flag",
+      "param2": "None"
+    },
+    {
+      "value": 6,
+      "name": "Event Flags Group",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 7,
+      "name": "Block Pool",
+      "param1": "Total Blocks",
+      "param2": "Block Size"
+    },
+    {
+      "value": 8,
+      "name": "Byte Pool",
+      "param1": "Total Bytes",
+      "param2": "None"
+    },
+    {
+      "value": 9,
+      "name": "Media",
+      "param1": "Fat Cache Size",
+      "param2": "Sector Cache Size"
+    },
+    {
+      "value": 10,
+      "name": "File",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 11,
+      "name": "IP",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 12,
+      "name": "Packet Pool",
+      "param1": "Packet Size",
+      "param2": "Number of Packets"
+    },
+    {
+      "value": 13,
+      "name": "TCP Socket",
+      "param1": "IP address",
+      "param2": "Window Size"
+    },
+    {
+      "value": 14,
+      "name": "UDP Socket",
+      "param1": "IP address",
+      "param2": "RX Queue Max"
+    },
+    {
+      "value": 15,
+      "name": "Reserved",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 16,
+      "name": "Reserved",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 17,
+      "name": "Reserved",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 18,
+      "name": "Reserved",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 19,
+      "name": "Reserved",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 20,
+      "name": "Reserved",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 21,
+      "name": "USB Host Stack Device",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 22,
+      "name": "USB Host Stack Interface",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 23,
+      "name": "USB Host Endpoint",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 24,
+      "name": "USB Host Class",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 25,
+      "name": "USB Device",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 26,
+      "name": "USB Device Interface",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 27,
+      "name": "USB Device Endpoint",
+      "param1": "None",
+      "param2": "None"
+    },
+    {
+      "value": 28,
+      "name": "USB Device Class",
+      "param1": "None",
+      "param2": "None"
+    }
+  ]
+}

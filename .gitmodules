@@ -1,0 +1,3 @@
+[submodule "external/cjson"]
+	path = external/cjson
+	url = git@github.com:davegamble/cjson
