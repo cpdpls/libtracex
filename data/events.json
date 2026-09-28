@@ -1,0 +1,3092 @@
+{
+  "eventTypesNames": [
+    {
+      "value": 1,
+      "name": "Thread Resume",
+      "info1": "Thread Ptr",
+      "info2": "Previous State",
+      "info3": "Stack Ptr",
+      "info4": "Next Thread"
+    },
+    {
+      "value": 2,
+      "name": "Thread Suspend",
+      "info1": "Thread Ptr",
+      "info2": "New State",
+      "info3": "Stack Ptr",
+      "info4": "Next Thread"
+    },
+    {
+      "value": 3,
+      "name": "ISR Enter",
+      "info1": "Stack Ptr",
+      "info2": "ISR Number",
+      "info3": "System State",
+      "info4": "Preempt Disable"
+    },
+    {
+      "value": 4,
+      "name": "ISR Exit",
+      "info1": "Stack Ptr",
+      "info2": "ISR Number",
+      "info3": "System State",
+      "info4": "Preempt Disable"
+    },
+    {
+      "value": 5,
+      "name": "Time Slice",
+      "info1": "Next Thread Ptr",
+      "info2": "System State",
+      "info3": "Preempt Disable",
+      "info4": "Stack"
+    },
+    {
+      "value": 6,
+      "name": "Running",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 10,
+      "name": "Block Allocate",
+      "info1": "Pool Ptr",
+      "info2": "Memory Ptr",
+      "info3": "Wait Option",
+      "info4": "Remaining Blocks"
+    },
+    {
+      "value": 11,
+      "name": "Block Pool Create",
+      "info1": "Pool Ptr",
+      "info2": "Pool Start",
+      "info3": "Total Blocks",
+      "info4": "Block Size"
+    },
+    {
+      "value": 12,
+      "name": "Block Pool Delete",
+      "info1": "Pool Ptr",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 13,
+      "name": "Block Pool Info Get",
+      "info1": "Pool Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 14,
+      "name": "Block Pool Performance Info Get",
+      "info1": "Pool Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 15,
+      "name": "Block Pool Performance System Info Get",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 16,
+      "name": "Block Pool Prioritize",
+      "info1": "Pool Ptr",
+      "info2": "Suspended Count",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 17,
+      "name": "Block Release",
+      "info1": "Pool Ptr",
+      "info2": "Memory Ptr",
+      "info3": "Suspended",
+      "info4": "Stack Ptr"
+    },
+    {
+      "value": 20,
+      "name": "Byte Allocate",
+      "info1": "Pool Ptr",
+      "info2": "Memory Ptr",
+      "info3": "Size Requested",
+      "info4": "Wait Option"
+    },
+    {
+      "value": 21,
+      "name": "Byte Pool Create",
+      "info1": "Pool Ptr",
+      "info2": "Start Ptr",
+      "info3": "Pool Size",
+      "info4": "Stack Ptr"
+    },
+    {
+      "value": 22,
+      "name": "Byte Pool Delete",
+      "info1": "Pool Ptr",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 23,
+      "name": "Byte Pool Info Get",
+      "info1": "Pool Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 24,
+      "name": "Byte Pool Performance Info Get",
+      "info1": "Pool Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 25,
+      "name": "Byte Pool Performance System Info Get",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 26,
+      "name": "Byte Pool Prioritize",
+      "info1": "Pool Ptr",
+      "info2": "Suspended Count",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 27,
+      "name": "Byte Release",
+      "info1": "Pool Ptr",
+      "info2": "Memory Ptr",
+      "info3": "Suspended",
+      "info4": "Available Bytes"
+    },
+    {
+      "value": 30,
+      "name": "Event Flags Create",
+      "info1": "Group Ptr",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 31,
+      "name": "Event Flags Delete",
+      "info1": "Group Ptr",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 32,
+      "name": "Event Flags Get",
+      "info1": "Group Ptr",
+      "info2": "Requested Flags",
+      "info3": "Current Flags",
+      "info4": "Get Option"
+    },
+    {
+      "value": 33,
+      "name": "Event Flags Info Get",
+      "info1": "Group Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 34,
+      "name": "Event Flags Performance Info Get",
+      "info1": "Group Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 35,
+      "name": "Event Flags Performance System Info Get",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 36,
+      "name": "Event Flags Set",
+      "info1": "Group Ptr",
+      "info2": "Flags to Set",
+      "info3": "Set Option",
+      "info4": "Suspended Count"
+    },
+    {
+      "value": 37,
+      "name": "Event Flags Set Notify",
+      "info1": "Group Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 40,
+      "name": "Interrupt Control",
+      "info1": "New Interrupt Posture",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 50,
+      "name": "Mutex Create",
+      "info1": "Mutex Ptr",
+      "info2": "Inheritance",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 51,
+      "name": "Mutex Delete",
+      "info1": "Mutex Ptr",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 52,
+      "name": "Mutex Get",
+      "info1": "Mutex Ptr",
+      "info2": "Wait Option",
+      "info3": "Owning Thread",
+      "info4": "Own Count"
+    },
+    {
+      "value": 53,
+      "name": "Mutex Info Get",
+      "info1": "Mutex Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 54,
+      "name": "Mutex Performance Info Get",
+      "info1": "Mutex Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 55,
+      "name": "Mutex Performance System Info Get",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 56,
+      "name": "Mutex Prioritize",
+      "info1": "Mutex Ptr",
+      "info2": "Suspended Count",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 57,
+      "name": "Mutex Put",
+      "info1": "Mutex Ptr",
+      "info2": "Owning Thread",
+      "info3": "Own Count",
+      "info4": "Stack Ptr"
+    },
+    {
+      "value": 60,
+      "name": "Queue Create",
+      "info1": "Queue Ptr",
+      "info2": "Message Size",
+      "info3": "Queue Start",
+      "info4": "Queue Size"
+    },
+    {
+      "value": 61,
+      "name": "Queue Delete",
+      "info1": "Queue Ptr",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 62,
+      "name": "Queue Flush",
+      "info1": "Queue Ptr",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 63,
+      "name": "Queue Front Send",
+      "info1": "Queue Ptr",
+      "info2": "Source Ptr",
+      "info3": "Wait Option",
+      "info4": "Enqueued"
+    },
+    {
+      "value": 64,
+      "name": "Queue Info Get",
+      "info1": "Queue Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 65,
+      "name": "Queue Performance Info Get",
+      "info1": "Queue Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 66,
+      "name": "Queue Performance System Info Get",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 67,
+      "name": "Queue Prioritize",
+      "info1": "Queue Ptr",
+      "info2": "Suspended Count",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 68,
+      "name": "Queue Receive",
+      "info1": "Queue Ptr",
+      "info2": "Destination Ptr",
+      "info3": "Wait Option",
+      "info4": "Enqueued"
+    },
+    {
+      "value": 69,
+      "name": "Queue Send",
+      "info1": "Queue Ptr",
+      "info2": "Source Ptr",
+      "info3": "Wait Option",
+      "info4": "Enqueued"
+    },
+    {
+      "value": 70,
+      "name": "Queue Send Notify",
+      "info1": "Queue Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 80,
+      "name": "Semaphore Ceiling Put",
+      "info1": "Semaphore Ptr",
+      "info2": "Current Count",
+      "info3": "Suspended Count",
+      "info4": "Ceiling"
+    },
+    {
+      "value": 81,
+      "name": "Semaphore Create",
+      "info1": "Semaphore Ptr",
+      "info2": "Initial Count",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 82,
+      "name": "Semaphore Delete",
+      "info1": "Semaphore Ptr",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 83,
+      "name": "Semaphore Get",
+      "info1": "Semaphore Ptr",
+      "info2": "Wait Option",
+      "info3": "Current Count",
+      "info4": "Stack Ptr"
+    },
+    {
+      "value": 84,
+      "name": "Semaphore Info Get",
+      "info1": "Semaphore Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 85,
+      "name": "Semaphore Performance Info Get",
+      "info1": "Semaphore Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 86,
+      "name": "Semaphore Performance System Info Get",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 87,
+      "name": "Semaphore Prioritize",
+      "info1": "Semaphore Ptr",
+      "info2": "Suspended Count",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 88,
+      "name": "Semaphore Put",
+      "info1": "Semaphore Ptr",
+      "info2": "Current Count",
+      "info3": "Suspended Count",
+      "info4": "Stack Ptr"
+    },
+    {
+      "value": 89,
+      "name": "Semaphore Put Notify",
+      "info1": "Semaphore Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 100,
+      "name": "Thread Create",
+      "info1": "Thread Ptr",
+      "info2": "Priority",
+      "info3": "Stack Ptr",
+      "info4": "Stack Size"
+    },
+    {
+      "value": 101,
+      "name": "Thread Delete",
+      "info1": "Thread Ptr",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 102,
+      "name": "Thread Entry Exit Notify",
+      "info1": "Thread Ptr",
+      "info2": "Thread State",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 103,
+      "name": "Thread Identify",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 104,
+      "name": "Thread Info Get",
+      "info1": "Thread Ptr",
+      "info2": "Thread State",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 105,
+      "name": "Thread Performance Info Get",
+      "info1": "Thread Ptr",
+      "info2": "Thread State",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 106,
+      "name": "Thread Performance System Info Get",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 107,
+      "name": "Thread Preemption Change",
+      "info1": "Thread Ptr",
+      "info2": "New Threshold",
+      "info3": "Old Threshold",
+      "info4": "Thread State"
+    },
+    {
+      "value": 108,
+      "name": "Thread Priority Change",
+      "info1": "Thread Ptr",
+      "info2": "New Priority",
+      "info3": "Old Priority",
+      "info4": "Thread State"
+    },
+    {
+      "value": 109,
+      "name": "Thread Relinquish",
+      "info1": "Stack Ptr",
+      "info2": "Next Thread Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 110,
+      "name": "Thread Reset",
+      "info1": "Thread Ptr",
+      "info2": "Thread State",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 111,
+      "name": "Thread Resume API",
+      "info1": "Thread Ptr",
+      "info2": "Thread State",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 112,
+      "name": "Thread Sleep",
+      "info1": "Sleep Value",
+      "info2": "Thread State",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 113,
+      "name": "Thread Stack Error Notify",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 114,
+      "name": "Thread Suspend API",
+      "info1": "Thread Ptr",
+      "info2": "Thread State",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 115,
+      "name": "Thread Terminate",
+      "info1": "Thread Ptr",
+      "info2": "Thread State",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 116,
+      "name": "Thread Time Slice Change",
+      "info1": "Thread Ptr",
+      "info2": "New Timeslice",
+      "info3": "Old Timeslice",
+      "info4": "None"
+    },
+    {
+      "value": 117,
+      "name": "Thread Wait Abort",
+      "info1": "Thread Ptr",
+      "info2": "Thread State",
+      "info3": "Stack Ptr",
+      "info4": "None"
+    },
+    {
+      "value": 120,
+      "name": "Time Get",
+      "info1": "Current Time",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 121,
+      "name": "Time Set",
+      "info1": "New Time",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 122,
+      "name": "Timer Activate",
+      "info1": "Timer Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 123,
+      "name": "Timer Change",
+      "info1": "Timer Ptr",
+      "info2": "Initial Ticks",
+      "info3": "Reschedule Ticks",
+      "info4": "None"
+    },
+    {
+      "value": 124,
+      "name": "Timer Create",
+      "info1": "Timer Ptr",
+      "info2": "Initial Ticks",
+      "info3": "Reschedule Ticks",
+      "info4": "Enable"
+    },
+    {
+      "value": 125,
+      "name": "Timer Deactivate",
+      "info1": "Timer Ptr",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 126,
+      "name": "Timer Delete",
+      "info1": "Timer Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 127,
+      "name": "Timer Info Get",
+      "info1": "Timer Ptr",
+      "info2": "Stack Ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 128,
+      "name": "Timer Performance Info Get",
+      "info1": "Timer Ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 129,
+      "name": "Timer Performance System Info Get",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 201,
+      "name": "Internal Log Sector Cache Miss media ptr",
+      "info1": "sector",
+      "info2": "total misses",
+      "info3": "cache size",
+      "info4": "None"
+    },
+    {
+      "value": 202,
+      "name": "Internal Dir Cache Miss media ptr",
+      "info1": "total misses",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 203,
+      "name": "Internal Media Flush media ptr",
+      "info1": "dirty sectors",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 204,
+      "name": "Internal Dir Entry Read media ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 205,
+      "name": "Internal Dir Entry Write media ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 206,
+      "name": "Internal IO Driver Read media ptr",
+      "info1": "sector",
+      "info2": "number of sectors",
+      "info3": "buffer",
+      "info4": "None"
+    },
+    {
+      "value": 207,
+      "name": "Internal IO Driver Write media ptr",
+      "info1": "sector",
+      "info2": "number of sectors",
+      "info3": "buffer",
+      "info4": "None"
+    },
+    {
+      "value": 208,
+      "name": "Internal IO Driver Flush media ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 209,
+      "name": "Internal IO Driver Abort media ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 210,
+      "name": "Internal IO Driver Init media ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 211,
+      "name": "Internal IO Driver Boot Read media ptr",
+      "info1": "buffer",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 212,
+      "name": "Internal IO Driver Release Sectors media ptr",
+      "info1": "sector",
+      "info2": "number of sectors",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 213,
+      "name": "Internal IO Driver Boot Write media ptr",
+      "info1": "buffer",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 214,
+      "name": "Internal IO Driver Uninit media ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 220,
+      "name": "Directory Attributes Read media ptr",
+      "info1": "directory name",
+      "info2": "attributes",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 221,
+      "name": "Directory Attributes Set media ptr",
+      "info1": "directory name",
+      "info2": "attributes",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 222,
+      "name": "Directory Create media ptr",
+      "info1": "directory name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 223,
+      "name": "Directory Default Get media ptr",
+      "info1": "return path name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 224,
+      "name": "Directory Default Set media ptr",
+      "info1": "new path name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 225,
+      "name": "Directory Delete media ptr",
+      "info1": "directory name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 226,
+      "name": "Directory First Entry Find media ptr",
+      "info1": "directory name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 227,
+      "name": "Directory First Full Entry Find media ptr",
+      "info1": "directory name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 228,
+      "name": "Directory Information Get media ptr",
+      "info1": "directory name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 229,
+      "name": "Directory Local Path Clear media ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 230,
+      "name": "Directory Local Path Get media ptr",
+      "info1": "return path name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 231,
+      "name": "Directory Local Path Restore media ptr",
+      "info1": "local path ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 232,
+      "name": "Directory Local Path Set media ptr",
+      "info1": "local path ptr",
+      "info2": "new path name",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 233,
+      "name": "Directory Long Name Get media ptr",
+      "info1": "short file name",
+      "info2": "long file name",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 234,
+      "name": "Directory Name Test media ptr",
+      "info1": "directory name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 235,
+      "name": "Directory Next Entry Find media ptr",
+      "info1": "directory name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 236,
+      "name": "Directory Next Full Entry Find media ptr",
+      "info1": "directory name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 237,
+      "name": "Directory Rename media ptr",
+      "info1": "old directory name",
+      "info2": "new directory name",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 238,
+      "name": "Directory Short Name Get media ptr",
+      "info1": "long file name",
+      "info2": "short file name",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 239,
+      "name": "File Allocate file ptr",
+      "info1": "size",
+      "info2": "previous size",
+      "info3": "new size",
+      "info4": "None"
+    },
+    {
+      "value": 240,
+      "name": "File Attributes Read media ptr",
+      "info1": "file name",
+      "info2": "attributes",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 241,
+      "name": "File Attributes Set media ptr",
+      "info1": "file name",
+      "info2": "attributes",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 242,
+      "name": "File Best Effort Allocate file ptr",
+      "info1": "size",
+      "info2": "actual size allocated",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 243,
+      "name": "File Close file ptr",
+      "info1": "None",
+      "info2": "file size",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 244,
+      "name": "File Create media ptr",
+      "info1": "file name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 245,
+      "name": "File Date Time Set media ptr",
+      "info1": "file name",
+      "info2": "year",
+      "info3": "month",
+      "info4": "None"
+    },
+    {
+      "value": 246,
+      "name": "File Delete media ptr",
+      "info1": "file name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 247,
+      "name": "File Open media ptr",
+      "info1": "file ptr",
+      "info2": "file name",
+      "info3": "open type",
+      "info4": "None"
+    },
+    {
+      "value": 248,
+      "name": "File Read file ptr",
+      "info1": "buffer ptr",
+      "info2": "request size",
+      "info3": "actual size",
+      "info4": "None"
+    },
+    {
+      "value": 249,
+      "name": "File Relative Seek file ptr",
+      "info1": "byte offset",
+      "info2": "seek from",
+      "info3": "previous offset",
+      "info4": "None"
+    },
+    {
+      "value": 250,
+      "name": "File Rename media ptr",
+      "info1": "old file name",
+      "info2": "new file name",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 251,
+      "name": "File Seek file ptr",
+      "info1": "byte offset",
+      "info2": "previous offset",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 252,
+      "name": "File Truncate file ptr",
+      "info1": "size",
+      "info2": "previous size",
+      "info3": "new size",
+      "info4": "None"
+    },
+    {
+      "value": 253,
+      "name": "File Truncate Release file ptr",
+      "info1": "size",
+      "info2": "previous size",
+      "info3": "new size",
+      "info4": "None"
+    },
+    {
+      "value": 254,
+      "name": "File Write file ptr",
+      "info1": "buffer ptr",
+      "info2": "size",
+      "info3": "bytes written",
+      "info4": "None"
+    },
+    {
+      "value": 255,
+      "name": "Media Abort media ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 256,
+      "name": "Media Cache Invalidate media ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 257,
+      "name": "Media Check media ptr",
+      "info1": "scratch memory",
+      "info2": "scratch memory size",
+      "info3": "errors",
+      "info4": "None"
+    },
+    {
+      "value": 258,
+      "name": "Media Close media ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 259,
+      "name": "Media Flush media ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 260,
+      "name": "Media Format media ptr",
+      "info1": "root entries",
+      "info2": "sectors",
+      "info3": "sectors per cluster",
+      "info4": "None"
+    },
+    {
+      "value": 261,
+      "name": "Media Open media ptr",
+      "info1": "media driver",
+      "info2": "memory ptr",
+      "info3": "memory size",
+      "info4": "None"
+    },
+    {
+      "value": 262,
+      "name": "Media Read media ptr",
+      "info1": "logical sector",
+      "info2": "buffer ptr",
+      "info3": "bytes read",
+      "info4": "None"
+    },
+    {
+      "value": 263,
+      "name": "Media Space Available media ptr",
+      "info1": "available bytes ptr",
+      "info2": "available clusters",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 264,
+      "name": "Media Volume Get media ptr",
+      "info1": "volume name",
+      "info2": "volume source",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 265,
+      "name": "Media Volume Set media ptr",
+      "info1": "volume name",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 266,
+      "name": "Media Write media ptr",
+      "info1": "logical sector",
+      "info2": "buffer ptr",
+      "info3": "bytes written",
+      "info4": "None"
+    },
+    {
+      "value": 267,
+      "name": "System Date Get year",
+      "info1": "month",
+      "info2": "day",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 268,
+      "name": "System Date Set year",
+      "info1": "month",
+      "info2": "day",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 269,
+      "name": "System Initialize None",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 270,
+      "name": "System Time Get hour",
+      "info1": "minute",
+      "info2": "second",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 271,
+      "name": "System Time Set hour",
+      "info1": "minute",
+      "info2": "second",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 272,
+      "name": "Unicode Directory Create media ptr",
+      "info1": "source unicode",
+      "info2": "source length",
+      "info3": "short name",
+      "info4": "None"
+    },
+    {
+      "value": 273,
+      "name": "Unicode Directory Rename media ptr",
+      "info1": "source unicode",
+      "info2": "source length",
+      "info3": "new name",
+      "info4": "None"
+    },
+    {
+      "value": 274,
+      "name": "Unicode File Create media ptr",
+      "info1": "source unicode",
+      "info2": "source length",
+      "info3": "short name",
+      "info4": "None"
+    },
+    {
+      "value": 275,
+      "name": "Unicode File Rename media ptr",
+      "info1": "source unicode",
+      "info2": "source length",
+      "info3": "new name",
+      "info4": "None"
+    },
+    {
+      "value": 276,
+      "name": "Unicode Length Get unicode name",
+      "info1": "length",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 277,
+      "name": "Unicode Name Get media ptr",
+      "info1": "source short name",
+      "info2": "unicode name",
+      "info3": "length",
+      "info4": "None"
+    },
+    {
+      "value": 278,
+      "name": "Unicode Short Name Get media ptr",
+      "info1": "source unicode name",
+      "info2": "length",
+      "info3": "short name",
+      "info4": "None"
+    },
+    {
+      "value": 300,
+      "name": "Internal ARP Request Receive ip ptr",
+      "info1": "source IP address",
+      "info2": "packet ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 301,
+      "name": "Internal ARP Request Send ip ptr",
+      "info1": "destination IP address",
+      "info2": "packet ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 302,
+      "name": "Internal ARP Response Receive ip ptr",
+      "info1": "source IP address",
+      "info2": "packet ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 303,
+      "name": "Internal ARP Response Send ip ptr",
+      "info1": "destination IP address",
+      "info2": "packet ptr",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 304,
+      "name": "Internal ICMP Receive ip ptr",
+      "info1": "source IP address",
+      "info2": "packet ptr",
+      "info3": "header word 0",
+      "info4": "None"
+    },
+    {
+      "value": 305,
+      "name": "Internal ICMP Send ip ptr",
+      "info1": "destination IP address",
+      "info2": "packet ptr",
+      "info3": "header 0",
+      "info4": "None"
+    },
+    {
+      "value": 306,
+      "name": "Internal IGMP Receive ip ptr",
+      "info1": "source IP address",
+      "info2": "packet ptr",
+      "info3": "header word 0",
+      "info4": "None"
+    },
+    {
+      "value": 308,
+      "name": "Internal IP Receive ip ptr",
+      "info1": "source IP address",
+      "info2": "packet ptr",
+      "info3": "packet length",
+      "info4": "None"
+    },
+    {
+      "value": 309,
+      "name": "Internal IP Send ip ptr",
+      "info1": "destination IP address",
+      "info2": "packet ptr",
+      "info3": "length",
+      "info4": "None"
+    },
+    {
+      "value": 310,
+      "name": "Internal TCP Data Receive ip ptr",
+      "info1": "source IP address",
+      "info2": "packet ptr",
+      "info3": "sequence",
+      "info4": "None"
+    },
+    {
+      "value": 311,
+      "name": "Internal TCP Data Send ip ptr",
+      "info1": "socket ptr",
+      "info2": "packet ptr",
+      "info3": "sequence",
+      "info4": "None"
+    },
+    {
+      "value": 312,
+      "name": "Internal TCP FIN Receive ip ptr",
+      "info1": "socket ptr",
+      "info2": "packet ptr",
+      "info3": "sequence",
+      "info4": "None"
+    },
+    {
+      "value": 313,
+      "name": "Internal TCP FIN Send ip ptr",
+      "info1": "socket ptr",
+      "info2": "packet ptr",
+      "info3": "sequence",
+      "info4": "None"
+    },
+    {
+      "value": 314,
+      "name": "Internal TCP Reset Receive ip ptr",
+      "info1": "socket ptr",
+      "info2": "packet ptr",
+      "info3": "sequence",
+      "info4": "None"
+    },
+    {
+      "value": 315,
+      "name": "Internal TCP Reset Send ip ptr",
+      "info1": "socket ptr",
+      "info2": "packet ptr",
+      "info3": "sequence",
+      "info4": "None"
+    },
+    {
+      "value": 316,
+      "name": "Internal TCP SYN Receive ip ptr",
+      "info1": "socket ptr",
+      "info2": "packet ptr",
+      "info3": "sequence",
+      "info4": "None"
+    },
+    {
+      "value": 317,
+      "name": "Internal TCP SYN Send ip ptr",
+      "info1": "socket ptr",
+      "info2": "packet ptr",
+      "info3": "sequence",
+      "info4": "None"
+    },
+    {
+      "value": 318,
+      "name": "Internal UDP Receive ip ptr",
+      "info1": "socket ptr",
+      "info2": "packet ptr",
+      "info3": "header word 0",
+      "info4": "None"
+    },
+    {
+      "value": 319,
+      "name": "Internal UDP Send ip ptr",
+      "info1": "socket ptr",
+      "info2": "packet ptr",
+      "info3": "header 0",
+      "info4": "None"
+    },
+    {
+      "value": 320,
+      "name": "Internal RARP Receive ip ptr",
+      "info1": "target IP address",
+      "info2": "packet ptr",
+      "info3": "header word 1",
+      "info4": "None"
+    },
+    {
+      "value": 321,
+      "name": "Internal RARP Send ip ptr",
+      "info1": "target IP address",
+      "info2": "packet ptr",
+      "info3": "header word 1",
+      "info4": "None"
+    },
+    {
+      "value": 322,
+      "name": "Internal TCP Retry ip ptr",
+      "info1": "socket ptr",
+      "info2": "packet ptr",
+      "info3": "number of retries",
+      "info4": "None"
+    },
+    {
+      "value": 323,
+      "name": "Internal TCP State Change ip ptr",
+      "info1": "socket ptr",
+      "info2": "previous state",
+      "info3": "new state",
+      "info4": "None"
+    },
+    {
+      "value": 324,
+      "name": "Internal IO Driver Packet Send ip ptr",
+      "info1": "packet ptr",
+      "info2": "packet size",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 325,
+      "name": "Internal IO Driver Initialize ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 326,
+      "name": "Internal IO Driver Link Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 327,
+      "name": "Internal IO Driver Link Disable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 328,
+      "name": "Internal IO Driver Packet Broadcast ip ptr",
+      "info1": "packet ptr",
+      "info2": "packet size",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 329,
+      "name": "Internal IO Driver ARP Send ip ptr",
+      "info1": "packet ptr",
+      "info2": "packet size",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 330,
+      "name": "Internal IO Driver ARP Response Send ip ptr",
+      "info1": "packet ptr",
+      "info2": "packet size",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 331,
+      "name": "Internal IO Driver RARP Send ip ptr",
+      "info1": "packet ptr",
+      "info2": "packet size",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 332,
+      "name": "Internal IO Driver Multicast Join ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 333,
+      "name": "Internal IO Driver Multicast Leave ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 334,
+      "name": "Internal IO Driver Get Status ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 335,
+      "name": "Internal IO Driver Get Speed ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 336,
+      "name": "Internal IO Driver Get Duplex Type ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 337,
+      "name": "Internal IO Driver Get Error Count ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 338,
+      "name": "Internal IO Driver Get RX Count ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 339,
+      "name": "Internal IO Driver Get TX Count ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 340,
+      "name": "Internal IO Driver Get Alloc Errors ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 341,
+      "name": "Internal IO Driver Uninitialize ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 342,
+      "name": "Internal IO Driver Deferred Processing ip ptr",
+      "info1": "packet ptr",
+      "info2": "packet size",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 350,
+      "name": "ARP Dynamic Entries Invalidate ip ptr",
+      "info1": "entries invalidated",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 351,
+      "name": "ARP Dynamic Entry Set ip ptr",
+      "info1": "ip address",
+      "info2": "physical msw",
+      "info3": "physical lsw",
+      "info4": "None"
+    },
+    {
+      "value": 352,
+      "name": "ARP Enable ip ptr",
+      "info1": "arp cache memory",
+      "info2": "arp cache size",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 353,
+      "name": "ARP Gratuitous Send ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 354,
+      "name": "ARP Hardware Address Find ip ptr",
+      "info1": "ip address",
+      "info2": "physical msw",
+      "info3": "physical lsw",
+      "info4": "None"
+    },
+    {
+      "value": 355,
+      "name": "ARP Info Get ip ptr",
+      "info1": "arps sent",
+      "info2": "arp responses",
+      "info3": "arps received",
+      "info4": "None"
+    },
+    {
+      "value": 356,
+      "name": "ARP IP Address Find ip ptr",
+      "info1": "ip address",
+      "info2": "physical msw",
+      "info3": "physical lsw",
+      "info4": "None"
+    },
+    {
+      "value": 357,
+      "name": "ARP Static Entries Delete ip ptr",
+      "info1": "entries deleted",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 358,
+      "name": "ARP Static Entry Create ip ptr",
+      "info1": "ip address",
+      "info2": "physical msw",
+      "info3": "physical lsw",
+      "info4": "None"
+    },
+    {
+      "value": 359,
+      "name": "ARP Static Entry Delete ip ptr",
+      "info1": "ip address",
+      "info2": "physical msw",
+      "info3": "physical lsw",
+      "info4": "None"
+    },
+    {
+      "value": 360,
+      "name": "ICMP Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 361,
+      "name": "ICMP Info Get ip ptr",
+      "info1": "pings sent",
+      "info2": "ping responses",
+      "info3": "pings received",
+      "info4": "None"
+    },
+    {
+      "value": 362,
+      "name": "ICMP Ping ip ptr",
+      "info1": "ip address",
+      "info2": "data ptr",
+      "info3": "data size",
+      "info4": "None"
+    },
+    {
+      "value": 363,
+      "name": "IGMP Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 364,
+      "name": "IGMP Info Get ip ptr",
+      "info1": "reports sent",
+      "info2": "queries received",
+      "info3": "groups joined",
+      "info4": "None"
+    },
+    {
+      "value": 365,
+      "name": "IGMP Loopback Disable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 366,
+      "name": "IGMP Loopback Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 367,
+      "name": "IGMP Multicast Join ip ptr",
+      "info1": "group address",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 368,
+      "name": "IGMP Multicast Leave ip ptr",
+      "info1": "group address",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 369,
+      "name": "IP Address Change Notify ip ptr",
+      "info1": "ip address change notify",
+      "info2": "additional info",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 370,
+      "name": "IP Address Get ip ptr",
+      "info1": "ip address",
+      "info2": "network mask",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 371,
+      "name": "IP Address Set ip ptr",
+      "info1": "ip address",
+      "info2": "network mask",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 372,
+      "name": "IP Create ip ptr",
+      "info1": "ip address",
+      "info2": "network mask",
+      "info3": "default pool",
+      "info4": "None"
+    },
+    {
+      "value": 373,
+      "name": "IP Delete ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 374,
+      "name": "IP Driver Direct Command ip ptr",
+      "info1": "command",
+      "info2": "return value",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 375,
+      "name": "IP Forwarding Disable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 376,
+      "name": "IP Forwarding Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 377,
+      "name": "IP Fragment Disable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 378,
+      "name": "IP Fragment Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 379,
+      "name": "IP Gateway Address Set ip ptr",
+      "info1": "gateway address",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 380,
+      "name": "IP Info Get ip ptr",
+      "info1": "bytes sent",
+      "info2": "bytes received",
+      "info3": "packets dropped",
+      "info4": "None"
+    },
+    {
+      "value": 381,
+      "name": "IP Raw Packet Disable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 382,
+      "name": "IP Raw Packet Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 383,
+      "name": "IP Raw Packet Receive ip ptr",
+      "info1": "packet ptr",
+      "info2": "wait option",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 384,
+      "name": "IP Raw Packet Send ip ptr",
+      "info1": "packet ptr",
+      "info2": "destination ip",
+      "info3": "type of service",
+      "info4": "None"
+    },
+    {
+      "value": 385,
+      "name": "IP Status Check ip ptr",
+      "info1": "needed status",
+      "info2": "actual status",
+      "info3": "wait option",
+      "info4": "None"
+    },
+    {
+      "value": 386,
+      "name": "Packet Allocate pool ptr",
+      "info1": "packet ptr",
+      "info2": "packet type",
+      "info3": "available packets",
+      "info4": "None"
+    },
+    {
+      "value": 387,
+      "name": "Packet Copy packet ptr",
+      "info1": "new packet ptr",
+      "info2": "pool ptr",
+      "info3": "wait option",
+      "info4": "None"
+    },
+    {
+      "value": 388,
+      "name": "Packet Data Append packet ptr",
+      "info1": "data start",
+      "info2": "data size",
+      "info3": "pool ptr",
+      "info4": "None"
+    },
+    {
+      "value": 389,
+      "name": "Packet Data Retrieve packet ptr",
+      "info1": "buffer start",
+      "info2": "bytes copied",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 390,
+      "name": "Packet Length Get packet ptr",
+      "info1": "length",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 391,
+      "name": "Packet Pool Create pool ptr",
+      "info1": "payload size",
+      "info2": "memory ptr",
+      "info3": "memory size",
+      "info4": "None"
+    },
+    {
+      "value": 392,
+      "name": "Packet Pool Delete pool ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 393,
+      "name": "Packet Pool Info Get pool ptr",
+      "info1": "total packets",
+      "info2": "free packets",
+      "info3": "empty requests",
+      "info4": "None"
+    },
+    {
+      "value": 394,
+      "name": "Packet Release packet ptr",
+      "info1": "packet status",
+      "info2": "available packets",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 395,
+      "name": "Packet Transmit Release packet ptr",
+      "info1": "packet status",
+      "info2": "available packets",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 396,
+      "name": "RARP Disable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 397,
+      "name": "RARP Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 398,
+      "name": "RARP Info Get ip ptr",
+      "info1": "requests sent",
+      "info2": "responses received",
+      "info3": "invalids",
+      "info4": "None"
+    },
+    {
+      "value": 399,
+      "name": "System Initialize None",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 400,
+      "name": "TCP Client Socket Bind ip ptr",
+      "info1": "socket ptr",
+      "info2": "port",
+      "info3": "wait option",
+      "info4": "None"
+    },
+    {
+      "value": 401,
+      "name": "TCP Client Socket Connect ip ptr",
+      "info1": "socket ptr",
+      "info2": "server ip",
+      "info3": "server port",
+      "info4": "None"
+    },
+    {
+      "value": 402,
+      "name": "TCP Client Socket Port Get ip ptr",
+      "info1": "socket ptr",
+      "info2": "port",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 403,
+      "name": "TCP Client Socket Unbind ip ptr",
+      "info1": "socket ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 404,
+      "name": "TCP Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 405,
+      "name": "TCP Free Port Find ip ptr",
+      "info1": "port",
+      "info2": "free port",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 406,
+      "name": "TCP Info Get ip ptr",
+      "info1": "bytes sent",
+      "info2": "bytes received",
+      "info3": "invalid packets",
+      "info4": "None"
+    },
+    {
+      "value": 407,
+      "name": "TCP Server Socket Accept ip ptr",
+      "info1": "socket ptr",
+      "info2": "wait option",
+      "info3": "socket state",
+      "info4": "None"
+    },
+    {
+      "value": 408,
+      "name": "TCP Server Socket Listen ip ptr",
+      "info1": "port",
+      "info2": "socket ptr",
+      "info3": "listen queue size",
+      "info4": "None"
+    },
+    {
+      "value": 409,
+      "name": "TCP Server Socket Relisten ip ptr",
+      "info1": "port",
+      "info2": "socket ptr",
+      "info3": "socket state",
+      "info4": "None"
+    },
+    {
+      "value": 410,
+      "name": "TCP Server Socket Unaccept ip ptr",
+      "info1": "socket ptr",
+      "info2": "socket state",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 411,
+      "name": "TCP Server Socket Unlisten ip ptr",
+      "info1": "port",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 412,
+      "name": "TCP Socket Create ip ptr",
+      "info1": "socket ptr",
+      "info2": "type of service",
+      "info3": "window size",
+      "info4": "None"
+    },
+    {
+      "value": 413,
+      "name": "TCP Socket Delete ip ptr",
+      "info1": "socket ptr",
+      "info2": "socket state",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 414,
+      "name": "TCP Socket Disconnect ip ptr",
+      "info1": "socket ptr",
+      "info2": "wait option",
+      "info3": "socket state",
+      "info4": "None"
+    },
+    {
+      "value": 415,
+      "name": "TCP Socket Info Get ip ptr",
+      "info1": "socket ptr",
+      "info2": "bytes sent",
+      "info3": "bytes received",
+      "info4": "None"
+    },
+    {
+      "value": 416,
+      "name": "TCP Socket MSS Get ip ptr",
+      "info1": "socket ptr",
+      "info2": "mss",
+      "info3": "socket state",
+      "info4": "None"
+    },
+    {
+      "value": 417,
+      "name": "TCP Socket MSS Peer Get ip ptr",
+      "info1": "socket ptr",
+      "info2": "peer mss",
+      "info3": "socket state",
+      "info4": "None"
+    },
+    {
+      "value": 418,
+      "name": "TCP Socket MSS Set ip ptr",
+      "info1": "socket ptr",
+      "info2": "mss",
+      "info3": "socket state",
+      "info4": "None"
+    },
+    {
+      "value": 419,
+      "name": "TCP Socket Receive socket ptr",
+      "info1": "packet ptr",
+      "info2": "length",
+      "info3": "rx sequence",
+      "info4": "None"
+    },
+    {
+      "value": 420,
+      "name": "TCP Socket Receive Notify ip ptr",
+      "info1": "socket ptr",
+      "info2": "receive notify",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 421,
+      "name": "TCP Socket Send socket ptr",
+      "info1": "packet ptr",
+      "info2": "length",
+      "info3": "tx sequence",
+      "info4": "None"
+    },
+    {
+      "value": 422,
+      "name": "TCP Socket State Wait ip ptr",
+      "info1": "socket ptr",
+      "info2": "desired state",
+      "info3": "previous state",
+      "info4": "None"
+    },
+    {
+      "value": 423,
+      "name": "TCP Socket Transmit Configure ip ptr",
+      "info1": "socket ptr",
+      "info2": "queue depth",
+      "info3": "timeout",
+      "info4": "None"
+    },
+    {
+      "value": 424,
+      "name": "UDP Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 425,
+      "name": "UDP Free Port Find ip ptr",
+      "info1": "port",
+      "info2": "free port",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 426,
+      "name": "UDP Info Get ip ptr",
+      "info1": "bytes sent",
+      "info2": "bytes received",
+      "info3": "invalid packets",
+      "info4": "None"
+    },
+    {
+      "value": 427,
+      "name": "UDP Socket Bind ip ptr",
+      "info1": "socket ptr",
+      "info2": "port",
+      "info3": "wait option",
+      "info4": "None"
+    },
+    {
+      "value": 428,
+      "name": "UDP Socket Checksum Disable ip ptr",
+      "info1": "socket ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 429,
+      "name": "UDP Socket Checksum Enable ip ptr",
+      "info1": "socket ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 430,
+      "name": "UDP Socket Create ip ptr",
+      "info1": "socket ptr",
+      "info2": "type of service",
+      "info3": "queue maximum",
+      "info4": "None"
+    },
+    {
+      "value": 431,
+      "name": "UDP Socket Delete ip ptr",
+      "info1": "socket ptr",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 432,
+      "name": "UDP Socket Info Get ip ptr",
+      "info1": "socket ptr",
+      "info2": "bytes sent",
+      "info3": "bytes received",
+      "info4": "None"
+    },
+    {
+      "value": 433,
+      "name": "UDP Socket Port Get ip ptr",
+      "info1": "socket ptr",
+      "info2": "port",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 434,
+      "name": "UDP Socket Receive ip ptr",
+      "info1": "socket ptr",
+      "info2": "packet ptr",
+      "info3": "packet size",
+      "info4": "None"
+    },
+    {
+      "value": 435,
+      "name": "UDP Socket Receive Notify ip ptr",
+      "info1": "socket ptr",
+      "info2": "receive notify",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 436,
+      "name": "UDP Socket Send socket ptr",
+      "info1": "packet ptr",
+      "info2": "packet size",
+      "info3": "ip address",
+      "info4": "None"
+    },
+    {
+      "value": 437,
+      "name": "UDP Socket Unbind ip ptr",
+      "info1": "socket ptr",
+      "info2": "port",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 438,
+      "name": "UDP Source Extract packet ptr",
+      "info1": "ip address",
+      "info2": "port",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 439,
+      "name": "IP Interface Attach ip ptr",
+      "info1": "ip address",
+      "info2": "interface index",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 440,
+      "name": "UDP Socket Bytes Available ip ptr",
+      "info1": "socket ptr",
+      "info2": "bytes available",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 441,
+      "name": "IP Static Route Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 442,
+      "name": "IP Static Route Disable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 443,
+      "name": "IP Static Route Add ip ptr",
+      "info1": "network address",
+      "info2": "net mask",
+      "info3": "next hop",
+      "info4": "None"
+    },
+    {
+      "value": 444,
+      "name": "IP Static Route Delete ip ptr",
+      "info1": "network address",
+      "info2": "net mask",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 445,
+      "name": "TCP Socket Peer Info Get socket ptr",
+      "info1": "network address",
+      "info2": "port",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 446,
+      "name": "TCP Socket Window Update Notify Set socket ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 447,
+      "name": "UDP Socket Interface Set socket ptr",
+      "info1": "interface index",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 448,
+      "name": "UDP Socket Interface Clear socket ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 449,
+      "name": "IP Interface Info Get ip ptr",
+      "info1": "ip address",
+      "info2": "mtu size",
+      "info3": "interface index",
+      "info4": "None"
+    },
+    {
+      "value": 450,
+      "name": "Packet Data Extract Offset packet ptr",
+      "info1": "buffer length",
+      "info2": "bytes copied",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 470,
+      "name": "NXD ICMP Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 471,
+      "name": "ICMP Ping6 ip ptr",
+      "info1": "ip address",
+      "info2": "data ptr",
+      "info3": "data size",
+      "info4": "None"
+    },
+    {
+      "value": 472,
+      "name": "NXD UDP Source Extract packet ptr",
+      "info1": "IP Version",
+      "info2": "ip address",
+      "info3": "port",
+      "info4": "None"
+    },
+    {
+      "value": 473,
+      "name": "NXD UDP Socket Set Interface udp socket ptr",
+      "info1": "interface id",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 474,
+      "name": "NXD TCP Socket Set Interface tcp socket ptr",
+      "info1": "interface id",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 475,
+      "name": "NXD UDP Socket Send socket ptr",
+      "info1": "packet ptr",
+      "info2": "packet size",
+      "info3": "ip address",
+      "info4": "None"
+    },
+    {
+      "value": 476,
+      "name": "NXD ND Cache Delete dest ip",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 477,
+      "name": "NXD ND Cache Entry Set IP address",
+      "info1": "physical msw",
+      "info2": "physical lsw",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 478,
+      "name": "ND Cache IP Address Find ip ptr",
+      "info1": "IP address",
+      "info2": "physical msw",
+      "info3": "physical lsw",
+      "info4": "None"
+    },
+    {
+      "value": 479,
+      "name": "NXD ND Cache Invalidate ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 480,
+      "name": "NXD IPV6 Global Address Get ip ptr",
+      "info1": "IP address lsw",
+      "info2": "prefix length",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 481,
+      "name": "NXD IPV6 Global Address Set ip ptr",
+      "info1": "IP address lsw",
+      "info2": "prefix length",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 482,
+      "name": "IP Static Route Add ip ptr",
+      "info1": "network address",
+      "info2": "net mask",
+      "info3": "next hop address",
+      "info4": "None"
+    },
+    {
+      "value": 483,
+      "name": "IP Static Routing Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 484,
+      "name": "IP Static Routing Disable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 485,
+      "name": "IPV6 Enable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 486,
+      "name": "NXD IPV6 Raw Packet Send ip ptr",
+      "info1": "ip address lsw",
+      "info2": "protocol",
+      "info3": "packet ptr",
+      "info4": "None"
+    },
+    {
+      "value": 487,
+      "name": "NXD IP Raw Packet Send ip ptr",
+      "info1": "ip address lsw",
+      "info2": "type of service",
+      "info3": "packet ptr",
+      "info4": "None"
+    },
+    {
+      "value": 488,
+      "name": "NXD IPV6 Linklocal Address Get ip ptr",
+      "info1": "IP address lsw",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 489,
+      "name": "NXD IPV6 Linklocal Address Set ip ptr",
+      "info1": "IP address lsw",
+      "info2": "prefix length",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 490,
+      "name": "NXD IPV6 Initiate DAD Process ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 491,
+      "name": "NXD IPV6 Default Router Add ip ptr",
+      "info1": "router addr lsw",
+      "info2": "router lifetime",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 492,
+      "name": "NXD IPV6 Default Router Delete ip ptr",
+      "info1": "router addr lsw",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 493,
+      "name": "NXD IPV6 Interface Address Get ip ptr",
+      "info1": "IP address lsw",
+      "info2": "prefix length",
+      "info3": "interface index",
+      "info4": "None"
+    },
+    {
+      "value": 494,
+      "name": "NXD IPV6 Interface Address Set ip ptr",
+      "info1": "IP address lsw",
+      "info2": "prefix length",
+      "info3": "interface index",
+      "info4": "None"
+    },
+    {
+      "value": 495,
+      "name": "NXD TCP Socket Peer Info Get socket ptr",
+      "info1": "Peer IP address",
+      "info2": "peer port",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 496,
+      "name": "NXD IP Max Payload Size Find src address",
+      "info1": "dst address",
+      "info2": "payload length",
+      "info3": "start offset",
+      "info4": "None"
+    },
+    {
+      "value": 497,
+      "name": "IPV6 Disable ip ptr",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 498,
+      "name": "NXD IPV6 Address Change Notify ip ptr",
+      "info1": "notify callback",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 499,
+      "name": "NXD IPV6 Stateless Address Autoconfig Enable ip ptr",
+      "info1": "interface index",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 500,
+      "name": "NXD IPV6 Stateless Address Autoconfig Disable ip ptr",
+      "info1": "interface index",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 501,
+      "name": "NXD IP Raw Packet Filter Set ip ptr",
+      "info1": "raw packet filter",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 601,
+      "name": "Host Stack Class Instance Create",
+      "info1": "class",
+      "info2": "class instance",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 602,
+      "name": "Host Stack Class Instance Destroy",
+      "info1": "class",
+      "info2": "class instance",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 603,
+      "name": "Host Stack Configuration Delete",
+      "info1": "configuration",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 604,
+      "name": "Host Stack Configuration Enumerate",
+      "info1": "device",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 605,
+      "name": "Host Stack Configuration Instance Create",
+      "info1": "configuration",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 606,
+      "name": "Host Stack Configuration Instance Delete",
+      "info1": "configuration",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 607,
+      "name": "Host Stack Configuration Set",
+      "info1": "configuration",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 608,
+      "name": "Host Stack Device Address Set",
+      "info1": "device",
+      "info2": "device address",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 609,
+      "name": "Host Stack Device Configuration Get",
+      "info1": "device",
+      "info2": "configuration",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 610,
+      "name": "Host Stack Device Configuration Select",
+      "info1": "device",
+      "info2": "configuration",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 611,
+      "name": "Host Stack Device Descriptor Read",
+      "info1": "device",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 612,
+      "name": "Host Stack Device Get",
+      "info1": "device index",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 613,
+      "name": "Host Stack Device Remove",
+      "info1": "hcd",
+      "info2": "parent",
+      "info3": "port index",
+      "info4": "device"
+    },
+    {
+      "value": 614,
+      "name": "Host Stack Device Resource Free",
+      "info1": "device",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 615,
+      "name": "Host Stack Endpoint Instance Create",
+      "info1": "device",
+      "info2": "endpoint",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 616,
+      "name": "Host Stack Endpoint Instance Delete",
+      "info1": "device",
+      "info2": "endpoint",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 617,
+      "name": "Host Stack Endpoint Reset",
+      "info1": "device",
+      "info2": "endpoint",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 618,
+      "name": "Host Stack Endpoint Transfer Abort",
+      "info1": "device",
+      "info2": "endpoint",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 619,
+      "name": "Host Stack HCD Register",
+      "info1": "hcd name",
+      "info2": "infoeter 1",
+      "info3": "infoeter 2",
+      "info4": "None"
+    },
+    {
+      "value": 620,
+      "name": "Host Stack Initialize",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 621,
+      "name": "Host Stack Interface Endpoint Get",
+      "info1": "interface",
+      "info2": "endpoint index",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 622,
+      "name": "Host Stack Interface Instance Create",
+      "info1": "interface",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 623,
+      "name": "Host Stack Interface Instance Delete",
+      "info1": "interface",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 624,
+      "name": "Host Stack Interface Set",
+      "info1": "interface",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 625,
+      "name": "Host Stack Interface Setting Select",
+      "info1": "interface",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 626,
+      "name": "Host Stack New Configuration Create",
+      "info1": "device",
+      "info2": "configuration",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 627,
+      "name": "Host Stack New Device Create",
+      "info1": "hcd",
+      "info2": "device owner",
+      "info3": "port index",
+      "info4": "device"
+    },
+    {
+      "value": 628,
+      "name": "Host Stack New Endpoint Create",
+      "info1": "device",
+      "info2": "endpoint",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 629,
+      "name": "Host Stack New Interface Create",
+      "info1": "device",
+      "info2": "interface",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 630,
+      "name": "Host Stack RH Device Insertion",
+      "info1": "hcd",
+      "info2": "port index",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 631,
+      "name": "Host Stack RH Device Removal",
+      "info1": "hcd",
+      "info2": "port index",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 632,
+      "name": "Host Stack Transfer Request",
+      "info1": "device",
+      "info2": "endpoint",
+      "info3": "transfer request",
+      "info4": "None"
+    },
+    {
+      "value": 633,
+      "name": "Host Stack Transfer Request Abort",
+      "info1": "device",
+      "info2": "endpoint",
+      "info3": "transfer request",
+      "info4": "None"
+    },
+    {
+      "value": 634,
+      "name": "Host Stack Uninitialize",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 635,
+      "name": "Host Stack HCD Unregister",
+      "info1": "hcd name",
+      "info2": "infoeter 1",
+      "info3": "infoeter 2",
+      "info4": "None"
+    },
+    {
+      "value": 636,
+      "name": "Host Stack Class Register",
+      "info1": "class name",
+      "info2": "entry function",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 637,
+      "name": "Host Stack Class Unregister",
+      "info1": "class entry",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 851,
+      "name": "Device Stack Alternate Setting Get",
+      "info1": "interface value",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 852,
+      "name": "Device Stack Alternate Setting Set",
+      "info1": "interface value",
+      "info2": "alternate setting value",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 853,
+      "name": "Device Stack Class Register",
+      "info1": "class name",
+      "info2": "interface number",
+      "info3": "infoeter",
+      "info4": "None"
+    },
+    {
+      "value": 854,
+      "name": "Device Stack Clear Feature",
+      "info1": "request type",
+      "info2": "request value",
+      "info3": "request index",
+      "info4": "None"
+    },
+    {
+      "value": 855,
+      "name": "Device Stack Configuration Get",
+      "info1": "configuration value",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 856,
+      "name": "Device Stack Configuration Set",
+      "info1": "configuration value",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 857,
+      "name": "Device Stack Connect",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 858,
+      "name": "Device Stack Descriptor Send",
+      "info1": "descriptor type",
+      "info2": "request index",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 859,
+      "name": "Device Stack Disconnect",
+      "info1": "device",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 860,
+      "name": "Device Stack Endpoint Stall",
+      "info1": "endpoint",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 861,
+      "name": "Device Stack Get Status",
+      "info1": "request type",
+      "info2": "request value",
+      "info3": "request index",
+      "info4": "None"
+    },
+    {
+      "value": 862,
+      "name": "Device Stack Host Wakeup",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    },
+    {
+      "value": 863,
+      "name": "Device Stack Initialize",
+      "info1": "None",
+      "info2": "None",
+      "info3": "None",
+      "info4": "None"
+    }
+  ]
+}

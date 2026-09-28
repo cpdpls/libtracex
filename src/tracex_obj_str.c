@@ -2,10 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "tracex_obj_str.h"
 #include "cJSON.h"
 #include "tracex_list.h"
-#include "tracex_object.h"
-#include "tracex_obj_str.h"
 #include "tracex_utils.h"
 
 #define TRACEX_OBJECT_DEFAULT_JSON_PATH "data/objects.json"
@@ -32,7 +31,7 @@ struct tracex_obj_json {
 
 struct tracex_object_labels {
     uint8_t *object_type_str;                   /* The object type string */
-    enum tracex_object_type object_id;          /* The object ID as found in the enum tracex_object_type */
+    uint32_t object_id;                         /* The object ID as found in the enum tracex_object_type */
     struct tracex_object_params_labels params_str; /* The object strings for the param 1 and param 2 */
 
     tracex_node node;                           /* The next node */
@@ -40,16 +39,14 @@ struct tracex_object_labels {
 
 
 /* In case the list would be empty or a request could not be satisfied,
- * Those will be default strings we calling one of the functions bellow 
+ * Those will be the default strings when calling one of the functions bellow 
  */
 static uint8_t *default_invalid_params = "Not valid"; 
 static uint8_t *default_invalid_obj = "Invalid";
 
 
 
-/* Actual list of labels for the objects
- * Those are parsed from the tracex core
- */ 
+/* Actual list of labels for the objects */
 struct tracex_list object_labels_list;
 
 static struct tracex_object_labels *alloc_object_labels(size_t count);
@@ -57,7 +54,7 @@ static void destroy_object_label(struct tracex_object_labels **obj_label);
 static void tracex_object_labels_add(struct tracex_object_labels *new_labels, enum label_add_override_setting override);
 static tracex_ret_t convert_cjson_to_obj_label(struct tracex_obj_json_element *cjson_obj, struct tracex_object_labels **new_label);
 
-const uint8_t *tracex_object_type_to_str(enum tracex_object_type type)
+const uint8_t *tracex_object_type_to_str(uint32_t type)
 {
 
     struct tracex_object_labels *entry;
@@ -78,7 +75,7 @@ const uint8_t *tracex_object_type_to_str(enum tracex_object_type type)
     return string;
 }
 
-struct tracex_object_params_labels tracex_object_param_to_str(enum tracex_object_type type)
+struct tracex_object_params_labels tracex_object_param_to_str(uint32_t type)
 {
     struct tracex_object_params_labels params;
     struct tracex_object_labels *entry;
@@ -155,7 +152,7 @@ tracex_ret_t tracex_object_load_labels(uint8_t *json_path)
         if (convert_cjson_to_obj_label(&json_struct.obj_element, &labels_ptr) == TRACEX_SUCCESS) {
 
             /* We finally add the converted tracex_object_labels to the global list */
-            tracex_object_labels_add(labels_ptr, E_LABEL_ADD_OVERRIDE);
+            tracex_object_labels_add(labels_ptr, E_LABEL_ADD_NO_OVERRIDE);
         }
     }
 
@@ -313,12 +310,6 @@ static tracex_ret_t convert_cjson_to_obj_label(struct tracex_obj_json_element *c
     /* Check for any missing field */
     if (cjson_obj->name == NULL || cjson_obj->param1 == NULL || cjson_obj->param2 == NULL)
     {
-        status = TRACEX_BAD_INPUT_PTR;
-        goto handle_return;
-    }
-
-    /* Check for an invalid object ID */
-    if (cjson_obj->value->valueint > TRACEX_OBJECT_TYPE_MAX) {
         status = TRACEX_BAD_INPUT_PTR;
         goto handle_return;
     }

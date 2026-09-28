@@ -4,8 +4,9 @@
 #include "tracex_event.h"
 #include "tracex_errno.h"
 #include "tracex_core.h"
+#include "tracex_event_str.h"
 
-
+static void convert_from_raw_to_user(struct tracex_event_entry *entry);
 static void destroy_event_entry(struct tracex_event_entry **entry);
 static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *buffer, size_t buffer_len, size_t *consumed);
 static tracex_ret_t process_event(struct tracex_event_context *ctx);
@@ -193,9 +194,12 @@ static tracex_ret_t process_event(struct tracex_event_context *ctx)
 
     }
 
+    /* Convert the raw objet to the user format */
+    convert_from_raw_to_user(ctx->curr_entry);
+
     /* Add the event to the list */
     tracex_list_insert(&ctx->curr_entry->node, &ctx->event_list);
-
+    
     status = TRACEX_SUCCESS;
     
 
@@ -233,6 +237,29 @@ handle_exit:
 
 }
 
+static void convert_from_raw_to_user(struct tracex_event_entry *entry)
+{
+    struct tracex_event_infos_labels info_labels;
+
+    // info_labels = tracex_event_infos_to_str(entry->raw_event.event_id);
+
+    entry->user_event.eventId = entry->raw_event.event_id;
+    entry->user_event.threadPointer = entry->raw_event.thread_pointer;
+    entry->user_event.threadParams.threadPriority = entry->raw_event.thread_priority;
+    entry->user_event.timeStamp = entry->raw_event.time_stamp;
+    entry->user_event.rawInfos.info1 = entry->raw_event.info1;
+    entry->user_event.rawInfos.info2 = entry->raw_event.info2;
+    entry->user_event.rawInfos.info3 = entry->raw_event.info3;
+    entry->user_event.rawInfos.info4 = entry->raw_event.info4;
+
+    entry->user_event.info1Label = info_labels.info1_label;
+    entry->user_event.info2Label = info_labels.info2_label;
+    entry->user_event.info3Label = info_labels.info3_label;
+    entry->user_event.info4Label = info_labels.info4_label;
+
+   // entry->user_event.eventLabel = tracex_event_id_to_str(entry->raw_event.event_id);
+
+}
 static void destroy_event_entry(struct tracex_event_entry **entry)
 {
     if (entry != NULL)

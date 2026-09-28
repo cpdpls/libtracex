@@ -8,38 +8,9 @@ typedef struct tracex_handler tracex_handler;   /* Forward declaration */
 
 typedef struct tracex_obj_iterator TRACEX_object_iterator_t;
 
-enum tracex_object_type
-{
-    TRACEX_OBJECT_TYPE_NOT_VALID            = 0,
-    TRACEX_OBJECT_TYPE_THREAD               = 1,
-    TRACEX_OBJECT_TYPE_TIMER                = 2,
-    TRACEX_OBJECT_TYPE_QUEUE                = 3,
-    TRACEX_OBJECT_TYPE_SEMAPHORE            = 4,
-    TRACEX_OBJECT_TYPE_MUTEX                = 5,
-    TRACEX_OBJECT_TYPE_EVENT_FLAGS_GROUP    = 6,
-    TRACEX_OBJECT_TYPE_BLOCK_POOL           = 7,
-    TRACEX_OBJECT_TYPE_BYTE_POOL            = 8,
-    TRACEX_OBJECT_TYPE_MEDIA                = 9,
-    TRACEX_OBJECT_TYPE_FILE                 = 10,
-    TRACEX_OBJECT_TYPE_IP                   = 11,
-    TRACEX_OBJECT_TYPE_PACKET_POOL          = 12,
-    TRACEX_OBJECT_TYPE_TCP_SOCKET           = 13,
-    TRACEX_OBJECT_TYPE_UDP_SOCKET           = 14,
-    /* 15-20 reserved */
-    TRACEX_OBJECT_TYPE_USB_HOST_STACK_DEV   = 21,
-    TRACEX_OBJECT_TYPE_USB_HOST_STACK_INT   = 22,
-    TRACEX_OBJECT_TYPE_USB_HOST_ENDPOINT    = 23,
-    TRACEX_OBJECT_TYPE_USB_HOST_CLASS       = 24,
-    TRACEX_OBJECT_TYPE_USB_DEV              = 25,
-    TRACEX_OBJECT_TYPE_USB_DEV_INT          = 26,
-    TRACEX_OBJECT_TYPE_USB_DEV_ENDPOINT     = 27,
-    TRACEX_OBJECT_TYPE_USB_DEV_CLASS        = 28,
-    TRACEX_OBJECT_TYPE_MAX                  = 30,
-};
-
 struct tracex_object
 {
-    enum tracex_object_type type;
+    uint32_t type;
     const uint8_t *objectTypeLabel;
     union
     {

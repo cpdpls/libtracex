@@ -60,7 +60,7 @@ void eventParsedCB(tracex_handler_t *handler, struct tracex_event *event, tracex
 {
     if (status == TRACEX_SUCCESS)
     {
-        //TRACEX_debug_print_single_event(event);
+        // TRACEX_debug_print_single_event(event);
     }
 
 }

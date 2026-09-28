@@ -355,14 +355,11 @@ static tracex_ret_t process_object(struct tracex_object_context *ctx)
     tracex_ret_t status;
     struct tracex_object_entry *entry;
 
-    /* This checks if the object is invalid (0) or is outside the range of object type */
-    /* Or if the object is in the reserved area (15-20) */
-    if (ctx->current_entry->raw_obj.available == 1 ||
-        ((ctx->current_entry->raw_obj.type == TRACEX_OBJECT_TYPE_NOT_VALID) ||
-        (ctx->current_entry->raw_obj.type > TRACEX_OBJECT_TYPE_MAX) ||
-        ((ctx->current_entry->raw_obj.type > TRACEX_OBJECT_TYPE_UDP_SOCKET) &&
-        (ctx->current_entry->raw_obj.type < TRACEX_OBJECT_TYPE_USB_HOST_STACK_DEV))))
-    {
+    /*  This checks if the available flag is set, which means it shouldn't be added to the list 
+    *   Or if the pointer address is set to 0, which means it's an invalid object
+    */
+    if (ctx->current_entry->raw_obj.available == 1 || ctx->current_entry->raw_obj.pointer == 0 ||
+        ctx->current_entry->raw_obj.type == 0) {
         status = TRACEX_OBJECT_INVALID;
         goto handle_exit;
 

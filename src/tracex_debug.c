@@ -42,7 +42,7 @@ void TRACEX_debug_print_single_object(const struct tracex_object *entry)
 
     TRACEX_DEBUG_OBJ("---- %.32s ----\n", entry->name);
     TRACEX_DEBUG_OBJ("Type : %s\n", entry->objectTypeLabel);
-    if (entry->type == TRACEX_OBJECT_TYPE_THREAD)
+    if (entry->type == 1)
     {
         TRACEX_DEBUG_OBJ("Thread Priority : %u\n", entry->thread_priority);
     }
@@ -83,18 +83,18 @@ void TRACEX_debug_print_single_event(const struct tracex_event *entry)
 
     switch (entry->occurenceType) {
         case TRACEX_EVENT_OCCURENCE_TYPE_INITIALIZATION:
-            TRACEX_DEBUG_EVENT("Event happened during initialization: 0x%.4x\n", entry->threadPointer);
+            TRACEX_DEBUG_EVENT("Event happened during initialization: (0x%.4x)\n", entry->threadPointer);
             break;
         case TRACEX_EVENT_OCCURENCE_TYPE_THREAD:
-            TRACEX_DEBUG_EVENT("Event happened inside a thread : 0x%.4x\n", entry->threadPointer);
+            TRACEX_DEBUG_EVENT("Event happened inside a thread : (0x%.4x)\n", entry->threadPointer);
             break;
         case TRACEX_EVENT_OCCURENCE_TYPE_ISR:
-            TRACEX_DEBUG_EVENT("Event happened during an ISR : 0x%.4x\n", entry->threadPointer);
+            TRACEX_DEBUG_EVENT("Event happened during an ISR : (0x%.4x)\n", entry->threadPointer);
             break;
 
     }
 
-    TRACEX_DEBUG_EVENT("Event ID : %u\n", entry->eventId);
+    TRACEX_DEBUG_EVENT("Event ID : %s\n", entry->eventLabel);
     TRACEX_DEBUG_EVENT("Thread Pointer : 0x%.4x\n", entry->threadPointer);
 
     if (entry->occurenceType == TRACEX_EVENT_OCCURENCE_TYPE_ISR)
@@ -104,10 +104,10 @@ void TRACEX_debug_print_single_event(const struct tracex_event *entry)
         TRACEX_DEBUG_EVENT("Thread Priority : %u\n", entry->threadParams.threadPriority);
     
     TRACEX_DEBUG_EVENT("Time-Stamp : %u\n", entry->timeStamp);
-    TRACEX_DEBUG_EVENT("Info 1 : %u\n", entry->info1);
-    TRACEX_DEBUG_EVENT("Info 2 : %u\n", entry->info2);
-    TRACEX_DEBUG_EVENT("Info 3 : %u\n", entry->info3);
-    TRACEX_DEBUG_EVENT("Info 4 : %u\n", entry->info4);
+    TRACEX_DEBUG_EVENT("%s : 0x%.4x\n", entry->info1Label,  entry->rawInfos.info1);
+    TRACEX_DEBUG_EVENT("%s : 0x%.4x\n", entry->info2Label, entry->rawInfos.info2);
+    TRACEX_DEBUG_EVENT("%s : 0x%.4x\n", entry->info3Label, entry->rawInfos.info3);
+    TRACEX_DEBUG_EVENT("%s : 0x%.4x\n\n", entry->info4Label, entry->rawInfos.info4);
 
 }
 void TRACEX_debug_print_events(const struct tracex_handler *handler)

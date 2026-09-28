@@ -1,0 +1,427 @@
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "tracex_event_str.h"
+#include "cJSON.h"
+#include "tracex_list.h"
+#include "tracex_utils.h"
+
+#define TRACEX_EVENT_DEFAULT_JSON_PATH "data/events.json"
+
+enum label_add_override_setting {
+    E_LABEL_ADD_NO_OVERRIDE,
+    E_LABEL_ADD_OVERRIDE,
+};
+
+struct tracex_event_json_element {
+    cJSON   *value;                
+    cJSON   *name;
+    cJSON   *info1;
+    cJSON   *info2;
+    cJSON   *info3;
+    cJSON   *info4;
+};
+
+struct tracex_event_json {
+    struct tracex_event_json_element    event_element;
+    cJSON                               *root;
+    cJSON                               *array;
+    cJSON                               *tmp_cjson_elem_ptr;
+};
+
+struct tracex_event_labels {
+    uint8_t                             *eventLabel;
+    uint32_t                            eventId;
+    struct tracex_event_infos_labels    infoLabels;
+
+    tracex_node node;                           /* The next node */
+};
+
+/* In case the list would be empty or a request could not be satisfied,
+ * Those will be the default strings when calling one of the functions bellow
+*/
+static uint8_t *default_invalid_info = "Not valid"; 
+static uint8_t *default_invalid_event = "Invalid";
+
+/* Actual list of labels for the events */
+
+struct tracex_list event_labels_list;
+
+static struct tracex_event_labels *alloc_event_labels(size_t count);
+static void destroy_event_label(struct tracex_event_labels **event_label);
+static void tracex_event_labels_add(struct tracex_event_labels *new_labels, enum label_add_override_setting override);
+static tracex_ret_t convert_cjson_to_event_label(struct tracex_event_json_element *cjson_event, struct tracex_event_labels **new_label);
+
+const uint8_t *tracex_event_id_to_str(uint32_t id)
+{
+
+    struct tracex_event_labels *entry;
+    uint8_t *string;
+
+    string = default_invalid_event;
+
+    if (event_labels_list.next != NULL && event_labels_list.prev != NULL) {
+        
+        tracex_list_for_each_entry(entry, &event_labels_list, node)
+        {
+            if (entry->eventId == id) {
+                string = entry->eventLabel;
+            }
+        }
+    }
+
+    return string;
+}
+
+struct tracex_event_infos_labels tracex_event_infos_to_str(uint32_t id)
+{
+    struct tracex_event_infos_labels infos;
+    struct tracex_event_labels *entry;
+
+    /* Set the params to invalid in case of an error */
+    infos.info1_label = default_invalid_info;
+    infos.info2_label = default_invalid_info;
+    infos.info3_label = default_invalid_info;
+    infos.info4_label = default_invalid_info;
+
+    if (event_labels_list.next != NULL && event_labels_list.prev != NULL) {
+
+        tracex_list_for_each_entry(entry, &event_labels_list, node)
+        {
+            if (entry->eventId == id) {
+                infos.info1_label = entry->infoLabels.info1_label;
+                infos.info2_label = entry->infoLabels.info2_label;
+                infos.info3_label = entry->infoLabels.info3_label;
+                infos.info4_label = entry->infoLabels.info4_label;
+            }
+        }
+    }
+    return infos;
+}
+
+tracex_ret_t tracex_event_load_labels(uint8_t *json_path)
+{
+    tracex_ret_t status;
+    struct tracex_event_json json_struct;
+    struct tracex_event_labels *labels_ptr;
+    uint8_t *actual_path;
+
+    memset(&json_struct, 0, sizeof(struct tracex_event_json));
+    labels_ptr = NULL;
+
+    if (json_path == NULL)
+        actual_path = TRACEX_EVENT_DEFAULT_JSON_PATH;  
+    else
+        actual_path = json_path;
+
+    status = tracex_utils_load_json_file(actual_path, &json_struct.root);
+
+    if (status != TRACEX_SUCCESS) {
+        goto handle_return;
+    }
+
+    /* The goal here is to get get each element that is in the array of eventTypesNames
+     * Inside the JSON file and 1 struct tracex_event_labels in oder to add that element
+     * In the list.
+     */
+
+    json_struct.array = cJSON_GetObjectItemCaseSensitive(json_struct.root, "eventTypesNames");
+
+    /* Check if the fields name in the json has been found */
+    if (json_struct.array == NULL) {
+        status = TRACEX_JSON_PARSING_FAILURE;
+        goto handle_return;
+    }
+    
+    /* Get the number of elements and check that it is at least 1 element long  */
+    if (cJSON_GetArraySize(json_struct.array) == 0) {
+        status = TRACEX_JSON_PARSING_FAILURE;
+        goto handle_return;
+    }
+
+    /* Iterate on all the element of the array and convert it to a struct tracex_event_labels */
+    cJSON_ArrayForEach(json_struct.tmp_cjson_elem_ptr, json_struct.array) {
+
+        /* Get the value field */
+        json_struct.event_element.value = cJSON_GetObjectItemCaseSensitive(json_struct.tmp_cjson_elem_ptr, "value");        
+        /* Get the name string value */
+        json_struct.event_element.name = cJSON_GetObjectItemCaseSensitive(json_struct.tmp_cjson_elem_ptr, "name");
+        /* Get the different params */
+        json_struct.event_element.info1 = cJSON_GetObjectItemCaseSensitive(json_struct.tmp_cjson_elem_ptr, "info1");
+        json_struct.event_element.info2 = cJSON_GetObjectItemCaseSensitive(json_struct.tmp_cjson_elem_ptr, "info2");
+        json_struct.event_element.info3 = cJSON_GetObjectItemCaseSensitive(json_struct.tmp_cjson_elem_ptr, "info3");
+        json_struct.event_element.info4 = cJSON_GetObjectItemCaseSensitive(json_struct.tmp_cjson_elem_ptr, "info4");
+
+        /* Convert the cJSON event to a struct tracex_event_labels and add it */
+        if (convert_cjson_to_event_label(&json_struct.event_element, &labels_ptr) == TRACEX_SUCCESS) {
+
+            /* We finally add the converted tracex_event_labels to the global list */
+            tracex_event_labels_add(labels_ptr, E_LABEL_ADD_OVERRIDE);
+        }
+    }
+
+
+handle_return:
+
+    /*  Free the parsed json event as we don't need them anymore
+    *   They have been converted to struct tracex_event_labels and are part of a list
+    */
+
+    if (json_struct.root != NULL) {
+        cJSON_Delete(json_struct.root);
+    }
+    return status;
+}
+
+void tracex_event_destroy_labels(void)
+{
+    struct tracex_event_labels *entry;
+    struct tracex_event_labels *next;
+
+    if (event_labels_list.next != NULL && event_labels_list.prev != NULL) {
+
+        tracex_list_for_each_entry_safe(entry, next, &event_labels_list,node)
+        {
+            destroy_event_label(&entry);
+        }
+
+    }
+}
+
+
+static void tracex_event_labels_add(struct tracex_event_labels *new_labels, enum label_add_override_setting override)
+{
+    struct tracex_event_labels *next;
+    uint8_t found;
+
+    found = 0;
+
+    /* In case we are adding the very first element of the list, we need to initialize the list */
+    if (event_labels_list.prev == NULL || event_labels_list.next == NULL) {
+        tracex_list_init(&event_labels_list);
+    }
+
+    /* If override is not allowed, add the labels to the list */
+    if (override == E_LABEL_ADD_NO_OVERRIDE)
+        goto early_add_list;
+    else {
+
+        /* Otherwise, we need to check if a label of the same type exists and potentially override it */
+        tracex_list_for_each_entry(next, &event_labels_list, node)
+        {
+            /* The event ID is already in the list. Let's replace it */
+            if (next->eventId == new_labels->eventId) {
+                
+                new_labels->node.next = next->node.next;
+                new_labels->node.prev = next->node.prev;
+                next->node.prev->next = &new_labels->node;
+                next->node.next->prev = &new_labels->node;
+
+                /*  Since the destroy function bellow moves the pointers inside the list
+                 *  We need to avoid it doing so. One single way is to set it's pointer to NULL
+                 *  Otherwise it would remove the new_labels previously added from the list
+                */ 
+                next->node.next = NULL;
+                next->node.prev = NULL;
+                /* Destroy the event from the list */
+                  destroy_event_label(&next);
+                /* Set the flag to avoid adding it again */
+                found = 1;
+                break;
+
+            }
+
+        }
+
+    }
+    
+early_add_list:
+    if (found == 0) {
+        /* Add the actual element in the list */
+        tracex_list_insert(&new_labels->node, &event_labels_list);
+    }
+
+early_return:
+    return;
+}
+
+
+static void destroy_event_label(struct tracex_event_labels **event_label)
+{
+    if (event_label != NULL) {
+
+        if (*event_label != NULL) {
+
+            /* Destroy the event type string */
+            if ((*event_label)->eventLabel != NULL) {
+                free((*event_label)->eventLabel);
+                (*event_label)->eventLabel = NULL;
+            }
+
+            /* Destroy the event info 1 string */
+            if ((*event_label)->infoLabels.info1_label != NULL) {
+                free((void*)(*event_label)->infoLabels.info1_label);
+                (*event_label)->infoLabels.info1_label = NULL;
+            }
+
+            /* Destroy the event info 2 string */
+            if ((*event_label)->infoLabels.info2_label != NULL) {
+                free((void*)(*event_label)->infoLabels.info2_label);
+                (*event_label)->infoLabels.info2_label = NULL;
+            }
+
+            /* Destroy the event info 3 string */
+            if ((*event_label)->infoLabels.info3_label != NULL) {
+                free((void*)(*event_label)->infoLabels.info3_label);
+                (*event_label)->infoLabels.info3_label = NULL;
+            }
+
+            /* Destroy the event info 4 string */
+            if ((*event_label)->infoLabels.info4_label != NULL) {
+                free((void*)(*event_label)->infoLabels.info4_label);
+                (*event_label)->infoLabels.info4_label = NULL;
+            }
+
+            
+
+            /* Check if the event is part of a list and remote it */
+            if ((*event_label)->node.next != NULL && (*event_label)->node.prev != NULL) {
+                tracex_list_delete(&(*event_label)->node);
+                (*event_label)->node.next = NULL;
+                (*event_label)->node.prev = NULL;
+            }
+
+            free(*event_label);
+            *event_label = NULL;
+        }
+    }
+}
+
+static struct tracex_event_labels *alloc_event_labels(size_t count)
+{
+    struct tracex_event_labels *tmp;
+
+    tmp = NULL;
+
+    if (count == 0)
+        goto early_return;
+    
+    tmp = (struct tracex_event_labels*)malloc(sizeof(struct tracex_event_labels) * count);
+
+    if (tmp == NULL)
+        goto early_return;
+    
+
+early_return:
+    return tmp;
+
+}
+
+
+static tracex_ret_t convert_cjson_to_event_label(struct tracex_event_json_element *cjson_event, struct tracex_event_labels **new_label)
+{
+    struct tracex_event_labels *tmp_label;
+    uint8_t *tmp_buffer;
+    tracex_ret_t status;
+
+
+    /* Check for any missing field */
+    if (cjson_event->name == NULL || cjson_event->info1 == NULL ||
+        cjson_event->info2 == NULL || cjson_event->info3 == NULL ||
+        cjson_event->info4 == NULL)
+    {
+        status = TRACEX_BAD_INPUT_PTR;
+        goto handle_return;
+    }
+
+    /* Check for a NULL string value */
+
+    if (cjson_event->name->valuestring == NULL ||
+        cjson_event->info1->valuestring == NULL ||
+        cjson_event->info2->valuestring == NULL ||
+        cjson_event->info3->valuestring == NULL ||
+        cjson_event->info4->valuestring == NULL ) {
+            status = TRACEX_JSON_PARSING_FAILURE;
+            goto handle_return;
+        }
+    
+    /* Alloc a new event label */
+    tmp_label = alloc_event_labels(1);
+
+    /* Check if successfull */
+    if (tmp_label == NULL) {
+        status = TRACEX_ALLOC_FAILURE;
+        goto handle_return;
+    }
+
+    /* Erase the newly allocated event labels */
+    memset(tmp_label, 0, sizeof(struct tracex_event_labels));
+
+    /* Duplicate the Event ID label string  */
+    tmp_buffer = (uint8_t*)malloc((sizeof(uint8_t) * strlen(cjson_event->name->valuestring)) + 1);
+
+    if (tmp_buffer == NULL) {
+        status = TRACEX_ALLOC_FAILURE;
+        goto handle_error;
+    }
+
+    memcpy(tmp_buffer, cjson_event->name->valuestring, strlen(cjson_event->name->valuestring) + 1);
+    tmp_label->eventLabel = tmp_buffer;
+    
+    /* Duplicate the info1 label string */
+    tmp_buffer = (uint8_t*)malloc((sizeof(uint8_t) * strlen(cjson_event->info1->valuestring)) + 1);
+    
+    if (tmp_buffer == NULL) {
+        status = TRACEX_ALLOC_FAILURE;
+        goto handle_error;
+    }
+    memcpy(tmp_buffer, cjson_event->info1->valuestring, strlen(cjson_event->info1->valuestring) + 1);
+    tmp_label->infoLabels.info1_label = tmp_buffer;
+
+    /* Duplicate the info2 label string */
+    tmp_buffer = (uint8_t*)malloc((sizeof(uint8_t) * strlen(cjson_event->info2->valuestring)) + 1);
+    
+    if (tmp_buffer == NULL) {
+        status = TRACEX_ALLOC_FAILURE;
+        goto handle_error;
+    }
+    memcpy(tmp_buffer, cjson_event->info2->valuestring, strlen(cjson_event->info2->valuestring) + 1);
+    tmp_label->infoLabels.info2_label = tmp_buffer;
+
+    /* Duplicate the info3 label string */
+    tmp_buffer = (uint8_t*)malloc((sizeof(uint8_t) * strlen(cjson_event->info3->valuestring)) + 1);
+    
+    if (tmp_buffer == NULL) {
+        status = TRACEX_ALLOC_FAILURE;
+        goto handle_error;
+    }
+    memcpy(tmp_buffer, cjson_event->info3->valuestring, strlen(cjson_event->info3->valuestring) + 1);
+    tmp_label->infoLabels.info3_label = tmp_buffer;
+
+    /* Duplicate the info4 label string */
+    tmp_buffer = (uint8_t*)malloc((sizeof(uint8_t) * strlen(cjson_event->info4->valuestring)) + 1);
+    
+    if (tmp_buffer == NULL) {
+        status = TRACEX_ALLOC_FAILURE;
+        goto handle_error;
+    }
+    memcpy(tmp_buffer, cjson_event->info4->valuestring, strlen(cjson_event->info4->valuestring) + 1);
+    tmp_label->infoLabels.info4_label = tmp_buffer;
+
+
+    /* Copy over the event ID */
+    tmp_label->eventId = cjson_event->value->valueint;
+
+    status = TRACEX_SUCCESS;
+
+    goto handle_return;
+
+handle_error:
+    /* Destroy the newly allocated event label and all it's pointers */
+    destroy_event_label(&tmp_label);
+
+handle_return:
+    *new_label = tmp_label;
+    return status;
+}

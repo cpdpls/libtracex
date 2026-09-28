@@ -12,12 +12,6 @@ enum tracex_event_occurence_type
     TRACEX_EVENT_OCCURENCE_TYPE_INITIALIZATION,
 };
 
-struct tracex_event_info_labels {
-    const uint8_t *info1;
-    const uint8_t *info2;
-    const uint8_t *info3;
-    const uint8_t *info4;
-};
 
 struct tracex_event
 {
@@ -34,12 +28,18 @@ struct tracex_event
 
     uint32_t    eventId;           /* Event ID of the event */
     uint32_t    timeStamp;         /* Timestamp when the event happened. To be used alongside the time stamp mask */
-    uint32_t    info1;              /* Info 1 of the event */
-    uint32_t    info2;              /* Info 2 of the event */
-    uint32_t    info3;              /* Info 3 of the event */
-    uint32_t    info4;              /* Info 4 of the event */
+    
+    struct {
+        uint32_t    info1;              /* Info 1 of the event */
+        uint32_t    info2;              /* Info 2 of the event */
+        uint32_t    info3;              /* Info 3 of the event */
+        uint32_t    info4;              /* Info 4 of the event */
+    } rawInfos;
 
-    struct tracex_event_info_labels infoLabels;
+    const uint8_t *info1Label;
+    const uint8_t *info2Label;
+    const uint8_t *info3Label;
+    const uint8_t *info4Label;
     const uint8_t *eventLabel;
 };
 
