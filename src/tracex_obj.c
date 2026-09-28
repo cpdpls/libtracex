@@ -227,7 +227,7 @@ void tracex_object_int_iterator_end(TRACEX_object_iterator_t **iterator)
 
 static void convert_from_raw_to_user(struct tracex_object_entry *entry, uint16_t name_size)
 {
-    struct tracex_object_params_str params;
+    struct tracex_object_params_labels params;
     /* Assign the correct endianess */
     
     params = tracex_object_param_to_str(entry->raw_obj.type);

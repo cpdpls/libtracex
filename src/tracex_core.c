@@ -50,7 +50,7 @@ tracex_ret_t tracex_init(void)
      *  for the types of object names and the parameters name
     */
 
-    status = tracex_object_load_labels("data/objects.json");
+    status = tracex_object_load_labels(NULL);
 
     tracex_init_done = 1;
 

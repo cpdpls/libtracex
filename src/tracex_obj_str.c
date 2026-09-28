@@ -3,9 +3,17 @@
 #include <string.h>
 
 #include "cJSON.h"
+#include "tracex_list.h"
 #include "tracex_object.h"
 #include "tracex_obj_str.h"
 #include "tracex_utils.h"
+
+#define TRACEX_OBJECT_DEFAULT_JSON_PATH "data/objects.json"
+
+enum label_add_override_setting{
+    E_LABEL_ADD_NO_OVERRIDE,
+    E_LABEL_ADD_OVERRIDE,
+};
 
 struct tracex_obj_json_element {
     cJSON   *value;                
@@ -25,7 +33,7 @@ struct tracex_obj_json {
 struct tracex_object_labels {
     uint8_t *object_type_str;                   /* The object type string */
     enum tracex_object_type object_id;          /* The object ID as found in the enum tracex_object_type */
-    struct tracex_object_params_str params_str; /* The object strings for the param 1 and param 2 */
+    struct tracex_object_params_labels params_str; /* The object strings for the param 1 and param 2 */
 
     tracex_node node;                           /* The next node */
 };
@@ -46,7 +54,7 @@ struct tracex_list object_labels_list;
 
 static struct tracex_object_labels *alloc_object_labels(size_t count);
 static void destroy_object_label(struct tracex_object_labels **obj_label);
-static void tracex_object_labels_add(struct tracex_object_labels *new_labels);
+static void tracex_object_labels_add(struct tracex_object_labels *new_labels, enum label_add_override_setting override);
 static tracex_ret_t convert_cjson_to_obj_label(struct tracex_obj_json_element *cjson_obj, struct tracex_object_labels **new_label);
 
 const uint8_t *tracex_object_type_to_str(enum tracex_object_type type)
@@ -70,9 +78,9 @@ const uint8_t *tracex_object_type_to_str(enum tracex_object_type type)
     return string;
 }
 
-struct tracex_object_params_str tracex_object_param_to_str(enum tracex_object_type type)
+struct tracex_object_params_labels tracex_object_param_to_str(enum tracex_object_type type)
 {
-    struct tracex_object_params_str params;
+    struct tracex_object_params_labels params;
     struct tracex_object_labels *entry;
 
     /* Set the params to invalid in case of an error */
@@ -96,17 +104,18 @@ tracex_ret_t tracex_object_load_labels(uint8_t *json_path)
 {
     tracex_ret_t status;
     struct tracex_obj_json json_struct;
-    struct tracex_object_labels *labels_ptr; 
+    struct tracex_object_labels *labels_ptr;
+    uint8_t *actual_path;
 
     memset(&json_struct, 0, sizeof(struct tracex_obj_json));
     labels_ptr = NULL;
 
-    if (json_path == NULL) {
-        status = TRACEX_BAD_INPUT_PTR;
-        goto handle_return;
-    }
+    if (json_path == NULL)
+        actual_path = TRACEX_OBJECT_DEFAULT_JSON_PATH;  
+    else
+        actual_path = json_path;
 
-    status = tracex_utils_load_json_file(json_path, &json_struct.root);
+    status = tracex_utils_load_json_file(actual_path, &json_struct.root);
 
     if (status != TRACEX_SUCCESS) {
         goto handle_return;
@@ -146,7 +155,7 @@ tracex_ret_t tracex_object_load_labels(uint8_t *json_path)
         if (convert_cjson_to_obj_label(&json_struct.obj_element, &labels_ptr) == TRACEX_SUCCESS) {
 
             /* We finally add the converted tracex_object_labels to the global list */
-            tracex_object_labels_add(labels_ptr);
+            tracex_object_labels_add(labels_ptr, E_LABEL_ADD_OVERRIDE);
         }
     }
 
@@ -179,16 +188,57 @@ void tracex_object_destroy_labels(void)
 }
 
 
-static void tracex_object_labels_add(struct tracex_object_labels *new_labels)
+static void tracex_object_labels_add(struct tracex_object_labels *new_labels, enum label_add_override_setting override)
 {
+    struct tracex_object_labels *next;
+    uint8_t found;
+
+    found = 0;
 
     /* In case we are adding the very first element of the list, we need to initialize the list */
     if (object_labels_list.prev == NULL || object_labels_list.next == NULL) {
         tracex_list_init(&object_labels_list);
     }
+
+    /* If override is not allowed, add the labels to the list */
+    if (override == E_LABEL_ADD_NO_OVERRIDE)
+        goto early_add_list;
+    else {
+
+        /* Otherwise, we need to check if a label of the same type exists and potentially override it */
+        tracex_list_for_each_entry(next, &object_labels_list, node)
+        {
+            /* The object ID is already in the list. Let's replace it */
+            if (next->object_id == new_labels->object_id) {
+                
+                new_labels->node.next = next->node.next;
+                new_labels->node.prev = next->node.prev;
+                next->node.prev->next = &new_labels->node;
+                next->node.next->prev = &new_labels->node;
+
+                /*  Since the destroy function bellow moves the pointers inside the list
+                 *  We need to avoid it doing so. One single way is to set it's pointer to NULL
+                 *  Otherwise it would remove the new_labels previously added from the list
+                */ 
+                next->node.next = NULL;
+                next->node.prev = NULL;
+                /* Destroy the object from the list */
+                  destroy_object_label(&next);
+                /* Set the flag to avoid adding it again */
+                found = 1;
+                break;
+
+            }
+
+        }
+
+    }
     
-    /* Add the actual element in the list */
-    tracex_list_insert(&new_labels->node, &object_labels_list);
+early_add_list:
+    if (found == 0) {
+        /* Add the actual element in the list */
+        tracex_list_insert(&new_labels->node, &object_labels_list);
+    }
 
 early_return:
     return;

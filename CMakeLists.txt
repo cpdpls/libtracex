@@ -23,6 +23,7 @@ add_executable(tx_tracer
     src/tracex_debug.c
     src/tracex_utils.c
     src/tracex_obj_str.c
+    src/tracex_event_str.c
 )
 
 target_include_directories(tx_tracer
