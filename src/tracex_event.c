@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 #include "tracex_event_int.h"
 #include "tracex_event.h"
 #include "tracex_errno.h"
@@ -14,13 +13,8 @@ static tracex_ret_t alloc_new_event_entry(struct tracex_event_entry **entry_ptr)
 
 tracex_ret_t tracex_event_int_init(struct tracex_event_context *ctx)
 {
-    if (pthread_mutex_init(&ctx->mutex, NULL) != 0)
-    {
-        return TRACEX_INIT_FAILURE;
-    }
 
-    /* Assign the pointer to the total event registry size */
-
+    /* Init the list of events */
     tracex_list_init(&ctx->event_list);
 
     return TRACEX_SUCCESS;
@@ -43,6 +37,7 @@ tracex_ret_t tracex_event_int_compute_registry_size(uint64_t *registry_size, uin
     /* Compute the total possible event entries inside the buffer */
     event_buffer_entries = (stop - start) / sizeof(struct tracex_event_int);
 
+    /* Check for an invalid registry size */
     if (event_buffer_entries == 0)
     {
         status = TRACEX_EVENT_TRACE_BUFFER_INVALID;
@@ -61,8 +56,6 @@ tracex_ret_t tracex_event_int_parse(struct tracex_event_context *ctx, void *buff
     tracex_ret_t status;
     size_t bytes_left;
     size_t bytes_consumed;
-
-    pthread_mutex_lock(&ctx->mutex);
 
     *consumed = 0;
     bytes_left = buff_len;
@@ -112,7 +105,6 @@ tracex_ret_t tracex_event_int_parse(struct tracex_event_context *ctx, void *buff
     }
 
 handle_exit:
-    pthread_mutex_unlock(&ctx->mutex);
     return status;
 
 }

@@ -45,7 +45,6 @@ struct tracex_object_context
     struct tracex_object_entry      *current_entry;                             /* Saved current object when parsing incrementally */
     uint8_t                         curr_offset;                                /* Saved current object byte count when parsing the fields incrementally */
     uint64_t                        tot_count;                                  /* Total count of objects */
-    pthread_mutex_t                 mutex;                                      /* Mutex used when retrieving and parsing objects */
     uint64_t                        registry_size;                              /* Total number of possible objects in the object registry */
     uint16_t                        name_size;                                  /* Max object name length of an object */
 

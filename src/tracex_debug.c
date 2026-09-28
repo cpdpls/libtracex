@@ -41,7 +41,7 @@ void TRACEX_debug_print_single_object(const struct tracex_object *entry)
 {
 
     TRACEX_DEBUG_OBJ("---- %.32s ----\n", entry->name);
-    TRACEX_DEBUG_OBJ("Type : %s\n", tracex_object_type_to_str(entry->type));
+    TRACEX_DEBUG_OBJ("Type : %s\n", entry->objectTypeLabel);
     if (entry->type == TRACEX_OBJECT_TYPE_THREAD)
     {
         TRACEX_DEBUG_OBJ("Thread Priority : %u\n", entry->thread_priority);
@@ -80,10 +80,30 @@ void TRACEX_debug_print_objects(const struct tracex_handler *handler)
 
 void TRACEX_debug_print_single_event(const struct tracex_event *entry)
 {
-    TRACEX_DEBUG_EVENT("Event ID : %u\n", entry->event_id);
-    TRACEX_DEBUG_EVENT("Thread Pointer : 0x%.4x\n", entry->thread_pointer);
-    TRACEX_DEBUG_EVENT("Thread Priority : 0x%.4x\n", entry->thread_param.thread_priority);
-    TRACEX_DEBUG_EVENT("Time-Stamp : %u\n", entry->time_stamp);
+
+    switch (entry->occurenceType) {
+        case TRACEX_EVENT_OCCURENCE_TYPE_INITIALIZATION:
+            TRACEX_DEBUG_EVENT("Event happened during initialization: 0x%.4x\n", entry->threadPointer);
+            break;
+        case TRACEX_EVENT_OCCURENCE_TYPE_THREAD:
+            TRACEX_DEBUG_EVENT("Event happened inside a thread : 0x%.4x\n", entry->threadPointer);
+            break;
+        case TRACEX_EVENT_OCCURENCE_TYPE_ISR:
+            TRACEX_DEBUG_EVENT("Event happened during an ISR : 0x%.4x\n", entry->threadPointer);
+            break;
+
+    }
+
+    TRACEX_DEBUG_EVENT("Event ID : %u\n", entry->eventId);
+    TRACEX_DEBUG_EVENT("Thread Pointer : 0x%.4x\n", entry->threadPointer);
+
+    if (entry->occurenceType == TRACEX_EVENT_OCCURENCE_TYPE_ISR)
+        TRACEX_DEBUG_EVENT("Thread running before ISR : 0x%.4x\n", entry->threadParams.threadPointerBeforeIsr);
+    
+    if (entry->occurenceType == TRACEX_EVENT_OCCURENCE_TYPE_THREAD)
+        TRACEX_DEBUG_EVENT("Thread Priority : %u\n", entry->threadParams.threadPriority);
+    
+    TRACEX_DEBUG_EVENT("Time-Stamp : %u\n", entry->timeStamp);
     TRACEX_DEBUG_EVENT("Info 1 : %u\n", entry->info1);
     TRACEX_DEBUG_EVENT("Info 2 : %u\n", entry->info2);
     TRACEX_DEBUG_EVENT("Info 3 : %u\n", entry->info3);

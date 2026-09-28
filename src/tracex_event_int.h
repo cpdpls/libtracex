@@ -34,7 +34,6 @@ struct tracex_event_context
     struct tracex_event_entry   *curr_entry;    /* Saved current event when parsing incrementally */
     uint64_t                    curr_offset;    /* Saved current events byte count when parsing incrementally */
     uint64_t                    tot_count;      /* Total count of events */
-    pthread_mutex_t             mutex;          /* Mutex used when retrieving and parsing events */
     uint64_t                    registry_size;  /* Total number of posssible events in the event registry */
 
 };

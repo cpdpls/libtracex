@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 
 #include "tracex_object.h"
 #include "tracex_obj_int.h"
@@ -17,11 +16,6 @@ static void destroy_object_entry(struct tracex_object_entry **object);
 
 tracex_ret_t tracex_object_int_init(struct tracex_object_context *ctx)
 {
-    if (pthread_mutex_init(&ctx->mutex, NULL) != 0)
-    {
-        return TRACEX_INIT_FAILURE;
-    }
-
     /* Set the initial state machine and assign the pointer to the total object registry size */
     ctx->fsm = E_OBJ_PARSE_OTHERS;
 
@@ -62,8 +56,6 @@ tracex_ret_t tracex_object_int_parse(struct tracex_object_context *ctx, void *bu
     tracex_ret_t status;
     size_t bytes_left;
     size_t bytes_consumed;
-
-    pthread_mutex_lock(&ctx->mutex);
 
     bytes_left = buff_len;
 
@@ -125,7 +117,6 @@ tracex_ret_t tracex_object_int_parse(struct tracex_object_context *ctx, void *bu
     }
 
 handle_exit:
-    pthread_mutex_unlock(&ctx->mutex);
     return status;
 
 
@@ -151,9 +142,6 @@ tracex_ret_t tracex_object_int_iterator_init(struct tracex_object_context *ctx, 
     struct tracex_object_entry *entry;
     uint64_t index;
 
-    /*TODO: Check the return value. We don't want to continue if it failed ... */
-    /* Lock the mutex to block the parser for a short moment */
-    pthread_mutex_lock(&ctx->mutex);
 
     *iterator = (struct tracex_obj_iterator*)malloc(sizeof(struct tracex_obj_iterator));
     if (*iterator == NULL)
@@ -187,8 +175,6 @@ handle_error:
     tracex_object_int_iterator_end(iterator);
 
 handle_exit:
-    /* Release the mutex */
-    pthread_mutex_unlock(&ctx->mutex);
     return status;
 
 }

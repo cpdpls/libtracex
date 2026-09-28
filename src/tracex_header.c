@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
-#include <pthread.h>
 
 #include "tracex_core.h"
 #include "tracex_errno.h"
@@ -10,85 +9,58 @@
 static tracex_ret_t process_header(struct tracex_header_context *ctx);
 static tracex_ret_t parse_incrementally(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
 
-tracex_ret_t tracex_header_int_init(struct tracex_header_context *ctx)
-{
-
-    if (pthread_mutex_init(&ctx->header_mutex, NULL) != 0)
-    {
-        return TRACEX_INIT_FAILURE;
-    }
-
-    return TRACEX_SUCCESS;
-}
-
 tracex_ret_t tracex_header_int_check_parsed(struct tracex_header_context *ctx)
 {
-    /* Try to get the object mutex */
-    pthread_mutex_lock(&ctx->header_mutex);
+    
 
     if (!ctx->header_parsed)
     {
-        /* Release the mutex before returning to the caller */
-        pthread_mutex_unlock(&ctx->header_mutex);
+        
         return TRACEX_NEED_MORE;
     }
 
-    /* Release the mutex before returning to the caller */
-    pthread_mutex_unlock(&ctx->header_mutex);
     return TRACEX_SUCCESS;
 }
 
 tracex_ret_t tracex_header_int_check_valid(struct tracex_header_context *ctx)
 {
-    /* Try to get the object mutex */
-    pthread_mutex_lock(&ctx->header_mutex);
-
+    
     if (!ctx->header_parsed)
-    {
-        /* Release the mutex before returning to the caller */
-        pthread_mutex_unlock(&ctx->header_mutex);
+    {   
         return TRACEX_NEED_MORE;
     }
 
     if (!ctx->header_valid)
     {
-        /* Release the mutex before returning to the caller */
-        pthread_mutex_unlock(&ctx->header_mutex);
+        
         return TRACEX_HEADER_NOT_VALID;
     }
 
-    /* Release the mutex before returning to the caller */
-    pthread_mutex_unlock(&ctx->header_mutex);
+    
     return TRACEX_SUCCESS;
 
 }
 
 tracex_ret_t tracex_header_int_get(struct tracex_header_context *ctx, struct tracex_header **header)
 {
-    /* Try to get the object mutex */
-    pthread_mutex_lock(&ctx->header_mutex);
+    
 
     /* Check if the header has already been parsed */
     if (!ctx->header_parsed)
     {
-        /* Release the mutex before returning to the caller */
-        pthread_mutex_unlock(&ctx->header_mutex);
+       
         return TRACEX_NEED_MORE;
     }
 
     /* Check if the header has been marked as invalid */
     if (ctx->header_parsed && !ctx->header_valid)
     {
-        /* Release the mutex before returning to the caller */
-        pthread_mutex_unlock(&ctx->header_mutex);
+        
         return TRACEX_HEADER_NOT_VALID;
     }
 
     /* Header is valid, return it to the user */
     *header = &ctx->header;
-
-    /* Release the mutex before returning to the caller */
-    pthread_mutex_unlock(&ctx->header_mutex);
 
     return TRACEX_SUCCESS;
 
@@ -99,7 +71,6 @@ tracex_ret_t tracex_header_int_parse(struct tracex_header_context *ctx, void *bu
 {
     tracex_ret_t status;
 
-    pthread_mutex_lock(&ctx->header_mutex);
     
     *consumed = 0;
     status = parse_incrementally(ctx, buffer, buff_len, consumed);
@@ -118,12 +89,7 @@ tracex_ret_t tracex_header_int_parse(struct tracex_header_context *ctx, void *bu
         if (ctx->on_header_parsed != NULL)
             ctx->on_header_parsed(ctx->cb_data, &ctx->header, status);
     }
-     
-    goto handle_exit;
     
-/* Release the mutex before returning to the caller */    
-handle_exit:
-    pthread_mutex_unlock(&ctx->header_mutex);
     return status;
 
 }
