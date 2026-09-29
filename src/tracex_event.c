@@ -120,6 +120,14 @@ void tracex_event_int_destroy_list(struct tracex_event_context *ctx)
     {
         destroy_event_entry(&entry);
     }
+    
+    /* In case we were parsing incrementally and that that the parsing got interrupted
+     * We need to free the current working entry, otherwise this is a memory leak.
+     * As it is not yet added to the current list.
+     */
+    if (ctx->curr_offset != 0 && ctx->curr_entry != NULL) {
+        destroy_event_entry(&ctx->curr_entry);
+    }
 
 }
 
@@ -241,7 +249,7 @@ static void convert_from_raw_to_user(struct tracex_event_entry *entry)
 {
     struct tracex_event_infos_labels info_labels;
 
-    // info_labels = tracex_event_infos_to_str(entry->raw_event.event_id);
+    info_labels = tracex_event_infos_to_str(entry->raw_event.event_id);
 
     entry->user_event.eventId = entry->raw_event.event_id;
     entry->user_event.threadPointer = entry->raw_event.thread_pointer;
@@ -257,7 +265,7 @@ static void convert_from_raw_to_user(struct tracex_event_entry *entry)
     entry->user_event.info3Label = info_labels.info3_label;
     entry->user_event.info4Label = info_labels.info4_label;
 
-   // entry->user_event.eventLabel = tracex_event_id_to_str(entry->raw_event.event_id);
+   entry->user_event.eventLabel = tracex_event_id_to_str(entry->raw_event.event_id);
 
 }
 static void destroy_event_entry(struct tracex_event_entry **entry)

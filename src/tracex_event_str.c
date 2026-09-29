@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "uthash.h"
 #include "tracex_event_str.h"
 #include "cJSON.h"
 #include "tracex_list.h"
@@ -35,7 +36,7 @@ struct tracex_event_labels {
     uint32_t                            eventId;
     struct tracex_event_infos_labels    infoLabels;
 
-    tracex_node node;                           /* The next node */
+    UT_hash_handle hh;
 };
 
 /* In case the list would be empty or a request could not be satisfied,
@@ -44,9 +45,8 @@ struct tracex_event_labels {
 static uint8_t *default_invalid_info = "Not valid"; 
 static uint8_t *default_invalid_event = "Invalid";
 
-/* Actual list of labels for the events */
-
-struct tracex_list event_labels_list;
+/* Actual list of labels for the events inside a hash table */
+static struct tracex_event_labels *event_labels_hash = NULL;
 
 static struct tracex_event_labels *alloc_event_labels(size_t count);
 static void destroy_event_label(struct tracex_event_labels **event_label);
@@ -59,17 +59,13 @@ const uint8_t *tracex_event_id_to_str(uint32_t id)
     struct tracex_event_labels *entry;
     uint8_t *string;
 
-    string = default_invalid_event;
-
-    if (event_labels_list.next != NULL && event_labels_list.prev != NULL) {
-        
-        tracex_list_for_each_entry(entry, &event_labels_list, node)
-        {
-            if (entry->eventId == id) {
-                string = entry->eventLabel;
-            }
-        }
-    }
+            
+    HASH_FIND_INT(event_labels_hash, &id, entry);
+    if (entry)
+        string = entry->eventLabel;
+    else
+        string = default_invalid_event;
+            
 
     return string;
 }
@@ -79,23 +75,22 @@ struct tracex_event_infos_labels tracex_event_infos_to_str(uint32_t id)
     struct tracex_event_infos_labels infos;
     struct tracex_event_labels *entry;
 
-    /* Set the params to invalid in case of an error */
-    infos.info1_label = default_invalid_info;
-    infos.info2_label = default_invalid_info;
-    infos.info3_label = default_invalid_info;
-    infos.info4_label = default_invalid_info;
-
-    if (event_labels_list.next != NULL && event_labels_list.prev != NULL) {
-
-        tracex_list_for_each_entry(entry, &event_labels_list, node)
-        {
-            if (entry->eventId == id) {
-                infos.info1_label = entry->infoLabels.info1_label;
-                infos.info2_label = entry->infoLabels.info2_label;
-                infos.info3_label = entry->infoLabels.info3_label;
-                infos.info4_label = entry->infoLabels.info4_label;
-            }
-        }
+    
+    HASH_FIND_INT(event_labels_hash, &id, entry);
+    
+    if (entry) {
+        infos.info1_label = entry->infoLabels.info1_label;
+        infos.info2_label = entry->infoLabels.info2_label;
+        infos.info3_label = entry->infoLabels.info3_label;
+        infos.info4_label = entry->infoLabels.info4_label;
+        
+    } else {
+        
+        /* Set the params to invalid in case of an error */
+        infos.info1_label = default_invalid_info;
+        infos.info2_label = default_invalid_info;
+        infos.info3_label = default_invalid_info;
+        infos.info4_label = default_invalid_info;
     }
     return infos;
 }
@@ -176,71 +171,37 @@ handle_return:
 
 void tracex_event_destroy_labels(void)
 {
-    struct tracex_event_labels *entry;
-    struct tracex_event_labels *next;
+    struct tracex_event_labels *entry, *tmp;
 
-    if (event_labels_list.next != NULL && event_labels_list.prev != NULL) {
-
-        tracex_list_for_each_entry_safe(entry, next, &event_labels_list,node)
-        {
-            destroy_event_label(&entry);
-        }
-
+    /* Walk the hash table and free everything */
+    HASH_ITER(hh, event_labels_hash, entry, tmp) {
+        destroy_event_label(&entry);
     }
 }
 
 
 static void tracex_event_labels_add(struct tracex_event_labels *new_labels, enum label_add_override_setting override)
 {
-    struct tracex_event_labels *next;
+    struct tracex_event_labels *existing;
     uint8_t found;
 
-    found = 0;
+    existing = NULL;
 
-    /* In case we are adding the very first element of the list, we need to initialize the list */
-    if (event_labels_list.prev == NULL || event_labels_list.next == NULL) {
-        tracex_list_init(&event_labels_list);
-    }
+    HASH_FIND_INT(event_labels_hash, &new_labels->eventId, existing);
 
-    /* If override is not allowed, add the labels to the list */
-    if (override == E_LABEL_ADD_NO_OVERRIDE)
-        goto early_add_list;
-    else {
-
-        /* Otherwise, we need to check if a label of the same type exists and potentially override it */
-        tracex_list_for_each_entry(next, &event_labels_list, node)
-        {
-            /* The event ID is already in the list. Let's replace it */
-            if (next->eventId == new_labels->eventId) {
-                
-                new_labels->node.next = next->node.next;
-                new_labels->node.prev = next->node.prev;
-                next->node.prev->next = &new_labels->node;
-                next->node.next->prev = &new_labels->node;
-
-                /*  Since the destroy function bellow moves the pointers inside the list
-                 *  We need to avoid it doing so. One single way is to set it's pointer to NULL
-                 *  Otherwise it would remove the new_labels previously added from the list
-                */ 
-                next->node.next = NULL;
-                next->node.prev = NULL;
-                /* Destroy the event from the list */
-                  destroy_event_label(&next);
-                /* Set the flag to avoid adding it again */
-                found = 1;
-                break;
-
-            }
-
+    /* If the event is found and override is allowed, delete the existing*/
+    if (existing) {
+        if (override == E_LABEL_ADD_OVERRIDE) {
+            destroy_event_label(&new_labels);
         }
-
+        else
+            goto early_return;
     }
     
 early_add_list:
-    if (found == 0) {
-        /* Add the actual element in the list */
-        tracex_list_insert(&new_labels->node, &event_labels_list);
-    }
+
+    /* Add the actual element in the list */
+    HASH_ADD_INT(event_labels_hash, eventId, new_labels);
 
 early_return:
     return;
@@ -283,14 +244,7 @@ static void destroy_event_label(struct tracex_event_labels **event_label)
                 (*event_label)->infoLabels.info4_label = NULL;
             }
 
-            
-
-            /* Check if the event is part of a list and remote it */
-            if ((*event_label)->node.next != NULL && (*event_label)->node.prev != NULL) {
-                tracex_list_delete(&(*event_label)->node);
-                (*event_label)->node.next = NULL;
-                (*event_label)->node.prev = NULL;
-            }
+            HASH_DEL(event_labels_hash, *event_label);
 
             free(*event_label);
             *event_label = NULL;

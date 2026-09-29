@@ -47,7 +47,7 @@ int main(void)
         exit(-1);
     }
     
-    file(1);
+    network();
     tracex_destroy_handler(&handler);
 
     tracex_deinit();
@@ -76,7 +76,7 @@ void objectParsedCB(tracex_handler_t *handler, struct tracex_object *object, tra
 {
     if (status == TRACEX_SUCCESS)
     {
-        TRACEX_debug_print_single_object(object);
+        // TRACEX_debug_print_single_object(object);
     }
 
 }
@@ -85,9 +85,12 @@ void network()
 {
     struct sockaddr_in server;
     int lfd;
-    int bytes_read;
+    size_t to_parse;
+    size_t bytes_parsed;
+    size_t bytes_left;
     tracex_ret_t status;
     char buffer[500];
+    char *buff_ptr;
     
 
     lfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -103,11 +106,18 @@ void network()
 
     do
     {
-        bytes_read = recv(lfd, buffer, sizeof(buffer), 0);
+        to_parse = recv(lfd, buffer, sizeof(buffer), 0);
+        buff_ptr = buffer;
 
-        status = tracex_parse(handler, buffer, bytes_read);
+        bytes_left = to_parse;
+        do {
+            status = tracex_parse(handler, buff_ptr, bytes_left, &bytes_parsed);
+            buff_ptr += bytes_parsed;
+            bytes_left -= bytes_parsed;
 
-    }while (status == TRACEX_NEED_MORE && bytes_read >= 0);
+        } while (bytes_left != 0);
+
+    }while (to_parse > 0);
 
     close(lfd);
 
@@ -120,13 +130,15 @@ void file(char random)
     char *orig_buff;
     size_t trace_size;
     tracex_ret_t status;
+    size_t bytes_read;
+    size_t left;
     size_t bytes_to_parse;
 
     if (random)
     {
         srand(time(NULL));
     }
-    file_ptr = fopen("r15b_tracex_dump.trx", "rb");
+    file_ptr = fopen("trace256mb.trx", "rb");
 
     if (file_ptr == NULL)
     {
@@ -148,22 +160,30 @@ void file(char random)
 
     fread(buffer, trace_size, 1, file_ptr);
 
-    do
-    {
-        if (random)
-        {
-            bytes_to_parse = (rand() % 100) + 1;
+    left = trace_size;
 
-        }
-        else
-        {
-            bytes_to_parse = trace_size;
-        }
+    while (left != 0) {
+        bytes_to_parse = 1;
+        status = tracex_parse(handler, buffer, bytes_to_parse, &bytes_read);
+        buffer += bytes_read;
+        left -= bytes_read;
+    }
+    // do
+    // {
+    //     if (random)
+    //     {
+    //         bytes_to_parse = 1;
 
-        status = tracex_parse(handler, buffer, bytes_to_parse);
-        buffer += bytes_to_parse;
+    //     }
+    //     else
+    //     {
+    //         bytes_to_parse = trace_size;
+    //     }
 
-    } while (status == TRACEX_NEED_MORE);
+    //     // buffer += wtf;
+    //     // counter++;
+
+    // } while (status == TRACEX_NEED_MORE);
 
 
     free(orig_buff);

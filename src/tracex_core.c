@@ -166,18 +166,19 @@ void tracex_destroy_handler(tracex_handler_t **handler)
 
 }
 
-tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t buffer_length)
+tracex_ret_t tracex_parse(tracex_handler_t *handler, void *buffer, size_t buffer_length, size_t *bytes_consumed)
 {
     tracex_ret_t status;
-    uint64_t consumed;
-
-
+    uint64_t consumed_by_phase;
+    uint64_t consumed_by_call;
     struct tracex_header_context *hdr_ctx;
-    consumed = 0;
+
+    consumed_by_phase = 0;
+    consumed_by_call = 0;
 
     status = TRACEX_NEED_MORE;
 
-    if (handler == NULL || buffer == NULL)
+    if (handler == NULL || buffer == NULL || bytes_consumed == NULL)
     {
         status = TRACEX_BAD_INPUT_PTR;
         goto handle_exit;
@@ -201,12 +202,14 @@ tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t b
     /* Are we in the beginning of the parsing, AKA parsing the header ? */
     if (handler->state == E_HEADER_PHASE)
     {
-        status = tracex_header_int_parse(hdr_ctx, buffer, buffer_length, &consumed);
+        status = tracex_header_int_parse(hdr_ctx, buffer, buffer_length, &consumed_by_phase);
 
+        consumed_by_call += consumed_by_phase;
+        
         if (status == TRACEX_SUCCESS)
         {
             /* Increment the total bytes processed from here */
-            handler->raw_bytes_count += consumed;
+            handler->raw_bytes_count += consumed_by_phase;
 
             /* Assign the needed missing values for the next phases */
             handler->objs_ctx.name_size = handler->hdr_ctx.header.obj_registry_name_size;
@@ -217,7 +220,7 @@ tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t b
             handler->state = E_OBJECT_PHASE;
 
             /* If the remaining for the next phase is 0, ask for more */
-            if (buffer_length - consumed == 0)
+            if (buffer_length - consumed_by_phase == 0)
             {
                 status = TRACEX_NEED_MORE;
                 goto handle_exit;
@@ -227,8 +230,8 @@ tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t b
             */
             else
             {
-                buffer += consumed;
-                buffer_length -= consumed;
+                buffer += consumed_by_phase;
+                buffer_length -= consumed_by_phase;
             }
         }
     }
@@ -236,17 +239,18 @@ tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t b
     /* We are now trying to parse the objects */
     if (handler->state == E_OBJECT_PHASE)
     {
-        status = tracex_object_int_parse(&handler->objs_ctx, buffer, buffer_length, &consumed);
+        status = tracex_object_int_parse(&handler->objs_ctx, buffer, buffer_length, &consumed_by_phase);
 
         if (status == TRACEX_SUCCESS)
         {
             handler->state = E_EVENT_PHASE;
         }
         
-        handler->raw_bytes_count += consumed;
+        consumed_by_call += consumed_by_phase;
+        handler->raw_bytes_count += consumed_by_phase;
 
         /* If the remaining for the next phase is 0, ask for more */
-        if (buffer_length - consumed == 0)
+        if (buffer_length - consumed_by_phase == 0)
         {
             status = TRACEX_NEED_MORE;
             goto handle_exit;
@@ -256,8 +260,8 @@ tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t b
         */
         else
         {
-            buffer += consumed;
-            buffer_length -= consumed;
+            buffer += consumed_by_phase;
+            buffer_length -= consumed_by_phase;
         }
 
 
@@ -265,19 +269,21 @@ tracex_ret_t tracex_parse(struct tracex_handler *handler, void *buffer, size_t b
     
     if (handler->state == E_EVENT_PHASE)
     {
-        status = tracex_event_int_parse(&handler->event_ctx, buffer, buffer_length, &consumed);
+        status = tracex_event_int_parse(&handler->event_ctx, buffer, buffer_length, &consumed_by_phase);
 
         if (status == TRACEX_SUCCESS)
         {
             handler->state = E_OBJECT_PHASE;
         }
-
-        handler->raw_bytes_count += consumed;
-        buffer += consumed;
-        buffer_length -= consumed;
+        consumed_by_call += consumed_by_phase;
+        handler->raw_bytes_count += consumed_by_phase;
+        buffer += consumed_by_phase;
+        buffer_length -= consumed_by_phase;
     }
 
 handle_exit:
+
+    *bytes_consumed = consumed_by_call;
     return status;
 }
 

@@ -67,14 +67,15 @@ tracex_ret_t tracex_object_int_parse(struct tracex_object_context *ctx, void *bu
         bytes_consumed = 0;
         status = parse_incrementally(ctx, buffer, bytes_left, &bytes_consumed);
 
+        /* Increment the number of bytes consumed for the caller */
+        *consumed += bytes_consumed;
+
         /* Sanitize for an error */
         if (status != TRACEX_SUCCESS && status != TRACEX_NEED_MORE)
         {
             goto handle_exit;
         }
 
-        /* Increment the number of bytes consumed for the caller */
-        *consumed += bytes_consumed;
 
         /* We parsed a full object, let's now process it and add it to the list */
         if (status == TRACEX_SUCCESS)
@@ -131,6 +132,15 @@ void tracex_object_int_destroy_list(struct tracex_object_context *ctx)
     tracex_list_for_each_entry_safe(entry, next, &ctx->obj_list, node)
     {
         destroy_object_entry(&entry);
+    }
+
+    /* In case we were parsing incrementally and that that the parsing got interrupted
+     * We need to free the current working entry, otherwise this is a memory leak.
+     * As it is not yet added to the current list.
+    */
+
+    if (ctx->curr_offset != 0 && ctx->current_entry != NULL) {
+        destroy_object_entry(&ctx->current_entry);
     }
     
 
