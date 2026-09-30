@@ -38,8 +38,33 @@ struct tracex_event_context
 
 };
 
+/**
+ * @brief Initializes an event context structure 
+ * 
+ * @param ctx pointer the context to be initialized
+ * @return tracex_ret_t
+ */
 tracex_ret_t tracex_event_int_init(struct tracex_event_context *ctx);
+
+/**
+ * @brief Computes the total size of an event buffer, that is the maximum of events entry the buffer holds 
+ * 
+ * @param registry_size pointer to where the total entry of events is saved
+ * @param start The start address of the event buffer
+ * @param stop The end address of the event buffer
+ * @return tracex_ret_t 
+ */
 tracex_ret_t tracex_event_int_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop);
+
+/**
+ * @brief Parses events as much as possible from a given raw buffer of bytes
+ * 
+ * @param ctx holds the context of the event parser
+ * @param buffer raw buffer pointer containing bytes to be parsed to a set of events
+ * @param buff_len the size of the provided buffer pointer
+ * @param consumed number of consumed bytes from the raw buffer after the function call
+ * @return tracex_ret_t 
+ */
 tracex_ret_t tracex_event_int_parse(struct tracex_event_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
 void tracex_event_destroy_context(struct tracex_event_context *ctx);
 #endif

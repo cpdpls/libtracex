@@ -1,3 +1,13 @@
+/**
+ * @file tracex_core.c
+ * @author Christos Papadopoulos (papadopoulos.chris@icloud.com)
+ * @brief 
+ * @version 0.1
+ * @date 2026-09-30
+ * 
+ * @copyright Copyright (c) 2026
+ * 
+ */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -256,7 +266,7 @@ tracex_ret_t tracex_parse(tracex_handler_t *handler, void *buffer, size_t buffer
 			
 		}
 
-		/**
+		/*
 		 * Even if we are going to the next phase or a failed called happened,
 		 * keep the number of bytes parsed updated 
 		 */
@@ -267,7 +277,7 @@ tracex_ret_t tracex_parse(tracex_handler_t *handler, void *buffer, size_t buffer
 	/* Object parsing phase  */
 	if (handler->state == E_OBJECT_PHASE) {
 
-		/**
+		/*
 		 * In case no more bytes are left to parse, the previous parsing phase 
 		 * Would return TRACEX_SUCCESS, We need to return TRACEX_NEED_MORE if
 		 * there is no more bytes So that the user can call again this function with
@@ -294,7 +304,7 @@ tracex_ret_t tracex_parse(tracex_handler_t *handler, void *buffer, size_t buffer
 				status = TRACEX_NEED_MORE;
 		}
 
-		/**
+		/*
 		 * Even if we are going to the next phase or a failed called happened,
 		 * keep the number of bytes parsed updated 
 		 */
@@ -305,7 +315,7 @@ tracex_ret_t tracex_parse(tracex_handler_t *handler, void *buffer, size_t buffer
 	/* Event parsing phase */
 	if (handler->state == E_EVENT_PHASE) {
 
-		/**
+		/*
 		 * In case no more bytes are left to parse, the previous parsing phase 
 		 * Would return TRACEX_SUCCESS, We need to return TRACEX_NEED_MORE if
 		 * there is no more bytes So that the user can call again this function with
@@ -339,7 +349,7 @@ tracex_ret_t tracex_parse(tracex_handler_t *handler, void *buffer, size_t buffer
 		}
 
 
-		/**
+		/*
 		 * Even if we are going to the next phase or a failed called happened,
 		 * keep the number of bytes parsed updated 
 		 */
