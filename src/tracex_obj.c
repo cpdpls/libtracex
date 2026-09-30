@@ -27,9 +27,8 @@ tracex_ret_t tracex_object_int_init(struct tracex_object_context *ctx)
 tracex_ret_t tracex_object_int_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop, uint32_t name_size)
 {
     tracex_ret_t status;
-    uint64_t object_entries;
+    uint64_t object_entries = 0;
 
-    object_entries = 0;
     if (stop == start)
     {
         status = TRACEX_OBJECT_REGISTRY_INVALID;
@@ -54,12 +53,9 @@ handle_exit:
 tracex_ret_t tracex_object_int_parse(struct tracex_object_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed)
 {
     tracex_ret_t status;
-    size_t bytes_left;
-    size_t bytes_consumed;
+    size_t bytes_left = 0;
+    size_t bytes_consumed = buff_len;
 
-    bytes_left = buff_len;
-
-    
     *consumed = 0;
 
     while (bytes_left != 0)
@@ -149,8 +145,8 @@ void tracex_object_int_destroy_list(struct tracex_object_context *ctx)
 tracex_ret_t tracex_object_int_iterator_init(struct tracex_object_context *ctx, TRACEX_object_iterator_t **iterator)
 {
     tracex_ret_t status;
-    struct tracex_object_entry *entry;
-    uint64_t index;
+    struct tracex_object_entry *entry = NULL;
+    uint64_t index = 0;
 
 
     *iterator = (struct tracex_obj_iterator*)malloc(sizeof(struct tracex_obj_iterator));
@@ -260,14 +256,10 @@ static void convert_from_raw_to_user(struct tracex_object_entry *entry, uint16_t
 static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void *buffer, size_t buffer_len, size_t *consumed)
 {
     tracex_ret_t status;
-    void *start_address;
-    size_t bytes_to_copy;
-    enum tracex_obj_fsm last_fsm;
+    void *start_address = NULL;
+    size_t bytes_to_copy = 0;
+    enum tracex_obj_fsm last_fsm = ctx->fsm; /* Keep track of the previous FSM */
 
-    
-    /* Keep track of the previous FSM */
-    last_fsm = ctx->fsm;
-    bytes_to_copy = 0;
 
     /* Check if this is a new object and try to allocate memory for it */
     if (ctx->curr_offset == 0 && ctx->fsm == E_OBJ_PARSE_OTHERS)
@@ -363,7 +355,7 @@ handle_exit:
 static tracex_ret_t process_object(struct tracex_object_context *ctx)
 {
     tracex_ret_t status;
-    struct tracex_object_entry *entry;
+    struct tracex_object_entry *entry = NULL;
 
     /*  This checks if the available flag is set, which means it shouldn't be added to the list 
     *   Or if the pointer address is set to 0, which means it's an invalid object
@@ -411,7 +403,7 @@ handle_exit:
 static tracex_ret_t alloc_new_object_entry(struct tracex_object_entry **object_ptr, uint16_t name_length)
 {
     tracex_ret_t status;
-    struct tracex_object_entry *tmp_entry;
+    struct tracex_object_entry *tmp_entry = NULL;
 
     /* Allocate a new object */
     tmp_entry = (struct tracex_object_entry*)malloc(sizeof(struct tracex_object_entry));

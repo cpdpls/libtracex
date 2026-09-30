@@ -169,12 +169,9 @@ void tracex_destroy_handler(tracex_handler_t **handler)
 tracex_ret_t tracex_parse(tracex_handler_t *handler, void *buffer, size_t buffer_length, size_t *bytes_consumed)
 {
     tracex_ret_t status;
-    uint64_t consumed_by_phase;
-    uint64_t consumed_by_call;
+    uint64_t consumed_by_phase = 0;
+    uint64_t consumed_by_call = 0;
     struct tracex_header_context *hdr_ctx;
-
-    consumed_by_phase = 0;
-    consumed_by_call = 0;
 
     status = TRACEX_NEED_MORE;
 

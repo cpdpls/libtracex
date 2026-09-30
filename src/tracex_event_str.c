@@ -56,8 +56,8 @@ static tracex_ret_t convert_cjson_to_event_label(struct tracex_event_json_elemen
 const uint8_t *tracex_event_id_to_str(uint32_t id)
 {
 
-    struct tracex_event_labels *entry;
-    uint8_t *string;
+    struct tracex_event_labels *entry = NULL;
+    uint8_t *string = NULL;
 
             
     HASH_FIND_INT(event_labels_hash, &id, entry);
@@ -73,7 +73,7 @@ const uint8_t *tracex_event_id_to_str(uint32_t id)
 struct tracex_event_infos_labels tracex_event_infos_to_str(uint32_t id)
 {
     struct tracex_event_infos_labels infos;
-    struct tracex_event_labels *entry;
+    struct tracex_event_labels *entry = NULL;
 
     
     HASH_FIND_INT(event_labels_hash, &id, entry);
@@ -99,11 +99,10 @@ tracex_ret_t tracex_event_load_labels(uint8_t *json_path)
 {
     tracex_ret_t status;
     struct tracex_event_json json_struct;
-    struct tracex_event_labels *labels_ptr;
-    uint8_t *actual_path;
+    struct tracex_event_labels *labels_ptr = NULL;
+    uint8_t *actual_path = NULL;
 
     memset(&json_struct, 0, sizeof(struct tracex_event_json));
-    labels_ptr = NULL;
 
     if (json_path == NULL)
         actual_path = TRACEX_EVENT_DEFAULT_JSON_PATH;  
@@ -182,10 +181,8 @@ void tracex_event_destroy_labels(void)
 
 static void tracex_event_labels_add(struct tracex_event_labels *new_labels, enum label_add_override_setting override)
 {
-    struct tracex_event_labels *existing;
-    uint8_t found;
-
-    existing = NULL;
+    struct tracex_event_labels *existing = NULL;
+    uint8_t found = 0;
 
     HASH_FIND_INT(event_labels_hash, &new_labels->eventId, existing);
 
@@ -254,9 +251,7 @@ static void destroy_event_label(struct tracex_event_labels **event_label)
 
 static struct tracex_event_labels *alloc_event_labels(size_t count)
 {
-    struct tracex_event_labels *tmp;
-
-    tmp = NULL;
+    struct tracex_event_labels *tmp = NULL;
 
     if (count == 0)
         goto early_return;
@@ -275,8 +270,8 @@ early_return:
 
 static tracex_ret_t convert_cjson_to_event_label(struct tracex_event_json_element *cjson_event, struct tracex_event_labels **new_label)
 {
-    struct tracex_event_labels *tmp_label;
-    uint8_t *tmp_buffer;
+    struct tracex_event_labels *tmp_label = NULL;
+    uint8_t *tmp_buffer = NULL;
     tracex_ret_t status;
 
 

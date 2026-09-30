@@ -24,9 +24,7 @@ tracex_ret_t tracex_event_int_init(struct tracex_event_context *ctx)
 tracex_ret_t tracex_event_int_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop)
 {
     tracex_ret_t status;
-    uint64_t event_buffer_entries;
-
-    event_buffer_entries = 0;
+    uint64_t event_buffer_entries = 0;
 
     /*TODO: Maybe find other checks in here */
     if (stop == start)
@@ -113,8 +111,8 @@ handle_exit:
 
 void tracex_event_int_destroy_list(struct tracex_event_context *ctx)
 {
-    struct tracex_event_entry *entry;
-    struct tracex_event_entry *next;
+    struct tracex_event_entry *entry = NULL;
+    struct tracex_event_entry *next = NULL;
     
     tracex_list_for_each_entry_safe(entry, next, &ctx->event_list, node)
     {
@@ -134,10 +132,9 @@ void tracex_event_int_destroy_list(struct tracex_event_context *ctx)
 static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *buffer, size_t buffer_len, size_t *consumed)
 {
     tracex_ret_t status;
-    void *start_address;
-    size_t bytes_to_copy;
+    void *start_address = NULL;
+    size_t bytes_to_copy = 0;
 
-    bytes_to_copy = 0;
 
     /* Check if this is a new event and zero out the structure */
     if (ctx->curr_offset == 0)
@@ -225,7 +222,7 @@ handle_exit:
 static tracex_ret_t alloc_new_event_entry(struct tracex_event_entry **entry_ptr)
 {
     tracex_ret_t status;
-    struct tracex_event_entry *tmp_entry;
+    struct tracex_event_entry *tmp_entry = NULL;
 
     /* Allocate a new event */
     tmp_entry = (struct tracex_event_entry*)malloc(sizeof(struct tracex_event_entry));

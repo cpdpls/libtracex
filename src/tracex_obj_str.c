@@ -57,8 +57,8 @@ static tracex_ret_t convert_cjson_to_obj_label(struct tracex_obj_json_element *c
 const uint8_t *tracex_object_type_to_str(uint32_t type)
 {
 
-    struct tracex_object_labels *entry;
-    uint8_t *string;
+    struct tracex_object_labels *entry = NULL;
+    uint8_t *string = NULL;
 
     string = default_invalid_obj;
 
@@ -78,7 +78,7 @@ const uint8_t *tracex_object_type_to_str(uint32_t type)
 struct tracex_object_params_labels tracex_object_param_to_str(uint32_t type)
 {
     struct tracex_object_params_labels params;
-    struct tracex_object_labels *entry;
+    struct tracex_object_labels *entry = NULL;
 
     /* Set the params to invalid in case of an error */
     params.param1_label = default_invalid_params;
@@ -101,11 +101,10 @@ tracex_ret_t tracex_object_load_labels(uint8_t *json_path)
 {
     tracex_ret_t status;
     struct tracex_obj_json json_struct;
-    struct tracex_object_labels *labels_ptr;
-    uint8_t *actual_path;
+    struct tracex_object_labels *labels_ptr = NULL;
+    uint8_t *actual_path = NULL;
 
     memset(&json_struct, 0, sizeof(struct tracex_obj_json));
-    labels_ptr = NULL;
 
     if (json_path == NULL)
         actual_path = TRACEX_OBJECT_DEFAULT_JSON_PATH;  
@@ -187,10 +186,8 @@ void tracex_object_destroy_labels(void)
 
 static void tracex_object_labels_add(struct tracex_object_labels *new_labels, enum label_add_override_setting override)
 {
-    struct tracex_object_labels *next;
-    uint8_t found;
-
-    found = 0;
+    struct tracex_object_labels *next = NULL;
+    uint8_t found = 0;
 
     /* In case we are adding the very first element of the list, we need to initialize the list */
     if (object_labels_list.prev == NULL || object_labels_list.next == NULL) {
@@ -281,9 +278,7 @@ static void destroy_object_label(struct tracex_object_labels **obj_label)
 
 static struct tracex_object_labels *alloc_object_labels(size_t count)
 {
-    struct tracex_object_labels *tmp;
-
-    tmp = NULL;
+    struct tracex_object_labels *tmp = NULL;
 
     if (count == 0)
         goto early_return;
@@ -302,9 +297,9 @@ early_return:
 
 static tracex_ret_t convert_cjson_to_obj_label(struct tracex_obj_json_element *cjson_obj, struct tracex_object_labels **new_label)
 {
-    struct tracex_object_labels *tmp_label;
-    uint8_t *tmp_buffer;
     tracex_ret_t status;
+    struct tracex_object_labels *tmp_label = NULL;
+    uint8_t *tmp_buffer = NULL;
 
 
     /* Check for any missing field */

@@ -11,8 +11,6 @@ static tracex_ret_t parse_incrementally(struct tracex_header_context *ctx, void 
 
 tracex_ret_t tracex_header_int_check_parsed(struct tracex_header_context *ctx)
 {
-    
-
     if (!ctx->header_parsed)
     {
         
@@ -71,8 +69,6 @@ tracex_ret_t tracex_header_int_parse(struct tracex_header_context *ctx, void *bu
 {
     tracex_ret_t status;
 
-    
-    *consumed = 0;
     status = parse_incrementally(ctx, buffer, buff_len, consumed);
 
     if (status == TRACEX_SUCCESS)
@@ -97,8 +93,8 @@ tracex_ret_t tracex_header_int_parse(struct tracex_header_context *ctx, void *bu
 static tracex_ret_t process_header(struct tracex_header_context *ctx)
 {
     tracex_ret_t status;
-    struct tracex_header *hdr;
-    uint8_t *id;
+    struct tracex_header *hdr = NULL;
+    uint8_t *id = NULL;
 
     hdr = &ctx->header;
 
@@ -153,9 +149,8 @@ handle_exit:
 static tracex_ret_t parse_incrementally(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed)
 {
     tracex_ret_t status;
-    size_t bytes_to_copy;
+    size_t bytes_to_copy = 0;
 
-    bytes_to_copy = 0;
     if (ctx->byte_offset >= sizeof(struct tracex_header))
     {
         status = TRACEX_HEADER_BAD_OFFSET_START;

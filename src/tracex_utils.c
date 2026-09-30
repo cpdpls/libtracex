@@ -33,13 +33,11 @@ void tracex_utils_detect_indianess(void)
 tracex_ret_t tracex_utils_load_json_file(const uint8_t *path, cJSON **root)
 {
     tracex_ret_t status;
-    FILE *file_ptr;
-    size_t file_size;
-    uint8_t *tmp_buffer;
+    FILE *file_ptr = NULL;
+    size_t file_size = 0;
+    uint8_t *tmp_buffer = NULL;
 
     *root = NULL;
-    file_ptr = NULL;
-    tmp_buffer = NULL;
 
     /* Try to open the requested json raw file */
     file_ptr = fopen(path, "rb");
