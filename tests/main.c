@@ -26,6 +26,7 @@ int main(void)
 {
     tracex_ret_t status;
     struct tracex_callbacks callbacks;
+    char key;
 
     callbacks.on_event_parsed = eventParsedCB;
     callbacks.on_header_parsed = headerParsedCB;
@@ -47,8 +48,12 @@ int main(void)
         exit(-1);
     }
     
-    file(0);
+    network();
+
+    printf("PRESS ANY KEY TO EXIT !\n");
+    key = getchar();
     tracex_destroy_handler(&handler);
+
 
     tracex_deinit();
 
@@ -60,7 +65,7 @@ void eventParsedCB(tracex_handler_t *handler, struct tracex_event *event, tracex
 {
     if (status == TRACEX_SUCCESS)
     {
-        // TRACEX_debug_print_single_event(event);
+        //TRACEX_debug_print_single_event(event);
     }
 
 }
@@ -76,7 +81,7 @@ void objectParsedCB(tracex_handler_t *handler, struct tracex_object *object, tra
 {
     if (status == TRACEX_SUCCESS)
     {
-        // TRACEX_debug_print_single_object(object);
+        TRACEX_debug_print_single_object(object);
     }
 
 }
@@ -140,7 +145,7 @@ void file(char random)
     {
         srand(time(NULL));
     }
-    file_ptr = fopen("trace_samples/trace_big.trx", "rb");
+    file_ptr = fopen("trace_samples/r15b_all_int.trx", "rb");
 
     if (file_ptr == NULL)
     {
@@ -178,7 +183,7 @@ void file(char random)
         bytes_left = bytes_to_parse;
         do {
 
-            status = tracex_parse(handler, buffer, bytes_to_parse, &bytes_read);
+            status = tracex_parse(handler, buffer, bytes_left, &bytes_read);
             buffer += bytes_read;
             bytes_left -= bytes_read;
             left -= bytes_read;

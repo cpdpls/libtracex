@@ -41,5 +41,5 @@ struct tracex_event_context
 tracex_ret_t tracex_event_int_init(struct tracex_event_context *ctx);
 tracex_ret_t tracex_event_int_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop);
 tracex_ret_t tracex_event_int_parse(struct tracex_event_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
-void tracex_event_int_destroy_list(struct tracex_event_context *ctx);
+void tracex_event_destroy_context(struct tracex_event_context *ctx);
 #endif

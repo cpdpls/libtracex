@@ -50,10 +50,4 @@ struct tracex_object
 
 };
 
-
-
-tracex_ret_t tracex_object_iterator_init(tracex_handler *handler, TRACEX_object_iterator_t **iterator);
-tracex_ret_t tracex_object_iterator_next(TRACEX_object_iterator_t *iterator, const struct tracex_object **object);
-void tracex_object_iterator_end(TRACEX_object_iterator_t **iterator);
-
 #endif

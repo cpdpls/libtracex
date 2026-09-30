@@ -27,7 +27,6 @@ void tracex_utils_detect_indianess(void)
     {
         sys_endian = E_LITTLE;
     }
-
 }
 
 tracex_ret_t tracex_utils_load_json_file(const uint8_t *path, cJSON **root)

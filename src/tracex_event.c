@@ -11,6 +11,7 @@ static void destroy_event_entry(struct tracex_event_entry **entry);
 static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *buffer, size_t buffer_len, size_t *consumed);
 static tracex_ret_t process_event(struct tracex_event_context *ctx);
 static tracex_ret_t alloc_new_event_entry(struct tracex_event_entry **entry_ptr);
+static void destroy_events_list(struct tracex_event_context *ctx);
 
 tracex_ret_t tracex_event_int_init(struct tracex_event_context *ctx)
 {
@@ -53,54 +54,49 @@ handle_exit:
 tracex_ret_t tracex_event_int_parse(struct tracex_event_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed)
 {
     tracex_ret_t status;
-    size_t bytes_left;
-    size_t bytes_consumed;
+    size_t bytes_left = buff_len;
+    size_t bytes_consumed = 0;
 
     *consumed = 0;
-    bytes_left = buff_len;
+    status = TRACEX_NEED_MORE;
 
-    while (bytes_left != 0)
-    {
-        bytes_consumed = 0;
+    while (bytes_left != 0) {
+	    bytes_consumed = 0;
 
-        status = parse_incrementally(ctx, buffer, bytes_left, &bytes_consumed);
-        /* Sanitize for an error */
-        if (status != TRACEX_SUCCESS && status != TRACEX_NEED_MORE)
-        {
-            goto handle_exit;
-        }
+	    status = parse_incrementally(ctx, buffer, bytes_left, &bytes_consumed);
+	    /* Sanitize for an error */
+	    if (status != TRACEX_SUCCESS && status != TRACEX_NEED_MORE) {
+		    goto handle_exit;
+	    }
 
-        /* Increment the number of bytes consumed for the caller */
-        *consumed += bytes_consumed;
+	    /* Increment the number of bytes consumed for the caller */
+	    *consumed += bytes_consumed;
 
-        /* We parsed a full event, let's now process it and add it to the list */
-        if (status == TRACEX_SUCCESS)
-        {
-            /* Increment the number of events parsed for the current sessions*/
-            ctx->curr_count++;
+	    /* We parsed a full event, let's now process it and add it to the list */
+	    if (status == TRACEX_SUCCESS) {
+		    /* Increment the number of events parsed for the current sessions*/
+		    ctx->curr_count++;
 
-            status = process_event(ctx);
-            
-            if (status == TRACEX_SUCCESS)
-            {
-                ctx->tot_count++;
-            }
+		    status = process_event(ctx);
 
-            status = TRACEX_NEED_MORE;
+		    if (status == TRACEX_SUCCESS) {
+			    ctx->tot_count++;
+		    }
 
-            /* Check if we have parsed the whole event registry */
-            if (ctx->curr_count == ctx->registry_size)
-            {
-                /* Reset the current session total event registry count */
-                ctx->curr_count = 0;
-                status = TRACEX_SUCCESS;
-                goto handle_exit;
-            }
-        }
+		    status = TRACEX_NEED_MORE;
 
-        /* Adjust the loop counter and the buffer position with it's size */
-        buffer += bytes_consumed;
-        bytes_left -= bytes_consumed;
+		    /* Check if we have parsed the whole event registry */
+		    if (ctx->curr_count == ctx->registry_size) {
+			    /* Reset the current session total event registry count */
+			    ctx->curr_count = 0;
+			    status = TRACEX_SUCCESS;
+			    goto handle_exit;
+		    }
+	    }
+
+	    /* Adjust the loop counter and the buffer position with it's size */
+	    buffer += bytes_consumed;
+	    bytes_left -= bytes_consumed;
     }
 
 handle_exit:
@@ -109,16 +105,11 @@ handle_exit:
 }
 
 
-void tracex_event_int_destroy_list(struct tracex_event_context *ctx)
+void tracex_event_destroy_context(struct tracex_event_context *ctx)
 {
-    struct tracex_event_entry *entry = NULL;
-    struct tracex_event_entry *next = NULL;
-    
-    tracex_list_for_each_entry_safe(entry, next, &ctx->event_list, node)
-    {
-        destroy_event_entry(&entry);
-    }
-    
+    /* Destroy the list of parsed events */
+	destroy_events_list(ctx);
+
     /* In case we were parsing incrementally and that that the parsing got interrupted
      * We need to free the current working entry, otherwise this is a memory leak.
      * As it is not yet added to the current list.
@@ -126,7 +117,6 @@ void tracex_event_int_destroy_list(struct tracex_event_context *ctx)
     if (ctx->curr_offset != 0 && ctx->curr_entry != NULL) {
         destroy_event_entry(&ctx->curr_entry);
     }
-
 }
 
 static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *buffer, size_t buffer_len, size_t *consumed)
@@ -284,4 +274,16 @@ static void destroy_event_entry(struct tracex_event_entry **entry)
             *entry = NULL;
         }
     }
+}
+
+static void destroy_events_list(struct tracex_event_context *ctx)
+{
+    struct tracex_event_entry *entry = NULL;
+    struct tracex_event_entry *next = NULL;
+    
+    tracex_list_for_each_entry_safe(entry, next, &ctx->event_list, node)
+    {
+        destroy_event_entry(&entry);
+    }
+
 }

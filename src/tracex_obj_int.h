@@ -68,7 +68,7 @@ struct tracex_obj_iterator
 tracex_ret_t tracex_object_int_init(struct tracex_object_context *ctx);
 tracex_ret_t tracex_object_int_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop, uint32_t name_size);
 tracex_ret_t tracex_object_int_parse(struct tracex_object_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
-void tracex_object_int_destroy_list(struct tracex_object_context *ctx);
+void tracex_object_destroy_context(struct tracex_object_context *ctx);
 
 tracex_ret_t tracex_object_int_iterator_init(struct tracex_object_context *ctx, TRACEX_object_iterator_t **iterator);
 tracex_ret_t tracex_object_int_iterator_next(TRACEX_object_iterator_t *iterator, const struct tracex_object **object);
