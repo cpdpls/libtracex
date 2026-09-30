@@ -140,7 +140,7 @@ void file(char random)
     {
         srand(time(NULL));
     }
-    file_ptr = fopen("trace_big.trx", "rb");
+    file_ptr = fopen("trace_samples/trace_big.trx", "rb");
 
     if (file_ptr == NULL)
     {
