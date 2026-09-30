@@ -31,6 +31,7 @@ target_include_directories(tx_tracer
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cjson
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/uthash/include
 )
 
 target_link_libraries(tx_tracer PRIVATE cjson)
