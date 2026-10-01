@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "tracex_core.h"
-#include "tracex_errno.h"
+#include "tracex/tracex_errno.h"
 #include "tracex_obj_int.h"
 
 static tracex_ret_t process_header(struct tracex_header_context *ctx);

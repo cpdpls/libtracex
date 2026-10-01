@@ -1,12 +1,10 @@
 #include <assert.h>
 #include <stdio.h>
-#include "tracex_debug.h"
+#include "tracex/tracex_debug.h"
 #include "tracex_header_int.h"
 #include "tracex_core.h"
-#include "tracex_obj_int.h"
-#include "tracex_object.h"
+#include "tracex/tracex_object.h"
 #include "tracex_event_int.h"
-#include "tracex_obj_str.h"
 
 #define TRACEX_DEBUG_HDR(fmt, args...) fprintf(stdout, "TRACEX-HEADER >> " fmt, ##args)
 #define TRACEX_DEBUG_OBJ(fmt, args...) fprintf(stdout, "TRACEX-OBJECT >> " fmt, ##args)
@@ -41,7 +39,7 @@ void TRACEX_debug_print_single_object(const struct tracex_object *entry)
 {
 
     TRACEX_DEBUG_OBJ("---- %.32s ----\n", entry->name);
-    TRACEX_DEBUG_OBJ("Type : %s\n", entry->objectTypeLabel);
+    TRACEX_DEBUG_OBJ("Type : %u\n", entry->type);
     if (entry->type == 1)
     {
         TRACEX_DEBUG_OBJ("Thread Priority : %u\n", entry->thread_priority);
@@ -53,8 +51,8 @@ void TRACEX_debug_print_single_object(const struct tracex_object *entry)
 
     }
     TRACEX_DEBUG_OBJ("Object Pointer : 0x%.4x\n", entry->pointer);
-    TRACEX_DEBUG_OBJ("%s : 0x%.4x\n", entry->param1Label, entry->params.raw.param1);
-    TRACEX_DEBUG_OBJ("%s : 0x%.4x\n", entry->param2Label, entry->params.raw.param2);
+    // TRACEX_DEBUG_OBJ("%s : 0x%.4x\n", entry->param1Label, entry->params.raw.param1);
+    // TRACEX_DEBUG_OBJ("%s : 0x%.4x\n", entry->param2Label, entry->params.raw.param2);
     TRACEX_DEBUG_OBJ("Name : %.32s\n\n", entry->name);
 }
 
@@ -94,20 +92,20 @@ void TRACEX_debug_print_single_event(const struct tracex_event *entry)
 
     }
 
-    TRACEX_DEBUG_EVENT("Event ID : %s\n", entry->eventLabel);
+    TRACEX_DEBUG_EVENT("Event ID : %u\n", entry->eventId);
     TRACEX_DEBUG_EVENT("Thread Pointer : 0x%.4x\n", entry->threadPointer);
 
     if (entry->occurenceType == TRACEX_EVENT_OCCURENCE_TYPE_ISR)
-        TRACEX_DEBUG_EVENT("Thread running before ISR : 0x%.4x\n", entry->threadParams.threadPointerBeforeIsr);
+        TRACEX_DEBUG_EVENT("Thread running before ISR : 0x%.4x\n", entry->threadPointerBeforeIsr);
     
     if (entry->occurenceType == TRACEX_EVENT_OCCURENCE_TYPE_THREAD)
-        TRACEX_DEBUG_EVENT("Thread Priority : %u\n", entry->threadParams.threadPriority);
+        TRACEX_DEBUG_EVENT("Thread Priority : %u\n", entry->threadPriority);
     
     TRACEX_DEBUG_EVENT("Time-Stamp : %u\n", entry->timeStamp);
-    TRACEX_DEBUG_EVENT("%s : 0x%.4x\n", entry->info1Label,  entry->rawInfos.info1);
-    TRACEX_DEBUG_EVENT("%s : 0x%.4x\n", entry->info2Label, entry->rawInfos.info2);
-    TRACEX_DEBUG_EVENT("%s : 0x%.4x\n", entry->info3Label, entry->rawInfos.info3);
-    TRACEX_DEBUG_EVENT("%s : 0x%.4x\n\n", entry->info4Label, entry->rawInfos.info4);
+    // TRACEX_DEBUG_EVENT("%s : 0x%.4x\n", entry->info1Label,  entry->rawInfos.info1);
+    // TRACEX_DEBUG_EVENT("%s : 0x%.4x\n", entry->info2Label, entry->rawInfos.info2);
+    // TRACEX_DEBUG_EVENT("%s : 0x%.4x\n", entry->info3Label, entry->rawInfos.info3);
+    // TRACEX_DEBUG_EVENT("%s : 0x%.4x\n\n", entry->info4Label, entry->rawInfos.info4);
 
 }
 void TRACEX_debug_print_events(const struct tracex_handler *handler)
@@ -122,7 +120,7 @@ void TRACEX_debug_print_events(const struct tracex_handler *handler)
     tracex_list_for_each_entry(entry, &handler->event_ctx.event_list, node)
     {
         TRACEX_DEBUG_EVENT("| BEGIN EVENT ENTRY (%lu) |\n", event_counter);
-        TRACEX_debug_print_single_event(&entry->user_event);
+        TRACEX_debug_print_single_event(&entry->event);
         TRACEX_DEBUG_EVENT("| END EVENT ENTRY (%lu) |\n\n", event_counter++);
     }
 

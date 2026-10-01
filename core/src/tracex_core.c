@@ -12,36 +12,18 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "tracex/tracex_errno.h"
+#include "tracex/tracex_header.h"
+#include "tracex/tracex_event.h"
+#include "tracex/tracex_object.h"
+
 #include "tracex_core.h"
-#include "tracex_errno.h"
 #include "tracex_event_int.h"
 #include "tracex_obj_int.h"
-#include "tracex_utils.h"
-#include "tracex_header.h"
-#include "tracex_event.h"
-#include "tracex_object.h"
-#include "tracex_obj_str.h"
-#include "tracex_event_str.h"
+#include "tracex_endian.h"
 
 /* Flag set to detect wether tracex has been init */
 static uint8_t tracex_init_done;
-
-
-struct tracex_core_event_labels_json {
-	cJSON *array;
-	cJSON *value;
-	cJSON *name;
-	cJSON *param1;
-	cJSON *param2;
-	cJSON *param3;
-	cJSON *param4;
-};
-
-struct tracex_core_event_json {
-	struct tracex_core_event_labels_json event_types;
-	cJSON *root;
-	cJSON *tmp_item;
-};
 
 
 
@@ -94,17 +76,6 @@ tracex_ret_t tracex_init(void)
 	 */
 	tracex_utils_detect_indianess();
 
-	/*
-	 * Load all the default labels for the objects (object name and it's param labels)
-	 * We pass NULL in order to load the default json file.
-	 */
-	status = tracex_object_load_labels(NULL);
-
-	/*
-	 * Load all the default labels for the events (event name and it's infos labels)
-	 * We pass NULL in order to load the default json file.
-	 */
-	status = tracex_event_load_labels(NULL);
 
 	tracex_init_done = 1;
 
@@ -114,9 +85,9 @@ early_return:
 
 void tracex_deinit(void)
 {
-	/* Call the destructors of the previous parsed labels from a json file */
-	tracex_object_destroy_labels();
-	tracex_event_destroy_labels();
+	// /* Call the destructors of the previous parsed labels from a json file */
+	// tracex_object_destroy_labels();
+	// tracex_event_destroy_labels();
 }
 
 tracex_ret_t tracex_create_new_handler(tracex_handler_t **new_handler)
@@ -200,7 +171,7 @@ void tracex_destroy_handler(tracex_handler_t **handler)
 		tracex_object_destroy_context(&(*handler)->objs_ctx);
 
 		/* Destroy the event context */
-		tracex_event_destroy_context(&(*handler)->event_ctx);
+		tracex_event_int_destroy_context(&(*handler)->event_ctx);
 
 		/* Zero-out the whole handler, erasing subsequent contexts too */
 		memset((*handler), 0, sizeof(struct tracex_handler));

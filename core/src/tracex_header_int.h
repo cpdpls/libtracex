@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-#include "tracex_header.h"
+#include "tracex/tracex_header.h"
 #include "tracex_obj_int.h"
-#include "tracex_event_int.h"
+#include "event.h"
 
 #define TRACEX_HEADER_ID_BIG_ENDIAN     0x54585442
 #define TRACEX_HEADER_ID_LITTLE_ENDIAN  0x42545854

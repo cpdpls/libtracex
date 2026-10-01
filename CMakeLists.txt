@@ -4,43 +4,32 @@ project(libtracex VERSION 1.0 LANGUAGES C)
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# Force cJSON to build as a static library and skip its tests
-set(CJSON_OVERRIDE_BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
-set(CJSON_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-set(ENABLE_SANITIZERS OFF CACHE BOOL "" FORCE)
-set(ENABLE_CJSON_TEST OFF CACHE BOOL "Enable building cJSON test" FORCE)
+# Options used to turn off the building of certain libraries and tests
+option(TRACEX_BUILD_LABELS   "Build the labels library"           ON)
+option(TRACEX_BUILD_STATS    "Build the statistics / Lua library" OFF)
+option(TRACEX_BUILD_EXAMPLES "Build example programs"             ON)
 
-add_subdirectory(external/cjson)
 
-add_library(tracex STATIC
-    src/tracex_errno.c
-    src/tracex_header.c
-    src/tracex_core.c
-    src/tracex_obj.c
-    src/tracex_event.c
-    src/tracex_debug.c
-    src/tracex_utils.c
-    src/tracex_obj_str.c
-    src/tracex_event_str.c
-)
+# Force cJSON to build statically and skip the building of the tests
+set(CJSON_OVERRIDE_BUILD_SHARED_LIBS ON  CACHE BOOL "" FORCE)
+set(CJSON_BUILD_SHARED_LIBS          OFF CACHE BOOL "" FORCE)
+set(ENABLE_SANITIZERS                OFF CACHE BOOL "" FORCE)
+set(ENABLE_CJSON_TEST                OFF CACHE BOOL "Enable building cJSON test" FORCE)
 
-target_include_directories(tracex
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/external/cjson
-        ${CMAKE_CURRENT_SOURCE_DIR}/external/uthash/include
-)
+# Always build the core library in any cases 
+add_subdirectory(core)
 
-target_link_libraries(tracex PRIVATE cjson)
+# Build the labels library if enabled
+if(TRACEX_BUILD_LABELS)
+    add_subdirectory(labels)
+endif()
 
-option(BUILD_TRACEX_TEST "Build the tracex test executable (tests/main.c)" OFF)
+# Build the statistics library if enabled
+if(TRACEX_BUILD_STATS)
+    add_subdirectory(stats)
+endif()
 
-if(BUILD_TRACEX_TEST)
-    add_executable(tracex_test
-        tests/main.c
-    )
-    target_link_libraries(tracex_test PRIVATE tracex)
+# Build the testing program if enabled
+if(TRACEX_BUILD_EXAMPLES)
+    add_subdirectory(examples)
 endif()

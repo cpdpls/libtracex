@@ -23,8 +23,7 @@ struct tracex_event
     {
         uint32_t threadPriority;            /* If the event occured when a thread was running, this is it's priority*/
         uint32_t threadPointerBeforeIsr;    /* If the event occured during an ISR, it's the thread running before the ISR */
-
-    } threadParams;
+    };
 
     uint32_t    eventId;           /* Event ID of the event */
     uint32_t    timeStamp;         /* Timestamp when the event happened. To be used alongside the time stamp mask */
@@ -35,12 +34,6 @@ struct tracex_event
         uint32_t    info3;              /* Info 3 of the event */
         uint32_t    info4;              /* Info 4 of the event */
     } rawInfos;
-
-    const uint8_t *info1Label;
-    const uint8_t *info2Label;
-    const uint8_t *info3Label;
-    const uint8_t *info4Label;
-    const uint8_t *eventLabel;
 };
 
 #endif

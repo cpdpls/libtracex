@@ -1,12 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
+#include "tracex/tracex_event.h"
+#include "tracex/tracex_errno.h"
 #include "tracex_event_int.h"
-#include "tracex_event.h"
-#include "tracex_errno.h"
 #include "tracex_core.h"
-#include "tracex_event_str.h"
 
-static void convert_from_raw_to_user(struct tracex_event_entry *entry);
+static void convert_from_raw_to_user(struct tracex_event_raw *raw, struct tracex_event *user);
 static void destroy_event_entry(struct tracex_event_entry **entry);
 static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *buffer, size_t buffer_len, size_t *consumed);
 static tracex_ret_t process_event(struct tracex_event_context *ctx);
@@ -35,7 +34,7 @@ tracex_ret_t tracex_event_int_compute_registry_size(uint64_t *registry_size, uin
     }
 
     /* Compute the total possible event entries inside the buffer */
-    event_buffer_entries = (stop - start) / sizeof(struct tracex_event_int);
+    event_buffer_entries = (stop - start) / sizeof(struct tracex_event_raw);
 
     /* Check for an invalid registry size */
     if (event_buffer_entries == 0)
@@ -105,7 +104,7 @@ handle_exit:
 }
 
 
-void tracex_event_destroy_context(struct tracex_event_context *ctx)
+void tracex_event_int_destroy_context(struct tracex_event_context *ctx)
 {
     /* Destroy the list of parsed events */
 	destroy_events_list(ctx);
@@ -114,8 +113,8 @@ void tracex_event_destroy_context(struct tracex_event_context *ctx)
      * We need to free the current working entry, otherwise this is a memory leak.
      * As it is not yet added to the current list.
      */
-    if (ctx->curr_offset != 0 && ctx->curr_entry != NULL) {
-        destroy_event_entry(&ctx->curr_entry);
+    if (ctx->staging_raw_offset != 0 && ctx->tmp_event != NULL) {
+        destroy_event_entry(&ctx->tmp_event);
     }
 }
 
@@ -126,23 +125,24 @@ static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *
     size_t bytes_to_copy = 0;
 
 
-    /* Check if this is a new event and zero out the structure */
-    if (ctx->curr_offset == 0)
+    /* Check if this is a new event. Zero out the staging structure and allocate a new temp object */
+    if (ctx->staging_raw_offset == 0)
     {
-        if ((status = alloc_new_event_entry(&ctx->curr_entry)) != TRACEX_SUCCESS)
-        {
-            goto handle_exit;
-        }
+	    memset(&ctx->staging_raw_event, 0, sizeof(struct tracex_event_raw));
+	    if ((status = alloc_new_event_entry(&ctx->tmp_event)) != TRACEX_SUCCESS)
+	    {
+	        goto handle_exit;
+	    }
     }
 
     /* Set the start address + the previous offset */
-    start_address = (void*)&ctx->curr_entry->raw_event + ctx->curr_offset;
+    start_address = (void*)&ctx->staging_raw_event + ctx->staging_raw_offset;
 
     /* Check if the buffer length added with the previous offset if bigger than a whole event struct */
-    if (buffer_len + ctx->curr_offset >= sizeof(struct tracex_event_int))
+    if (buffer_len + ctx->staging_raw_offset >= sizeof(struct tracex_event_raw))
     {
         /* Copy What is left to be copied */
-        bytes_to_copy = sizeof(struct tracex_event_int) - ctx->curr_offset; 
+        bytes_to_copy = sizeof(struct tracex_event_raw) - ctx->staging_raw_offset; 
     }
 
     /* Otherwise, there is not enough byte to parse a full event so copy what we can */
@@ -151,16 +151,16 @@ static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *
         bytes_to_copy = buffer_len;
     }
 
-    ctx->curr_offset += bytes_to_copy;
+    ctx->staging_raw_offset += bytes_to_copy;
 
     /* Perform the copy */
     memcpy(start_address, buffer, bytes_to_copy);
 
     /* Check if we reached the end of the parsing of a full event */
-    if (ctx->curr_offset == sizeof(struct tracex_event_int))
+    if (ctx->staging_raw_offset == sizeof(struct tracex_event_raw))
     {
         /* Reset the current offset */
-        ctx->curr_offset = 0;
+        ctx->staging_raw_offset = 0;
         status = TRACEX_SUCCESS;
     }
     else
@@ -181,8 +181,8 @@ static tracex_ret_t process_event(struct tracex_event_context *ctx)
     /*TODO: Revert to the correct endianess */
 
     /* Check if this is an empty invalid event */
-    if (ctx->curr_entry->raw_event.thread_pointer == 0 || 
-        ctx->curr_entry->raw_event.thread_priority == 0)
+    if (ctx->staging_raw_event.thread_pointer == 0 || 
+        ctx->staging_raw_event.thread_priority == 0)
     {
         status = TRACEX_EVENT_INVALID;
         goto handle_exit;
@@ -190,10 +190,10 @@ static tracex_ret_t process_event(struct tracex_event_context *ctx)
     }
 
     /* Convert the raw objet to the user format */
-    convert_from_raw_to_user(ctx->curr_entry);
+    convert_from_raw_to_user(&ctx->staging_raw_event, &ctx->tmp_event->event);
 
     /* Add the event to the list */
-    tracex_list_insert(&ctx->curr_entry->node, &ctx->event_list);
+    tracex_list_insert(&ctx->tmp_event->node, &ctx->event_list);
     
     status = TRACEX_SUCCESS;
     
@@ -202,9 +202,9 @@ handle_exit:
     if (status == TRACEX_SUCCESS) {
         /* Call the user provided callback */
         if (ctx->on_event_parsed != NULL)
-            ctx->on_event_parsed(ctx->cb_data, &ctx->curr_entry->user_event, TRACEX_SUCCESS);
+            ctx->on_event_parsed(ctx->cb_data, &ctx->tmp_event->event, TRACEX_SUCCESS);
     } else {
-        destroy_event_entry(&ctx->curr_entry);
+        destroy_event_entry(&ctx->tmp_event);
     }
     return status;
 }
@@ -232,27 +232,18 @@ handle_exit:
 
 }
 
-static void convert_from_raw_to_user(struct tracex_event_entry *entry)
+static void convert_from_raw_to_user(struct tracex_event_raw *raw, struct tracex_event *user)
 {
-    struct tracex_event_infos_labels info_labels;
+	user->eventId = raw->event_id;
+	user->threadPointer = raw->thread_pointer;
+	user->threadPriority = raw->thread_priority;
+	user->eventId = raw->event_id;
+	user->timeStamp = raw->time_stamp;
 
-    info_labels = tracex_event_infos_to_str(entry->raw_event.event_id);
-
-    entry->user_event.eventId = entry->raw_event.event_id;
-    entry->user_event.threadPointer = entry->raw_event.thread_pointer;
-    entry->user_event.threadParams.threadPriority = entry->raw_event.thread_priority;
-    entry->user_event.timeStamp = entry->raw_event.time_stamp;
-    entry->user_event.rawInfos.info1 = entry->raw_event.info1;
-    entry->user_event.rawInfos.info2 = entry->raw_event.info2;
-    entry->user_event.rawInfos.info3 = entry->raw_event.info3;
-    entry->user_event.rawInfos.info4 = entry->raw_event.info4;
-
-    entry->user_event.info1Label = info_labels.info1_label;
-    entry->user_event.info2Label = info_labels.info2_label;
-    entry->user_event.info3Label = info_labels.info3_label;
-    entry->user_event.info4Label = info_labels.info4_label;
-
-   entry->user_event.eventLabel = tracex_event_id_to_str(entry->raw_event.event_id);
+	user->rawInfos.info1 = raw->info1;
+	user->rawInfos.info2 = raw->info2;
+	user->rawInfos.info3 = raw->info3;
+	user->rawInfos.info4 = raw->info4;
 
 }
 static void destroy_event_entry(struct tracex_event_entry **entry)

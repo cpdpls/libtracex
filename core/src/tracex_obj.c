@@ -1,12 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "tracex_object.h"
+#include "tracex/tracex_object.h"
+#include "tracex/tracex_errno.h"
 #include "tracex_obj_int.h"
-#include "tracex_errno.h"
 #include "tracex_core.h"
 #include "tracex_header_int.h"
-#include "tracex_obj_str.h"
 
 static void convert_from_raw_to_user(struct tracex_object_entry *entry, uint16_t name_size);
 static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void *buffer, size_t buffer_len, size_t *consumed);
@@ -223,11 +222,8 @@ void tracex_object_int_iterator_end(TRACEX_object_iterator_t **iterator)
 
 static void convert_from_raw_to_user(struct tracex_object_entry *entry, uint16_t name_size)
 {
-    struct tracex_object_params_labels params;
-    /* Assign the correct endianess */
-    
-    params = tracex_object_param_to_str(entry->raw_obj.type);
 
+    /*TODO: Assign the correct endianess */
     entry->usr_obj.type = entry->raw_obj.type;
 
     entry->usr_obj.res1 = entry->raw_obj.res1;
@@ -235,10 +231,10 @@ static void convert_from_raw_to_user(struct tracex_object_entry *entry, uint16_t
     entry->usr_obj.pointer = entry->raw_obj.pointer;
     entry->usr_obj.params.raw.param1 = entry->raw_obj.param_1;
     entry->usr_obj.params.raw.param2 = entry->raw_obj.param_2;
-    entry->usr_obj.objectTypeLabel = tracex_object_type_to_str(entry->usr_obj.type);
+    entry->usr_obj.objectTypeLabel = NULL;
 
-    entry->usr_obj.param1Label = params.param1_label;
-    entry->usr_obj.param2Label = params.param2_label;
+    entry->usr_obj.param1Label = NULL;
+    entry->usr_obj.param2Label = NULL;
     
     memcpy(entry->usr_obj.name, entry->raw_obj.name, name_size);
 

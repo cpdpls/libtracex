@@ -2,11 +2,11 @@
 #define __TRACEX_EVENT_INT_H__
 
 #include <stdint.h>
+#include "tracex/tracex_event.h"
+#include "tracex/tracex_errno.h"
 #include "tracex_list.h"
-#include "tracex_event.h"
-#include "tracex_errno.h"
 
-struct tracex_event_int
+struct tracex_event_raw
 {
     uint32_t    thread_pointer;     /* Thread pointer when the event happened*/
     uint32_t    thread_priority;    /* Thread priority */
@@ -20,21 +20,21 @@ struct tracex_event_int
 
 struct tracex_event_entry
 {
-    struct tracex_event_int raw_event;
-    struct tracex_event     user_event;             /* Parsed event from the raw dump */
-    tracex_node             node;                   /* Next event node */
+    struct tracex_event     event;             /* Parsed event from the raw dump */
+    tracex_node             node;              /* Next event node */
 };
 
 struct tracex_event_context
 {
     void (*on_event_parsed)(void *cb_data, struct tracex_event *event, tracex_ret_t status);    /* Callback to use when a new event had been parsed */
     void                        *cb_data;
-    struct tracex_list          event_list;     /* List of parsed events */
-    uint64_t                    curr_count;     /* Total count of events for the current parssing session */
-    struct tracex_event_entry   *curr_entry;    /* Saved current event when parsing incrementally */
-    uint64_t                    curr_offset;    /* Saved current events byte count when parsing incrementally */
-    uint64_t                    tot_count;      /* Total count of events */
-    uint64_t                    registry_size;  /* Total number of posssible events in the event registry */
+    struct tracex_list          event_list;         /* List of parsed events */
+    uint64_t                    curr_count;         /* Total count of events for the current parssing session */
+    struct tracex_event_raw     staging_raw_event;  /* Staging raw event for the incremental parsing  */
+    uint16_t                    staging_raw_offset; /* Staging raw event offset when parsing incrementally */
+    struct tracex_event_entry   *tmp_event;         /* Temp allocated event object when the incremental parsing started */
+    uint64_t tot_count;                             /* Total count of events */
+    uint64_t                    registry_size;      /* Total number of posssible events in the event registry */
 
 };
 
@@ -66,5 +66,6 @@ tracex_ret_t tracex_event_int_compute_registry_size(uint64_t *registry_size, uin
  * @return tracex_ret_t 
  */
 tracex_ret_t tracex_event_int_parse(struct tracex_event_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
-void tracex_event_destroy_context(struct tracex_event_context *ctx);
+
+void tracex_event_int_destroy_context(struct tracex_event_context *ctx);
 #endif

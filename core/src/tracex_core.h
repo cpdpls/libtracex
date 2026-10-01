@@ -3,13 +3,12 @@
 
 #include <stdint.h>
 
-#include "cJSON.h"
-#include "tracex_errno.h"
+#include "tracex/tracex_errno.h"
+#include "tracex/tracex.h"
 #include "tracex_header_int.h"
 #include "tracex_obj_int.h"
 #include "tracex_event_int.h"
 #include "tracex_list.h"
-#include "tracex.h"
 
 #define TO_HANDLER(x) ((struct tracex_handler *)x)
 

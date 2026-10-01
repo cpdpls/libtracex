@@ -2,10 +2,10 @@
 #define __TRACEX_OBJ_INT_H__
 
 #include <stdint.h>
+#include "tracex/tracex_object.h"
+#include "tracex/tracex_errno.h"
 #include "tracex_list.h"
-#include "tracex_object.h"
 #include "tracex_header_int.h"
-#include "tracex_errno.h"
 
 
 enum tracex_obj_fsm

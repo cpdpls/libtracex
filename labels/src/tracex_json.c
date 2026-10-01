@@ -1,34 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "cJSON.h"
-#include "tracex_utils.h"
-#include "tracex_errno.h"
-
-enum endianess
-{
-    E_LITTLE,
-    E_BIG,
-};
-
-static enum endianess sys_endian = 0;
-
-void tracex_utils_detect_indianess(void)
-{
-    const int x = 1;
-
-    /* This is a big endian system */
-    if ((*(char*)&x) == 0)
-    {
-        sys_endian = E_BIG;
-    }
-    else
-    {
-        sys_endian = E_LITTLE;
-    }
-}
-
 tracex_ret_t tracex_utils_load_json_file(const uint8_t *path, cJSON **root)
 {
     tracex_ret_t status;
@@ -99,3 +68,18 @@ handle_return:
     return status;
 
 }
+
+
+
+
+/*
+	 * Load all the default labels for the objects (object name and it's param labels)
+	 * We pass NULL in order to load the default json file.
+	 */
+	status = tracex_object_load_labels(NULL);
+
+	/*
+	 * Load all the default labels for the events (event name and it's infos labels)
+	 * We pass NULL in order to load the default json file.
+	 */
+	status = tracex_event_load_labels(NULL);

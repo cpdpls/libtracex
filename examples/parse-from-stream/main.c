@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "tracex.h"
-#include "tracex_debug.h"
+#include "tracex/tracex.h"
+#include "tracex/tracex_debug.h"
 
 
 tracex_handler *handler;
@@ -126,73 +126,4 @@ void network()
 
     close(lfd);
 
-}
-
-void file(char random)
-{
-    FILE *file_ptr;
-    char *buffer;
-    char *orig_buff;
-    size_t trace_size;
-    tracex_ret_t status;
-    size_t bytes_read;
-    size_t left;
-    size_t bytes_left;
-
-    size_t bytes_to_parse;
-
-    if (random)
-    {
-        srand(time(NULL));
-    }
-    file_ptr = fopen("trace_samples/r15b_all_int.trx", "rb");
-
-    if (file_ptr == NULL)
-    {
-        printf("Failed to open the trace file !\n");
-        exit(-1);
-    }
-
-    fseek(file_ptr, 0L, SEEK_END);
-    trace_size = ftell(file_ptr);
-    fseek(file_ptr, 0L, SEEK_SET);
-
-    buffer = (char*)malloc(sizeof(char) * trace_size);
-    if (buffer == NULL)
-    {
-        printf("Allocation failure in test !\n");
-        exit(-1);
-    }
-    orig_buff = buffer;
-
-    fread(buffer, trace_size, 1, file_ptr);
-
-    left = trace_size;
-
-    while (left != 0) {
-
-        if (random){
-            bytes_to_parse = rand() % 100 + 1;
-            if (bytes_to_parse > left)
-                bytes_to_parse = left;
-        }
-        else
-        {
-            bytes_to_parse = trace_size;
-        }
-        bytes_left = bytes_to_parse;
-        do {
-
-            status = tracex_parse(handler, buffer, bytes_left, &bytes_read);
-            buffer += bytes_read;
-            bytes_left -= bytes_read;
-            left -= bytes_read;
-
-        } while (bytes_left != 0);
-
-    }
-
-    free(orig_buff);
-    fclose(file_ptr);
-    
 }
