@@ -15,7 +15,7 @@ enum tracex_obj_fsm
 };
 
 
-struct tracex_object_int
+struct tracex_object_raw
 {
     uint8_t  available;
     uint8_t  type;
@@ -31,8 +31,7 @@ struct tracex_object_int
 
 struct tracex_object_entry
 {
-    struct tracex_object_int        raw_obj;        /* Parsed object from the raw dump */
-    struct tracex_object            usr_obj;        /* Parsed user object */
+    struct tracex_object            obj;        /* Parsed user object */
     tracex_node                     node;           /* Next object node */
 };
 
@@ -40,13 +39,14 @@ struct tracex_object_context
 {
     void (*on_object_parsed)(void *cb_data, struct tracex_object *object, tracex_ret_t status);   /* Callback to use when a new object has been parsed */
     void                            *cb_data;
-    struct tracex_list              obj_list;                                   /* List of parsed objects */
-    uint64_t                        curr_count;                                 /* Total count of objects for the current parsing */
-    struct tracex_object_entry      *current_entry;                             /* Saved current object when parsing incrementally */
-    uint8_t                         curr_offset;                                /* Saved current object byte count when parsing the fields incrementally */
-    uint64_t                        tot_count;                                  /* Total count of objects */
-    uint64_t                        registry_size;                              /* Total number of possible objects in the object registry */
-    uint16_t                        name_size;                                  /* Max object name length of an object */
+    struct tracex_list              obj_list;               /* List of parsed objects */
+    uint64_t                        curr_count;             /* Total count of objects for the current parsing */
+    struct tracex_object_raw        staging_raw_obj;        /* Staging raw object for the incremental parsing */
+    uint8_t                         staging_raw_offset;     /* Staging raw object offset when parsing incrementally */
+    struct tracex_object_entry      *tmp_obj;               /* Temp allocated object */
+    uint64_t                        tot_count;              /* Total count of objects */
+    uint64_t                        registry_size;          /* Total number of possible objects in the object registry */
+    uint16_t                        name_size;              /* Max object name length of an object */
 
     /* Because the objects structure has a variable object name that is not known
         until the header has been parser, we need to allocate the pointer *obj_name when creating the object.

@@ -106,7 +106,7 @@ void headerParsedCB(tracex_handler_t *handler, struct tracex_header *header, tra
 {
     if (status == TRACEX_SUCCESS)
     {
-        TRACEX_debug_print_raw_header(header);
+        TRACEX_debug_print_user_header(header);
     }
 
 }

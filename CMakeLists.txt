@@ -21,6 +21,7 @@ add_subdirectory(core)
 
 # Build the labels library if enabled
 if(TRACEX_BUILD_LABELS)
+    add_subdirectory(external/cjson)
     add_subdirectory(labels)
 endif()
 

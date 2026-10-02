@@ -30,9 +30,9 @@ struct tracex_event_context
     void                        *cb_data;
     struct tracex_list          event_list;         /* List of parsed events */
     uint64_t                    curr_count;         /* Total count of events for the current parssing session */
-    struct tracex_event_raw     staging_raw_event;  /* Staging raw event for the incremental parsing  */
+    struct tracex_event_raw     staging_raw_event;  /* Staging raw event for the incremental parsing */
     uint16_t                    staging_raw_offset; /* Staging raw event offset when parsing incrementally */
-    struct tracex_event_entry   *tmp_event;         /* Temp allocated event object when the incremental parsing started */
+    struct tracex_event_entry   *tmp_event;         /* Temp allocated event object */
     uint64_t tot_count;                             /* Total count of events */
     uint64_t                    registry_size;      /* Total number of posssible events in the event registry */
 

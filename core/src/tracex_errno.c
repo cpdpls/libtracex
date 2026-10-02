@@ -35,8 +35,8 @@ const char *TRACEX_strerror(tracex_ret_t tracex_error)
     const char *error_string;
 
     /* Check for an unknown tracex error */
-    if (tracex_error >= TRACEX_NUMBER_OF_ERRORS) {
-        error_string = tracex_errno_strings[TRACEX_NUMBER_OF_ERRORS - 1];
+    if (tracex_error >= TRACEX_ERRNO_COUNT) {
+        error_string = tracex_errno_strings[TRACEX_ERRNO_COUNT - 1];
     }
 
     /* Otherwise return the actual error string */

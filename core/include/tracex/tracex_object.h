@@ -11,7 +11,6 @@ typedef struct tracex_obj_iterator TRACEX_object_iterator_t;
 struct tracex_object
 {
     uint32_t type;
-    const uint8_t *objectTypeLabel;
     union
     {
         uint16_t thread_priority;
@@ -44,10 +43,11 @@ struct tracex_object
         struct { uint32_t param1; uint32_t param2; } raw;
     } params;
 
-    const uint8_t *param1Label;
-    const uint8_t *param2Label;
     uint8_t     *name;
 
+    void *user_data;
+
+    void (*user_data_destructor)(void *user_data);
 };
 
 #endif

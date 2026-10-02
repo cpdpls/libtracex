@@ -167,6 +167,9 @@ void tracex_destroy_handler(tracex_handler_t **handler)
 	/* Sanitize for bad input */
 	if (handler != NULL && *handler != NULL) {
 
+		/* Destroy the header context */
+		tracex_header_destroy_context(&(*handler)->hdr_ctx);
+		
 		/* Destroy the object context */
 		tracex_object_destroy_context(&(*handler)->objs_ctx);
 
@@ -224,7 +227,7 @@ tracex_ret_t tracex_parse(tracex_handler_t *handler, void *buffer, size_t buffer
 			 * We now, know more about the registry size of the objects and events 
 			 * So let's update those for each context and continue with the parsing
 			 */
-			handler->objs_ctx.name_size = handler->hdr_ctx.header.obj_registry_name_size;
+			handler->objs_ctx.name_size = handler->hdr_ctx.staging_raw_header.obj_registry_name_size;
 			handler->objs_ctx.registry_size = handler->hdr_ctx.obj_registry_size;
 			handler->event_ctx.registry_size = handler->hdr_ctx.event_registry_size;
 

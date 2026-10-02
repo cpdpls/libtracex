@@ -8,6 +8,14 @@
 
 static tracex_ret_t process_header(struct tracex_header_context *ctx);
 static tracex_ret_t parse_incrementally(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
+static tracex_ret_t alloc_new_user_header(struct tracex_header **user_hdr);
+static void destroy_user_header(struct tracex_header **user_hdr);
+static void convert_header_from_raw_to_user(struct tracex_header_raw *raw, struct tracex_header *user);
+
+void tracex_header_destroy_context(struct tracex_header_context *ctx)
+{
+	destroy_user_header(&ctx->user_header);
+}
 
 tracex_ret_t tracex_header_int_check_parsed(struct tracex_header_context *ctx)
 {
@@ -58,7 +66,7 @@ tracex_ret_t tracex_header_int_get(struct tracex_header_context *ctx, struct tra
     }
 
     /* Header is valid, return it to the user */
-    *header = &ctx->header;
+    *header = ctx->user_header;
 
     return TRACEX_SUCCESS;
 
@@ -76,14 +84,16 @@ tracex_ret_t tracex_header_int_parse(struct tracex_header_context *ctx, void *bu
         /* We should have now parsed a full header */
         status = process_header(ctx);
 
-        if (status != TRACEX_SUCCESS)
+	    convert_header_from_raw_to_user(&ctx->staging_raw_header, ctx->user_header);
+
+	if (status != TRACEX_SUCCESS)
             ctx->header_valid = 0;
         else
             ctx->header_valid = 1;
 
         /* Call the user provided callback */
         if (ctx->on_header_parsed != NULL)
-            ctx->on_header_parsed(ctx->cb_data, &ctx->header, status);
+            ctx->on_header_parsed(ctx->cb_data, ctx->user_header, status);
     }
     
     return status;
@@ -93,10 +103,10 @@ tracex_ret_t tracex_header_int_parse(struct tracex_header_context *ctx, void *bu
 static tracex_ret_t process_header(struct tracex_header_context *ctx)
 {
     tracex_ret_t status;
-    struct tracex_header *hdr = NULL;
+    struct tracex_header_raw *hdr = NULL;
     uint8_t *id = NULL;
 
-    hdr = &ctx->header;
+    hdr = &ctx->staging_raw_header;
 
     id = (uint8_t*)&hdr->id;
 
@@ -151,15 +161,24 @@ static tracex_ret_t parse_incrementally(struct tracex_header_context *ctx, void 
     tracex_ret_t status;
     size_t bytes_to_copy = 0;
 
-    if (ctx->byte_offset >= sizeof(struct tracex_header))
+    /* Check if we are beginning to parser the header. Zero-out the staging header and allocate a user header */
+    if (ctx->staging_raw_offset == 0)
+    {
+	    memset(&ctx->staging_raw_header, 0, sizeof(struct tracex_header_raw));
+
+        if ((status = alloc_new_user_header(&ctx->user_header)) != TRACEX_SUCCESS)
+		    goto handle_exit;
+    }
+
+    if (ctx->staging_raw_offset >= sizeof(struct tracex_header_raw))
     {
         status = TRACEX_HEADER_BAD_OFFSET_START;
         goto handle_exit;
     }
 
-    if (buff_len + ctx->byte_offset >= sizeof(struct tracex_header))
+    if (buff_len + ctx->staging_raw_offset >= sizeof(struct tracex_header_raw))
     {
-        bytes_to_copy = sizeof(struct tracex_header) - ctx->byte_offset;
+        bytes_to_copy = sizeof(struct tracex_header_raw) - ctx->staging_raw_offset;
     }
     else
     {
@@ -167,12 +186,12 @@ static tracex_ret_t parse_incrementally(struct tracex_header_context *ctx, void 
 
     }
 
-    memcpy(((void*)&ctx->header)+ ctx->byte_offset, buffer, bytes_to_copy);
+    memcpy(((void*)&ctx->staging_raw_header)+ ctx->staging_raw_offset, buffer, bytes_to_copy);
 
-    ctx->byte_offset += bytes_to_copy;
+    ctx->staging_raw_offset += bytes_to_copy;
 
 
-    if (ctx->byte_offset >= sizeof(struct tracex_header))
+    if (ctx->staging_raw_offset >= sizeof(struct tracex_header_raw))
     {
         ctx->header_parsed = 1;
         status = TRACEX_SUCCESS;
@@ -187,4 +206,42 @@ static tracex_ret_t parse_incrementally(struct tracex_header_context *ctx, void 
 handle_exit:
     *consumed = bytes_to_copy;
     return status;
+}
+
+static tracex_ret_t alloc_new_user_header(struct tracex_header **user_hdr)
+{
+	tracex_ret_t status;
+	struct tracex_header *tmp_hdr = NULL;
+
+    /* Allocate a new user header */
+
+	tmp_hdr = (struct tracex_header *)malloc(sizeof(struct tracex_header));
+    if (tmp_hdr == NULL) {
+	    status = TRACEX_ALLOC_FAILURE;
+	    goto handle_exit;
+    }
+
+    /* Zero-out the struct for safety */
+    memset(tmp_hdr, 0, sizeof(struct tracex_header));
+    status = TRACEX_SUCCESS;
+
+handle_exit:
+	*user_hdr = tmp_hdr;
+	return status;
+}
+
+static void destroy_user_header(struct tracex_header **user_hdr)
+{
+    if (user_hdr != NULL) {
+        if (*user_hdr != NULL) {
+		    free(*user_hdr);
+		    *user_hdr = NULL;
+	    }
+    }
+}
+static void convert_header_from_raw_to_user(struct tracex_header_raw *raw, struct tracex_header *user)
+{
+	user->Id = raw->id;
+	user->obj_registry_name_size = raw->obj_registry_name_size;
+	user->timeStampMask = raw->timestamp_mask;
 }

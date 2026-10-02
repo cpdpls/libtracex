@@ -12,6 +12,7 @@
 
 #include "tracex/tracex.h"
 #include "tracex/tracex_debug.h"
+#include "tracex/tracex_labels.h"
 
 
 tracex_handler *handler;
@@ -24,7 +25,9 @@ void file(char random);
 
 int main(void)
 {
-    tracex_ret_t status;
+    tracex_ret_t status_tx;
+    tracex_labels_ret_t status_lab;
+
     struct tracex_callbacks callbacks;
     char key;
 
@@ -32,19 +35,33 @@ int main(void)
     callbacks.on_header_parsed = headerParsedCB;
     callbacks.on_object_parsed = objectParsedCB;
 
+    status_lab = tracex_labels_event_load_labels(NULL);
+
+    if (status_lab != TRACEX_LABELS_SUCCESS) {
+        printf("%s\n", tracex_labels_strerror(status_tx));
+        exit(-1);
+    }
+
+    status_lab = tracex_labels_object_load_labels(NULL);
+
+    if (status_lab != TRACEX_LABELS_SUCCESS) {
+        printf("%s\n", tracex_labels_strerror(status_tx));
+        exit(-1);
+    }
+
     tracex_init();
 
-    status = tracex_create_new_handler(&handler);
+    status_tx = tracex_create_new_handler(&handler);
 
-    if (status != TRACEX_SUCCESS)
+    if (status_tx != TRACEX_SUCCESS)
     {
-        printf("%s\n", TRACEX_strerror(status));
+        printf("%s\n", TRACEX_strerror(status_tx));
         exit(-1);
     }
 
     if (tracex_register_callbacks(handler, &callbacks) != TRACEX_SUCCESS)
     {
-        printf("%s\n", TRACEX_strerror(status));
+        printf("%s\n", TRACEX_strerror(status_tx));
         exit(-1);
     }
     
@@ -73,7 +90,7 @@ void headerParsedCB(tracex_handler_t *handler, struct tracex_header *header, tra
 {
     if (status == TRACEX_SUCCESS)
     {
-        TRACEX_debug_print_raw_header(header);
+        TRACEX_debug_print_user_header(header);
     }
 
 }

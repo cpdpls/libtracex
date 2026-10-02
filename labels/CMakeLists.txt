@@ -1,9 +1,9 @@
-add_subdirectory(external/cjson)
-
 add_library(tracex_labels STATIC
-    src/tracex_obj_str.c         # moved from core
-    src/tracex_event_str.c       # moved from core
-    # add any other labels-specific sources
+    src/tracex_labels_errno.c
+    src/tracex_labels_obj.c
+    src/tracex_labels_event.c
+    src/tracex_labels_utils.c
+    
 )
 
 add_library(tracex::labels ALIAS tracex_labels)

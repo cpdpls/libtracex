@@ -125,7 +125,7 @@ static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *
     size_t bytes_to_copy = 0;
 
 
-    /* Check if this is a new event. Zero out the staging structure and allocate a new temp object */
+    /* Check if this is a new event. Zero out the staging structure and allocate a new temp event */
     if (ctx->staging_raw_offset == 0)
     {
 	    memset(&ctx->staging_raw_event, 0, sizeof(struct tracex_event_raw));
@@ -274,7 +274,12 @@ static void destroy_events_list(struct tracex_event_context *ctx)
     
     tracex_list_for_each_entry_safe(entry, next, &ctx->event_list, node)
     {
-        destroy_event_entry(&entry);
+        /* Call the user data destructor if any */
+        if (entry->event.user_data != NULL)
+            if (entry->event.user_data_destructor != NULL)
+		    entry->event.user_data_destructor(entry->event.user_data);
+            
+	    destroy_event_entry(&entry);
     }
 
 }

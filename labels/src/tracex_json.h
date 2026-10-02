@@ -1,1 +1,0 @@
-tracex_ret_t tracex_utils_load_json_file(const uint8_t *path, cJSON **root);

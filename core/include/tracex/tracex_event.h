@@ -34,6 +34,9 @@ struct tracex_event
         uint32_t    info3;              /* Info 3 of the event */
         uint32_t    info4;              /* Info 4 of the event */
     } rawInfos;
+
+    void *user_data;
+    void (*user_data_destructor)(void *user_data);
 };
 
 #endif

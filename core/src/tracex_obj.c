@@ -7,7 +7,7 @@
 #include "tracex_core.h"
 #include "tracex_header_int.h"
 
-static void convert_from_raw_to_user(struct tracex_object_entry *entry, uint16_t name_size);
+static void convert_from_raw_to_user(struct tracex_object_raw *raw, struct tracex_object *user);
 static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void *buffer, size_t buffer_len, size_t *consumed);
 static tracex_ret_t process_object(struct tracex_object_context *ctx);
 static tracex_ret_t alloc_new_object_entry(struct tracex_object_entry **object_ptr, uint16_t name_length);
@@ -37,7 +37,7 @@ tracex_ret_t tracex_object_int_compute_registry_size(uint64_t *registry_size, ui
     }
 
     /* Compute the total possible objects inside the registry */
-    object_entries = ((stop - start) / ((sizeof(struct tracex_object_int) - sizeof(uint8_t*)) + name_size));
+    object_entries = ((stop - start) / ((sizeof(struct tracex_object_raw) - sizeof(uint8_t*)) + name_size));
     if (object_entries == 0)
     {
         status = TRACEX_OBJECT_REGISTRY_INVALID;
@@ -123,11 +123,11 @@ void tracex_object_destroy_context(struct tracex_object_context *ctx)
 
     /*
      * The only way to know if the current entry was in use by the time we are destroying the context
-     * Is by either having the current offset being different than 0 or the current_entry set to NULL
+     * Is by either having the current offset being different than 0 and the current_entry different than NUL
      * Or if the current fsm was set to parsing the object name
      */
-    if (ctx->curr_offset != 0 || ctx->current_entry != NULL || ctx->fsm == E_OBJ_PARSE_NAME) {
-        destroy_object_entry(&ctx->current_entry);
+    if ((ctx->staging_raw_offset != 0 && ctx->tmp_obj != NULL) || ctx->fsm == E_OBJ_PARSE_NAME) {
+        destroy_object_entry(&ctx->tmp_obj);
     }
 }
 
@@ -157,7 +157,7 @@ tracex_ret_t tracex_object_int_iterator_init(struct tracex_object_context *ctx, 
     tracex_list_for_each_entry(entry, &ctx->obj_list, node)
     {
         /* Assign the object */
-        (*iterator)->objects[index++] = &entry->usr_obj;
+        (*iterator)->objects[index++] = &entry->obj;
     }
 
     (*iterator)->count = ctx->tot_count;
@@ -220,24 +220,22 @@ void tracex_object_int_iterator_end(TRACEX_object_iterator_t **iterator)
     }
 }
 
-static void convert_from_raw_to_user(struct tracex_object_entry *entry, uint16_t name_size)
+static void convert_from_raw_to_user(struct tracex_object_raw *raw, struct tracex_object *user)
 {
 
-    /*TODO: Assign the correct endianess */
-    entry->usr_obj.type = entry->raw_obj.type;
+    // /*TODO: Assign the correct endianess */
 
-    entry->usr_obj.res1 = entry->raw_obj.res1;
-    entry->usr_obj.res2 = entry->raw_obj.res2;
-    entry->usr_obj.pointer = entry->raw_obj.pointer;
-    entry->usr_obj.params.raw.param1 = entry->raw_obj.param_1;
-    entry->usr_obj.params.raw.param2 = entry->raw_obj.param_2;
-    entry->usr_obj.objectTypeLabel = NULL;
+    /* The name pointer has already been filled in during the parsing
+     * As it was as the main pointer when parsing the name
+     */
 
-    entry->usr_obj.param1Label = NULL;
-    entry->usr_obj.param2Label = NULL;
+    user->type = raw->type;
+    user->pointer = raw->pointer;
+    user->res1 = raw->res1;
+    user->res2 = raw->res2;
+    user->params.raw.param1 = raw->param_1;
+    user->params.raw.param2 = raw->param_2;
     
-    memcpy(entry->usr_obj.name, entry->raw_obj.name, name_size);
-
 }
 static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void *buffer, size_t buffer_len, size_t *consumed)
 {
@@ -247,29 +245,35 @@ static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void 
     enum tracex_obj_fsm last_fsm = ctx->fsm; /* Keep track of the previous FSM */
 
 
-    /* Check if this is a new object and try to allocate memory for it */
-    if (ctx->curr_offset == 0 && ctx->fsm == E_OBJ_PARSE_OTHERS)
+    /* Check if this is a new event. Zero out the staging structure and allocate a new temp object */
+    if (ctx->staging_raw_offset == 0 && ctx->fsm == E_OBJ_PARSE_OTHERS)
     {
-        if ((status = alloc_new_object_entry(&ctx->current_entry, ctx->name_size)) != TRACEX_SUCCESS)
-        {
-            goto handle_exit;
-        }
+	    memset(&ctx->staging_raw_obj, 0, sizeof(struct tracex_object_raw));
+	    if ((status = alloc_new_object_entry(&ctx->tmp_obj, ctx->name_size)) != TRACEX_SUCCESS) {
+		    goto handle_exit;
+	    }
+        /* Since we just allocated memory for the next object to be parsed, we can take
+         * It's just allocated pointer to the object name and have as a working pointer 
+         * In the staging object
+         */
+
+	    ctx->staging_raw_obj.name = ctx->tmp_obj->obj.name;
     }
     
     /* Are we at the beginning of the parsing ? (The whole struct without the object name) */
     if (ctx->fsm == E_OBJ_PARSE_OTHERS)
     {
         /* Start address is the start of the object struct + the previous offset */
-        start_address = ((void*)&ctx->current_entry->raw_obj) + ctx->curr_offset;
+        start_address = ((void*)&ctx->staging_raw_obj) + ctx->staging_raw_offset;
 
         /* Check if the buffer length added with the previous offset is bigger than the object struct - the size of the object name pointer */
-        if (buffer_len + ctx->curr_offset >= (sizeof(struct tracex_object_int) - sizeof(uint8_t*)))
+        if (buffer_len + ctx->staging_raw_offset >= (sizeof(struct tracex_object_raw) - sizeof(uint8_t*)))
         {
             /* Copy all the structure fields until the start of the object name pointer in the struct (last field) */
-            bytes_to_copy = (sizeof(struct tracex_object_int) - sizeof(uint8_t*)) - ctx->curr_offset;
+            bytes_to_copy = (sizeof(struct tracex_object_raw) - sizeof(uint8_t*)) - ctx->staging_raw_offset;
 
             /* Reset the offset for the next loop */
-            ctx->curr_offset = 0;
+            ctx->staging_raw_offset = 0;
 
             /* Change the state machine in order to parse the object name */
             ctx->fsm = E_OBJ_PARSE_NAME;
@@ -282,7 +286,7 @@ static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void 
             bytes_to_copy = buffer_len;
 
             /* Increment the offset for the next iteration or function call */
-            ctx->curr_offset += bytes_to_copy;
+            ctx->staging_raw_offset += bytes_to_copy;
         }
 
     }
@@ -292,13 +296,13 @@ static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void 
     {
 
         /* Base address is the object name field inside the struct */
-        start_address = ((void*)ctx->current_entry->raw_obj.name) + ctx->curr_offset;
+        start_address = (void*)ctx->staging_raw_obj.name + ctx->staging_raw_offset;
 
         /* Check if the buffer length added with the previous offset is bigger than the object name length */
-        if (buffer_len + ctx->curr_offset >= ctx->name_size)
+        if (buffer_len + ctx->staging_raw_offset >= ctx->name_size)
         {
             /* We have enough bytes to copy the full object name */
-            bytes_to_copy = ctx->name_size - ctx->curr_offset;
+            bytes_to_copy = ctx->name_size - ctx->staging_raw_offset;
 
         }
         /* Otherwise it's a partial copy, it's not enough to copy the full struct */
@@ -309,20 +313,20 @@ static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void 
 
         }
         /* Increment the offset for the next iteration or function call */
-        ctx->curr_offset += bytes_to_copy;
+        ctx->staging_raw_offset += bytes_to_copy;
     }
 
     /* Perform the copy */
     memcpy(start_address, buffer, bytes_to_copy);
 
     /* Check if we reached the end of the parsing of an object */
-    if (last_fsm == E_OBJ_PARSE_NAME && ctx->fsm == E_OBJ_PARSE_NAME && ctx->curr_offset == ctx->name_size)
+    if (last_fsm == E_OBJ_PARSE_NAME && ctx->fsm == E_OBJ_PARSE_NAME && ctx->staging_raw_offset == ctx->name_size)
     {
         /* Reset the FSM in order to parse the object fields again on the next call */
         ctx->fsm = E_OBJ_PARSE_OTHERS;
         
         /* Reset the offset for the next call  */
-        ctx->curr_offset = 0;
+        ctx->staging_raw_offset = 0;
         status = TRACEX_SUCCESS;
     }
     /* We need more bytes to parse an object */
@@ -346,8 +350,8 @@ static tracex_ret_t process_object(struct tracex_object_context *ctx)
     /*  This checks if the available flag is set, which means it shouldn't be added to the list 
     *   Or if the pointer address is set to 0, which means it's an invalid object
     */
-    if (ctx->current_entry->raw_obj.available == 1 || ctx->current_entry->raw_obj.pointer == 0 ||
-        ctx->current_entry->raw_obj.type == 0) {
+    if (ctx->staging_raw_obj.available == 1 || ctx->staging_raw_obj.pointer == 0 ||
+        ctx->staging_raw_obj.type == 0) {
         status = TRACEX_OBJECT_INVALID;
         goto handle_exit;
 
@@ -357,7 +361,7 @@ static tracex_ret_t process_object(struct tracex_object_context *ctx)
     tracex_list_for_each_entry(entry, &ctx->obj_list, node)
     {
         /* This might be a destroyed object in the parsing, just ignore it the new object entry then*/
-        if (entry->raw_obj.pointer == ctx->current_entry->raw_obj.pointer)
+        if (entry->obj.pointer == ctx->staging_raw_obj.pointer)
         {
             status = TRACEX_OBJECT_DUPLICATE;
             goto handle_exit;
@@ -366,10 +370,10 @@ static tracex_ret_t process_object(struct tracex_object_context *ctx)
     }
 
     /* Convert the raw objet to the user format */
-    convert_from_raw_to_user(ctx->current_entry, ctx->name_size);
+    convert_from_raw_to_user(&ctx->staging_raw_obj, &ctx->tmp_obj->obj);
 
     /* Add the object to the list */
-    tracex_list_insert(&ctx->current_entry->node, &ctx->obj_list);
+    tracex_list_insert(&ctx->tmp_obj->node, &ctx->obj_list);
 
     status = TRACEX_SUCCESS;
 
@@ -378,9 +382,9 @@ handle_exit:
     if (status == TRACEX_SUCCESS) {
         /* Call the user provided callback */
         if (ctx->on_object_parsed != NULL)
-            ctx->on_object_parsed(ctx->cb_data, &ctx->current_entry->usr_obj, status);
+            ctx->on_object_parsed(ctx->cb_data, &ctx->tmp_obj->obj, status);
     } else {
-        destroy_object_entry(&ctx->current_entry);
+        destroy_object_entry(&ctx->tmp_obj);
     }
     return status;
 
@@ -404,16 +408,8 @@ static tracex_ret_t alloc_new_object_entry(struct tracex_object_entry **object_p
 
 
     /* We can now allocate memory for the raw object name */
-    tmp_entry->raw_obj.name = (uint8_t*)malloc(sizeof(uint8_t) * name_length);
-    if (tmp_entry->raw_obj.name == NULL)
-    {
-        status = TRACEX_ALLOC_FAILURE;
-        goto handle_error;
-    }
-
-    /* Do the same for the user object name pointer */
-    tmp_entry->usr_obj.name = (uint8_t*)malloc(sizeof(uint8_t) * name_length);
-    if (tmp_entry->usr_obj.name == NULL)
+    tmp_entry->obj.name = (uint8_t*)malloc(sizeof(uint8_t) * name_length);
+    if (tmp_entry->obj.name == NULL)
     {
         status = TRACEX_ALLOC_FAILURE;
         goto handle_error;
@@ -439,6 +435,11 @@ static void destroy_object_list(struct tracex_object_context *ctx)
     
     tracex_list_for_each_entry_safe(entry, next, &ctx->obj_list, node)
     {
+        /* Call the user data destructor if any */
+        if (entry->obj.user_data != NULL)
+            if (entry->obj.user_data_destructor != NULL)
+		    entry->obj.user_data_destructor(entry->obj.user_data);
+
         destroy_object_entry(&entry);
     }
 
@@ -451,18 +452,12 @@ static void destroy_object_entry(struct tracex_object_entry **object)
         if (*object != NULL)
         {
             /* Free the object name */
-            if ((*object)->raw_obj.name != NULL)
+            if ((*object)->obj.name != NULL)
             {
-                free((*object)->raw_obj.name);
-                (*object)->raw_obj.name = NULL;
+                free((*object)->obj.name);
+                (*object)->obj.name = NULL;
             }
 
-            if ((*object)->usr_obj.name != NULL)
-            {
-                free((*object)->usr_obj.name);
-                (*object)->usr_obj.name = NULL;
-                
-            }
             if ((*object)->node.next != NULL && (*object)->node.prev != NULL)
             {
                 tracex_list_delete(&(*object)->node);
