@@ -1,11 +1,10 @@
-#ifndef __TRACEX_HEADER_INT_H__
-#define __TRACEX_HEADER_INT_H__
+#ifndef TRACEX_HEADER_INT_H
+#define TRACEX_HEADER_INT_H
 
 #include <stdint.h>
 
 #include "tracex/tracex_header.h"
 #include "tracex_obj_int.h"
-#include "event.h"
 
 #define TRACEX_HEADER_ID_BIG_ENDIAN     0x54585442
 #define TRACEX_HEADER_ID_LITTLE_ENDIAN  0x42545854
@@ -47,4 +46,5 @@ tracex_ret_t tracex_header_int_check_parsed(struct tracex_header_context *ctx);
 tracex_ret_t tracex_header_int_check_valid(struct tracex_header_context *ctx);
 tracex_ret_t tracex_header_int_get(struct tracex_header_context *ctx, struct tracex_header **header);
 tracex_ret_t tracex_header_int_parse(struct tracex_header_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
+
 #endif

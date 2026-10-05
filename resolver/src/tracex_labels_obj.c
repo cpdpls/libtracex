@@ -3,21 +3,11 @@
 #include <string.h>
 
 #include "uthash.h"
-#include "tracex/tracex_labels.h"
+#include "tracex_resolver/tracex_labels.h"
 #include "cJSON.h"
 #include "tracex_labels_utils.h"
 
 #define TRACEX_OBJECT_DEFAULT_JSON_PATH "data/objects.json"
-
-/* In case a param label for a given object type does not exist,
- * This string will be assigned to the object
- */
-static uint8_t *default_invalid_params = "Not valid"; 
-
-/* In case an object type label for a given type does not exist,
- * This string will be assigned to the object
- */
-static uint8_t *default_invalid_obj = "Invalid";
 
 
 enum label_add_override_setting{
@@ -41,9 +31,8 @@ struct tracex_obj_json {
 };
 
 struct tracex_labels_object_labels {
-    uint8_t *object_type_str;                   /* The object type string */
     uint32_t object_id;                         /* The object ID as found in the enum tracex_object_type */
-    struct tracex_labels_object_params_labels params_str; /* The object strings for the param 1 and param 2 */
+    struct tracex_object_labels labels; /* The object strings for the param 1 and param 2 */
 
     UT_hash_handle hh;                           /* The next node */
 };
@@ -55,55 +44,33 @@ static struct tracex_labels_object_labels *object_labels_hash = NULL;
 static struct tracex_labels_object_labels *alloc_object_labels(size_t count);
 static void destroy_object_label(struct tracex_labels_object_labels **obj_label);
 static void tracex_labels_object_labels_add(struct tracex_labels_object_labels *new_labels, enum label_add_override_setting override);
-static tracex_labels_ret_t convert_cjson_to_obj_label(struct tracex_obj_json_element *cjson_obj, struct tracex_labels_object_labels **new_label);
+static int convert_cjson_to_obj_label(struct tracex_obj_json_element *cjson_obj, struct tracex_labels_object_labels **new_label);
 
-const uint8_t *tracex_object_type_to_str(uint32_t type)
+struct tracex_object_labels tracex_resolver_get_object_labels(uint32_t type)
 {
-
     struct tracex_labels_object_labels *entry = NULL;
-    uint8_t *string = NULL;
+    struct tracex_object_labels labels;
 
-    /* First check if the provided type corresponds to a set of previously parsed object type labels from the json file */
-	HASH_FIND_INT(object_labels_hash, &type, entry);
+    /* First check if the provided type corresponds to a set of previously parsed object labels from the json file */
+    HASH_FIND_INT(object_labels_hash, &type, entry);
 
-    /* If the type is part of the hashed list, we can return it's type label string */
+    /* If the type is part of the hashed list, we can return the object labels  */
 	if (entry)
-		string = entry->object_type_str;
-	
-	/* Othwersise, the ID is not linked to any existing label parsed from the json. Assign it the default string */
-	else
-		string = default_invalid_obj;
+		labels = entry->labels;
 
-    return string;
+    /* Othwersise, the type is not linked to any existing label parsed from the json. Assign it the default string */
+    else
+        memset(&labels, 0, sizeof(struct tracex_object_labels));
+
+    return labels;
 }
 
-struct tracex_labels_object_params_labels tracex_labels_object_param_to_str(uint32_t type)
+int tracex_resolver_object_load_labels(const char *json_path)
 {
-    struct tracex_labels_object_params_labels params;
-    struct tracex_labels_object_labels *entry = NULL;
-
-    /* First check if the provided ID corresponds to a set of previously parsed string labels from the json file */
-
-	HASH_FIND_INT(object_labels_hash, &type, entry);
-
-	if (entry) {
-		params.param1_label = entry->params_str.param1_label;
-		params.param1_label = entry->params_str.param2_label;
-
-	} else {
-		/* Set the params to invalid in case of an error */
-		params.param1_label = default_invalid_params;
-		params.param1_label = default_invalid_params;
-	}
-	return params;
-}
-
-tracex_labels_ret_t tracex_object_load_labels(uint8_t *json_path)
-{
-    tracex_labels_ret_t status;
+    int status;
     struct tracex_obj_json json_struct;
     struct tracex_labels_object_labels *labels_ptr = NULL;
-    uint8_t *actual_path = NULL;
+    const char *actual_path = NULL;
 
     memset(&json_struct, 0, sizeof(struct tracex_obj_json));
 
@@ -112,9 +79,9 @@ tracex_labels_ret_t tracex_object_load_labels(uint8_t *json_path)
     else
         actual_path = json_path;
 
-    status = tracex_utils_load_json_file(actual_path, &json_struct.root);
+    status = tracex_resolver_utils_load_json_file(actual_path, &json_struct.root);
 
-    if (status != TRACEX_LABELS_SUCCESS) {
+    if (status != 0) {
         goto handle_return;
     }
 
@@ -127,13 +94,13 @@ tracex_labels_ret_t tracex_object_load_labels(uint8_t *json_path)
 
     /* Check if the fields name in the json has been found */
     if (json_struct.array == NULL) {
-        status = TRACEX_LABELS_JSON_PARSING_FAILURE;
+        status = -1;
         goto handle_return;
     }
     
     /* Get the number of elements and check that it is at least 1 element long  */
     if (cJSON_GetArraySize(json_struct.array) == 0) {
-        status = TRACEX_LABELS_JSON_PARSING_FAILURE;
+        status = -1;
         goto handle_return;
     }
 
@@ -149,13 +116,14 @@ tracex_labels_ret_t tracex_object_load_labels(uint8_t *json_path)
         json_struct.obj_element.param2 = cJSON_GetObjectItemCaseSensitive(json_struct.tmp_cjson_elem_ptr, "param2");
 
         /* Convert the cJSON object to a struct tracex_labels_object_labels and add it */
-        if (convert_cjson_to_obj_label(&json_struct.obj_element, &labels_ptr) == TRACEX_LABELS_SUCCESS) {
+        if (convert_cjson_to_obj_label(&json_struct.obj_element, &labels_ptr) == 0) {
 
             /* We finally add the converted tracex_labels_object_labels to the global list */
             tracex_labels_object_labels_add(labels_ptr, E_LABEL_ADD_NO_OVERRIDE);
         }
     }
 
+    status = 0;
 
 handle_return:
 
@@ -169,7 +137,7 @@ handle_return:
     return status;
 }
 
-void tracex_object_destroy_labels(void)
+void tracex_resolver_object_destroy_labels(void)
 {
     struct tracex_labels_object_labels *entry = NULL;
     struct tracex_labels_object_labels *tmp = NULL;
@@ -214,21 +182,21 @@ static void destroy_object_label(struct tracex_labels_object_labels **obj_label)
         if (*obj_label != NULL) {
 
             /* Destroy the object type string */
-            if ((*obj_label)->object_type_str != NULL) {
-                free((*obj_label)->object_type_str);
-                (*obj_label)->object_type_str = NULL;
+            if ((*obj_label)->labels.objectTypeName != NULL) {
+                free((void *)(*obj_label)->labels.objectTypeName);
+                (*obj_label)->labels.objectTypeName = NULL;
             }
 
             /* Destroy the object param 1 string */
-            if ((*obj_label)->params_str.param1_label != NULL) {
-                free((void*)(*obj_label)->params_str.param1_label);
-                (*obj_label)->params_str.param1_label = NULL;
+            if ((*obj_label)->labels.param1 != NULL) {
+                free((void*)(*obj_label)->labels.param1);
+                (*obj_label)->labels.param1 = NULL;
             }
 
             /* Destroy the object param 2 string */
-            if ((*obj_label)->params_str.param2_label != NULL) {
-                free((void*)(*obj_label)->params_str.param2_label);
-                (*obj_label)->params_str.param2_label = NULL;
+            if ((*obj_label)->labels.param2 != NULL) {
+                free((void*)(*obj_label)->labels.param2);
+                (*obj_label)->labels.param2 = NULL;
             }
 
             HASH_DEL(object_labels_hash, *obj_label);
@@ -258,9 +226,9 @@ early_return:
 }
 
 
-static tracex_labels_ret_t convert_cjson_to_obj_label(struct tracex_obj_json_element *cjson_obj, struct tracex_labels_object_labels **new_label)
+static int convert_cjson_to_obj_label(struct tracex_obj_json_element *cjson_obj, struct tracex_labels_object_labels **new_label)
 {
-    tracex_labels_ret_t status;
+    int status;
     struct tracex_labels_object_labels *tmp_label = NULL;
     uint8_t *tmp_buffer = NULL;
 
@@ -268,7 +236,7 @@ static tracex_labels_ret_t convert_cjson_to_obj_label(struct tracex_obj_json_ele
     /* Check for any missing field */
     if (cjson_obj->name == NULL || cjson_obj->param1 == NULL || cjson_obj->param2 == NULL)
     {
-        status = TRACEX_LABELS_BAD_INPUT_PTR;
+        status = -1;
         goto handle_return;
     }
 
@@ -277,7 +245,7 @@ static tracex_labels_ret_t convert_cjson_to_obj_label(struct tracex_obj_json_ele
     if (cjson_obj->name->valuestring == NULL ||
         cjson_obj->param1->valuestring == NULL ||
         cjson_obj->param2->valuestring == NULL) {
-            status = TRACEX_LABELS_JSON_PARSING_FAILURE;
+            status = -1;
             goto handle_return;
         }
     
@@ -286,7 +254,7 @@ static tracex_labels_ret_t convert_cjson_to_obj_label(struct tracex_obj_json_ele
 
     /* Check if successfull */
     if (tmp_label == NULL) {
-        status = TRACEX_LABELS_ALLOC_FAILURE;
+        status = -1;
         goto handle_return;
     }
 
@@ -297,38 +265,38 @@ static tracex_labels_ret_t convert_cjson_to_obj_label(struct tracex_obj_json_ele
     tmp_buffer = (uint8_t*)malloc((sizeof(uint8_t) * strlen(cjson_obj->name->valuestring)) + 1);
 
     if (tmp_buffer == NULL) {
-        status = TRACEX_LABELS_ALLOC_FAILURE;
+        status = -1;
         goto handle_error;
     }
 
     memcpy(tmp_buffer, cjson_obj->name->valuestring, strlen(cjson_obj->name->valuestring) + 1);
-    tmp_label->object_type_str = tmp_buffer;
+    tmp_label->labels.objectTypeName = tmp_buffer;
     
     /* Duplicate the param1 label string */
     tmp_buffer = (uint8_t*)malloc((sizeof(uint8_t) * strlen(cjson_obj->param1->valuestring)) + 1);
     
     if (tmp_buffer == NULL) {
-        status = TRACEX_LABELS_ALLOC_FAILURE;
+        status = -1;
         goto handle_error;
     }
     memcpy(tmp_buffer, cjson_obj->param1->valuestring, strlen(cjson_obj->param1->valuestring) + 1);
-    tmp_label->params_str.param1_label = tmp_buffer;
+    tmp_label->labels.param1 = tmp_buffer;
 
     /* Duplicate the param2 label string */
     tmp_buffer = (uint8_t*)malloc((sizeof(uint8_t) * strlen(cjson_obj->param2->valuestring)) + 1);
     
     if (tmp_buffer == NULL) {
-        status = TRACEX_LABELS_ALLOC_FAILURE;
+        status = -1;
         goto handle_error;
     }
     memcpy(tmp_buffer, cjson_obj->param2->valuestring, strlen(cjson_obj->param2->valuestring) + 1);
-    tmp_label->params_str.param2_label = tmp_buffer;
+    tmp_label->labels.param2 = tmp_buffer;
 
 
     /* Copy over the object ID */
     tmp_label->object_id = cjson_obj->value->valueint;
 
-    status = TRACEX_LABELS_SUCCESS;
+    status = 0;
 
     goto handle_return;
 

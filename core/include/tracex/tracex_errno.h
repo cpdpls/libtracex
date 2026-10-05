@@ -1,5 +1,5 @@
-#ifndef __TRACEX_ERRNO_H__
-#define __TRACEX_ERRNO_H__
+#ifndef TRACEX_ERRNO_H
+#define TRACEX_ERRNO_H
 
 typedef enum
 {
@@ -21,7 +21,8 @@ typedef enum
     TRACEX_OBJ_ITER_INVALID,
     TRACEX_EVENT_TRACE_BUFFER_INVALID,
     TRACEX_EVENT_INVALID,
-    TRACEX_ERRNO_COUNT,
+    TRACEX_RESOLVER_ENGINE_FAILURE,
+    TRACEX_ERRNO_COUNT
 
 } tracex_ret_t;
 

@@ -5,7 +5,19 @@
 #include "tracex_event_int.h"
 #include "tracex_core.h"
 
-static void convert_from_raw_to_user(struct tracex_event_raw *raw, struct tracex_event *user);
+/* In case a resolver engine is not registed or, the engine returns an error,
+ * This string will be assigned to all the event info strings 
+ */
+
+static char *default_resolver_invalid_info_str = "Not valid";
+
+/* In case a resolver engine is not registed or, the engine returns an error,
+ * This string will be assigned to the event name
+ */
+static char *default_resolver_invalid_event_str = "Invalid";
+
+
+static void convert_from_raw_to_user(struct tracex_event_context *ctx, struct tracex_event_raw *raw, struct tracex_event *user);
 static void destroy_event_entry(struct tracex_event_entry **entry);
 static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *buffer, size_t buffer_len, size_t *consumed);
 static tracex_ret_t process_event(struct tracex_event_context *ctx);
@@ -50,6 +62,39 @@ handle_exit:
     return status;
 }
 
+tracex_ret_t tracex_event_int_register_resolver_engine(struct tracex_event_context *ctx, struct tracex_resolver_event_engine *engine, int *init_status)
+{
+	tracex_ret_t status;
+	int init_tmp_sts;
+
+    /* Sanitize input */
+    if (engine->init_engine == NULL || engine->deinit_engine == NULL ||
+	    engine->get_event_labels == NULL)
+    {
+	    status = TRACEX_BAD_INPUT_PTR;
+	    goto handle_exit;
+    }
+
+
+    /* Call the init provided function */
+    init_tmp_sts = engine->init_engine(engine->file_path);
+
+    /* If the user cares about the init return status, give it back to him */
+    if (init_status != NULL)
+        *init_status = init_tmp_sts;
+
+    /* If the init succeeded, we can assign the function pointer internally to the context */
+    if (init_tmp_sts == 0) {
+        status = TRACEX_SUCCESS;
+        ctx->resolver_engine = *engine;
+    }
+    else
+	    status = TRACEX_RESOLVER_ENGINE_FAILURE;
+
+handle_exit:
+	return status;
+
+}
 tracex_ret_t tracex_event_int_parse(struct tracex_event_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed)
 {
     tracex_ret_t status;
@@ -116,6 +161,12 @@ void tracex_event_int_destroy_context(struct tracex_event_context *ctx)
     if (ctx->staging_raw_offset != 0 && ctx->tmp_event != NULL) {
         destroy_event_entry(&ctx->tmp_event);
     }
+
+    /* If a resolved engine has been assigned, we should call it's deinit function to free any allocation it has made */
+    if (ctx->resolver_engine.deinit_engine != NULL) {
+	    ctx->resolver_engine.deinit_engine();
+    }
+
 }
 
 static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *buffer, size_t buffer_len, size_t *consumed)
@@ -136,7 +187,7 @@ static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *
     }
 
     /* Set the start address + the previous offset */
-    start_address = (void*)&ctx->staging_raw_event + ctx->staging_raw_offset;
+    start_address = (void*)((size_t)&ctx->staging_raw_event + (size_t)ctx->staging_raw_offset);
 
     /* Check if the buffer length added with the previous offset if bigger than a whole event struct */
     if (buffer_len + ctx->staging_raw_offset >= sizeof(struct tracex_event_raw))
@@ -190,7 +241,7 @@ static tracex_ret_t process_event(struct tracex_event_context *ctx)
     }
 
     /* Convert the raw objet to the user format */
-    convert_from_raw_to_user(&ctx->staging_raw_event, &ctx->tmp_event->event);
+    convert_from_raw_to_user(ctx, &ctx->staging_raw_event, &ctx->tmp_event->event);
 
     /* Add the event to the list */
     tracex_list_insert(&ctx->tmp_event->node, &ctx->event_list);
@@ -232,8 +283,10 @@ handle_exit:
 
 }
 
-static void convert_from_raw_to_user(struct tracex_event_raw *raw, struct tracex_event *user)
+static void convert_from_raw_to_user(struct tracex_event_context *ctx, struct tracex_event_raw *raw, struct tracex_event *user)
 {
+	struct tracex_event_labels labels;
+
 	user->eventId = raw->event_id;
 	user->threadPointer = raw->thread_pointer;
 	user->threadPriority = raw->thread_priority;
@@ -245,6 +298,32 @@ static void convert_from_raw_to_user(struct tracex_event_raw *raw, struct tracex
 	user->rawInfos.info3 = raw->info3;
 	user->rawInfos.info4 = raw->info4;
 
+
+    if (ctx->resolver_engine.get_event_labels != NULL) {
+	    labels = ctx->resolver_engine.get_event_labels(raw->event_id);
+
+	    user->labels.event_name = labels.event_name == NULL ? default_resolver_invalid_event_str :
+								  user->labels.event_name;
+	    user->labels.info1 = labels.info1 == NULL ? default_resolver_invalid_info_str :
+                                    user->labels.info1;
+
+
+        user->labels.info2 = labels.info2 == NULL ? default_resolver_invalid_info_str :
+                                    user->labels.info2;
+        user->labels.info3 = labels.info3 == NULL ? default_resolver_invalid_info_str :
+                                    user->labels.info3;
+
+        user->labels.info4 = labels.info4 == NULL ? default_resolver_invalid_info_str :
+                                    user->labels.info4;
+
+
+    } else {
+	    user->labels.event_name = default_resolver_invalid_event_str;
+	    user->labels.info1 = default_resolver_invalid_info_str;
+        user->labels.info2 = default_resolver_invalid_info_str;
+        user->labels.info3 = default_resolver_invalid_info_str;
+        user->labels.info4 = default_resolver_invalid_info_str;
+    }
 }
 static void destroy_event_entry(struct tracex_event_entry **entry)
 {
@@ -274,11 +353,6 @@ static void destroy_events_list(struct tracex_event_context *ctx)
     
     tracex_list_for_each_entry_safe(entry, next, &ctx->event_list, node)
     {
-        /* Call the user data destructor if any */
-        if (entry->event.user_data != NULL)
-            if (entry->event.user_data_destructor != NULL)
-		    entry->event.user_data_destructor(entry->event.user_data);
-            
 	    destroy_event_entry(&entry);
     }
 

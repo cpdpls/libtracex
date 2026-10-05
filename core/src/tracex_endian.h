@@ -1,5 +1,5 @@
-#ifndef __TRACEX_UTILS_H__
-#define __TRACEX_UTILS_H__
+#ifndef TRACEX_UTILS_H
+#define TRACEX_UTILS_H
 
 #include "tracex/tracex_errno.h"
 

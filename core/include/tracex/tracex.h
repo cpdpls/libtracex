@@ -1,5 +1,5 @@
-#ifndef __TRACEX_H__
-#define __TRACEX_H__
+#ifndef TRACEX_H
+#define TRACEX_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -24,6 +24,8 @@ void tracex_deinit(void);
 tracex_ret_t tracex_create_new_handler(tracex_handler_t **new_handler);
 tracex_ret_t tracex_register_callbacks(tracex_handler_t *handler, struct tracex_callbacks *callbacks);
 tracex_ret_t tracex_parse(tracex_handler_t *handler, void *buffer, size_t buffer_length, size_t *bytes_consumed);
+tracex_ret_t tracex_register_object_resolver_engine(tracex_handler_t *handler, struct tracex_resolver_obj_engine *resolver_engine, int *init_status);
+tracex_ret_t tracex_register_event_resolver_engine(tracex_handler_t *handler, struct tracex_resolver_event_engine *resolver_engine, int *init_status);
 void tracex_destroy_handler(tracex_handler_t **handler);
 
 

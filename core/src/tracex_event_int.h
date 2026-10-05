@@ -1,5 +1,5 @@
-#ifndef __TRACEX_EVENT_INT_H__
-#define __TRACEX_EVENT_INT_H__
+#ifndef TRACEX_EVENT_INT_H
+#define TRACEX_EVENT_INT_H
 
 #include <stdint.h>
 #include "tracex/tracex_event.h"
@@ -35,7 +35,7 @@ struct tracex_event_context
     struct tracex_event_entry   *tmp_event;         /* Temp allocated event object */
     uint64_t tot_count;                             /* Total count of events */
     uint64_t                    registry_size;      /* Total number of posssible events in the event registry */
-
+    struct tracex_resolver_event_engine resolver_engine;
 };
 
 /**
@@ -56,6 +56,8 @@ tracex_ret_t tracex_event_int_init(struct tracex_event_context *ctx);
  */
 tracex_ret_t tracex_event_int_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop);
 
+tracex_ret_t tracex_event_int_register_resolver_engine(struct tracex_event_context *ctx, struct tracex_resolver_event_engine *engine, int *init_status);
+
 /**
  * @brief Parses events as much as possible from a given raw buffer of bytes
  * 
@@ -68,4 +70,5 @@ tracex_ret_t tracex_event_int_compute_registry_size(uint64_t *registry_size, uin
 tracex_ret_t tracex_event_int_parse(struct tracex_event_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
 
 void tracex_event_int_destroy_context(struct tracex_event_context *ctx);
+
 #endif

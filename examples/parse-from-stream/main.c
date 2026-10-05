@@ -12,7 +12,7 @@
 
 #include "tracex/tracex.h"
 #include "tracex/tracex_debug.h"
-#include "tracex/tracex_labels.h"
+#include "tracex_resolver/tracex_labels.h"
 
 
 tracex_handler *handler;
@@ -26,28 +26,25 @@ void file(char random);
 int main(void)
 {
     tracex_ret_t status_tx;
-    tracex_labels_ret_t status_lab;
 
     struct tracex_callbacks callbacks;
+    struct tracex_resolver_event_engine event_resolver;
+    struct tracex_resolver_obj_engine obj_resolver;
     char key;
 
     callbacks.on_event_parsed = eventParsedCB;
     callbacks.on_header_parsed = headerParsedCB;
     callbacks.on_object_parsed = objectParsedCB;
 
-    status_lab = tracex_labels_event_load_labels(NULL);
+    event_resolver.init_engine = tracex_resolver_event_load_labels;
+    event_resolver.get_event_labels = tracex_resolver_get_event_labels;
+    event_resolver.deinit_engine = tracex_resolver_event_destroy_labels;
+    event_resolver.file_path = NULL;
 
-    if (status_lab != TRACEX_LABELS_SUCCESS) {
-        printf("%s\n", tracex_labels_strerror(status_tx));
-        exit(-1);
-    }
-
-    status_lab = tracex_labels_object_load_labels(NULL);
-
-    if (status_lab != TRACEX_LABELS_SUCCESS) {
-        printf("%s\n", tracex_labels_strerror(status_tx));
-        exit(-1);
-    }
+    obj_resolver.init_engine = tracex_resolver_object_load_labels;
+    obj_resolver.get_object_labels = tracex_resolver_get_object_labels;
+    obj_resolver.deinit_engine = tracex_resolver_object_destroy_labels;
+    obj_resolver.file_path = NULL;
 
     tracex_init();
 
@@ -64,7 +61,10 @@ int main(void)
         printf("%s\n", TRACEX_strerror(status_tx));
         exit(-1);
     }
-    
+
+    tracex_register_event_resolver_engine(handler, &event_resolver, NULL);
+    tracex_register_object_resolver_engine(handler, &obj_resolver, NULL);
+
     network();
 
     printf("PRESS ANY KEY TO EXIT !\n");
@@ -82,6 +82,7 @@ void eventParsedCB(tracex_handler_t *handler, struct tracex_event *event, tracex
 {
     if (status == TRACEX_SUCCESS)
     {
+        
         //TRACEX_debug_print_single_event(event);
     }
 

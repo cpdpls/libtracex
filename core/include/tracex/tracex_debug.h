@@ -1,5 +1,5 @@
-#ifndef __TRACEX_DEBUG_H__
-#define __TRACEX_DEBUG_H__
+#ifndef TRACEX_DEBUG_H
+#define TRACEX_DEBUG_H
 
 #include "tracex_header.h"
 #include "tracex_object.h"

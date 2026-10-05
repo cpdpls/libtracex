@@ -8,7 +8,7 @@
 enum endianess
 {
     E_LITTLE,
-    E_BIG,
+    E_BIG
 };
 
 static enum endianess sys_endian = 0;

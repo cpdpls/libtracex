@@ -1,5 +1,5 @@
-#ifndef __TRACEX_OBJ_INT_H__
-#define __TRACEX_OBJ_INT_H__
+#ifndef TRACEX_OBJ_INT_H
+#define TRACEX_OBJ_INT_H
 
 #include <stdint.h>
 #include "tracex/tracex_object.h"
@@ -11,7 +11,7 @@
 enum tracex_obj_fsm
 {
     E_OBJ_PARSE_OTHERS,
-    E_OBJ_PARSE_NAME,    
+    E_OBJ_PARSE_NAME    
 };
 
 
@@ -56,6 +56,7 @@ struct tracex_object_context
         we are parsing the obj name field
     */
     enum tracex_obj_fsm             fsm;                                        /* State machine used when parsing fields */
+    struct tracex_resolver_obj_engine resolver_engine;
 };
 
 struct tracex_obj_iterator
@@ -67,7 +68,8 @@ struct tracex_obj_iterator
 
 tracex_ret_t tracex_object_int_init(struct tracex_object_context *ctx);
 tracex_ret_t tracex_object_int_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop, uint32_t name_size);
-tracex_ret_t tracex_object_int_parse(struct tracex_object_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed);
+tracex_ret_t tracex_object_int_register_resolver_engine(struct tracex_object_context *ctx, struct tracex_resolver_obj_engine *engine, int *init_status);
+tracex_ret_t tracex_object_int_parse(struct tracex_object_context *ctx, void *buffer, size_t buff_len,uint64_t *consumed);
 void tracex_object_destroy_context(struct tracex_object_context *ctx);
 
 tracex_ret_t tracex_object_int_iterator_init(struct tracex_object_context *ctx, TRACEX_object_iterator_t **iterator);

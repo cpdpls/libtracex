@@ -1,15 +1,10 @@
 #include "tracex/tracex_errno.h"
 
 
-const char  *tracex_errno_strings[] =
+static const char  *tracex_errno_strings[] =
 {
     "TRACEX SUCESS",
     "TRACEX ALLOCATION ERROR",
-    "TRACEX JSON READING FAILURE",
-    "TRACEX JSON FILE NOT FOUND",
-    "TRACEX JSON FILE EMPTY",
-    "TRACEX JSON ALLOCATION FAILURE",
-    "TRACEX JSON PARSING FAILURE",
     "TRACEX HAS NOT BEEN INITIALIZED. PLEASE CALL \"TRACEX_INIT\" FIRST",
     "TRACEX INITIALIZATION FAILURE",
     "TRACEX BAD INPUT POINTER",
@@ -26,6 +21,7 @@ const char  *tracex_errno_strings[] =
     "TRACEX OBJECT ITERATOR IS INVALID OR CORRUPTED",
     "TRACEX TRACE EVENT BUFFER IS INVALID",
     "TRACEX EVENT IS INVALID",
+    "TRACEX RESOLVER ENGINE GENERAL FAILURE",
     "TRACEX UNKNOWN ERROR",
 };
 
@@ -35,7 +31,7 @@ const char *TRACEX_strerror(tracex_ret_t tracex_error)
     const char *error_string;
 
     /* Check for an unknown tracex error */
-    if (tracex_error >= TRACEX_ERRNO_COUNT) {
+    if ((unsigned)tracex_error >= TRACEX_ERRNO_COUNT) {
         error_string = tracex_errno_strings[TRACEX_ERRNO_COUNT - 1];
     }
 

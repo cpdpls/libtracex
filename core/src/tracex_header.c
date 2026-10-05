@@ -186,7 +186,7 @@ static tracex_ret_t parse_incrementally(struct tracex_header_context *ctx, void 
 
     }
 
-    memcpy(((void*)&ctx->staging_raw_header)+ ctx->staging_raw_offset, buffer, bytes_to_copy);
+    memcpy((void*)((size_t)&ctx->staging_raw_header + (size_t)ctx->staging_raw_offset), buffer, bytes_to_copy);
 
     ctx->staging_raw_offset += bytes_to_copy;
 

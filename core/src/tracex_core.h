@@ -1,5 +1,5 @@
-#ifndef __TRACEX_CORE_H__
-#define __TRACEX_CORE_H__
+#ifndef TRACEX_CORE_H
+#define TRACEX_CORE_H
 
 #include <stdint.h>
 
@@ -15,7 +15,7 @@
 enum tracex_parsing_state_t {
 	E_HEADER_PHASE, /* Header phase FSM */
 	E_OBJECT_PHASE, /* Object phase FSM */
-	E_EVENT_PHASE, /* Event phase FSM */
+	E_EVENT_PHASE 	/* Event phase FSM */
 };
 
 struct tracex_handler {

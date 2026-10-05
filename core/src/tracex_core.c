@@ -66,8 +66,6 @@ static void assign_internal_callbacks(tracex_handler_t *handler);
 
 tracex_ret_t tracex_init(void)
 {
-	tracex_ret_t status;
-
 	/*
 	 * First try to detect the endianess of the host system
 	 * Since a tracex dump can be in either big or little endian format
@@ -79,15 +77,15 @@ tracex_ret_t tracex_init(void)
 
 	tracex_init_done = 1;
 
-early_return:
-	return status;
+	return TRACEX_SUCCESS;
 }
 
 void tracex_deinit(void)
 {
-	// /* Call the destructors of the previous parsed labels from a json file */
-	// tracex_object_destroy_labels();
-	// tracex_event_destroy_labels();
+	/* Call the destructors of the previous parsed labels from a json file */
+	/* tracex_object_destroy_labels();
+	tracex_event_destroy_labels();
+	*/
 }
 
 tracex_ret_t tracex_create_new_handler(tracex_handler_t **new_handler)
@@ -119,16 +117,12 @@ tracex_ret_t tracex_create_new_handler(tracex_handler_t **new_handler)
 	memset(handler, 0, sizeof(struct tracex_handler));
 
 	/* Init the different contexts parts */
-	if ((status = tracex_object_int_init(&handler->objs_ctx)) != TRACEX_SUCCESS) {
-		status = TRACEX_INIT_FAILURE;
+	if ((status = tracex_object_int_init(&handler->objs_ctx)) != TRACEX_SUCCESS)
 		goto handle_error;
-	}
 
-	if ((status = tracex_event_int_init(&handler->event_ctx)) != TRACEX_SUCCESS) {
-		status = TRACEX_INIT_FAILURE;
+	if ((status = tracex_event_int_init(&handler->event_ctx)) != TRACEX_SUCCESS)
 		goto handle_error;
-	}
-
+	
 	/* Last thing to do is to assign the internal callbacks */
 	assign_internal_callbacks(handler);
 
@@ -160,6 +154,38 @@ tracex_ret_t tracex_register_callbacks(tracex_handler_t *handler, struct tracex_
 	handler->user_callbacks.on_event_parsed = callbacks->on_event_parsed;
 
 	return TRACEX_SUCCESS;
+}
+
+tracex_ret_t tracex_register_object_resolver_engine(tracex_handler_t *handler, struct tracex_resolver_obj_engine *resolver_engine, int *init_status)
+{
+	int status;
+
+	if (handler == NULL || resolver_engine == NULL) {
+		status = TRACEX_BAD_INPUT_PTR;
+		goto handle_exit;
+	}
+
+	
+	/* Assign the object resolver engine functions pointers */
+	status =  tracex_object_int_register_resolver_engine(&handler->objs_ctx, resolver_engine, init_status);
+
+
+
+handle_exit:
+	return status;
+}
+
+tracex_ret_t tracex_register_event_resolver_engine(tracex_handler_t *handler, struct tracex_resolver_event_engine *resolver_engine, int *init_status)
+{
+	int status;
+
+	if (resolver_engine != NULL) {
+		/* Assign the object resolver engine functions pointers */
+		status =  tracex_event_int_register_resolver_engine(&handler->event_ctx, resolver_engine, init_status);
+	} else
+		status = TRACEX_RESOLVER_ENGINE_FAILURE;
+
+	return status;
 }
 
 void tracex_destroy_handler(tracex_handler_t **handler)
