@@ -18,6 +18,7 @@ static char *default_resolver_invalid_params_str = "Not valid";
 static char *default_resolver_invalid_obj_str = "Invalid";
 
 static void convert_from_raw_to_user(struct tracex_object_context *ctx, struct tracex_object_raw *raw, struct tracex_object *user);
+static void resolve_labels(struct tracex_object_context *ctx, struct tracex_object *object);
 static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void *buffer, size_t buffer_len, size_t *consumed);
 static tracex_ret_t process_object(struct tracex_object_context *ctx);
 static tracex_ret_t alloc_new_object_entry(struct tracex_object_entry **object_ptr, uint16_t name_length);
@@ -61,38 +62,50 @@ handle_exit:
     return status;
 }
 
-tracex_ret_t tracex_object_int_register_resolver_engine(struct tracex_object_context *ctx, struct tracex_resolver_obj_engine *engine, int *init_status)
+tracex_ret_t tracex_object_int_register_resolver_function(struct tracex_object_context *ctx, tracexResolverGetlabel resolverFunc)
 {
 	tracex_ret_t status;
-	int init_tmp_sts;
 
     /* Sanitize input */
-    if (engine->init_engine == NULL || engine->deinit_engine == NULL ||
-	    engine->get_object_labels == NULL)
-    {
+    if (ctx == NULL || resolverFunc == NULL) {
 	    status = TRACEX_BAD_INPUT_PTR;
 	    goto handle_exit;
     }
 
+    /* Assign the function resolver to the context */
+    ctx->resolverFunc = resolverFunc;
 
-    /* Call the init provided function */
-    init_tmp_sts = engine->init_engine(engine->file_path);
-
-    /* If the user cares about the init return status, give it back to him */
-    if (init_status != NULL)
-        *init_status = init_tmp_sts;
-
-    /* If the init succeeded, we can assign the function pointer internally to the context */
-    if (init_tmp_sts == 0) {
-        status = TRACEX_SUCCESS;
-        ctx->resolver_engine = *engine;
-    }
-    else
-	    status = TRACEX_RESOLVER_ENGINE_FAILURE;
+    status = TRACEX_SUCCESS;
 
 handle_exit:
 	return status;
 }
+
+tracex_ret_t tracex_object_int_refresh_resolver_labels(struct tracex_object_context *ctx)
+{
+    tracex_ret_t status;
+    struct tracex_object_entry *entry;
+
+    /* Sanitize input */
+    if (ctx == NULL) {
+	    status = TRACEX_BAD_INPUT_PTR;
+	    goto handle_exit;
+    }
+
+    /* Since the resolve function has parsed or deleted labels
+     * We need to loop on the already parsed object and update their labels 
+     */
+
+     tracex_list_for_each_entry(entry, &ctx->obj_list, node) {
+	    resolve_labels(ctx, &entry->obj);
+    }
+
+    status = TRACEX_SUCCESS;
+
+handle_exit:
+	return status;
+}
+
 tracex_ret_t tracex_object_int_parse(struct tracex_object_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed)
 {
 	tracex_ret_t status;
@@ -170,11 +183,6 @@ void tracex_object_destroy_context(struct tracex_object_context *ctx)
      */
     if ((ctx->staging_raw_offset != 0 && ctx->tmp_obj != NULL) || ctx->fsm == E_OBJ_PARSE_NAME) {
         destroy_object_entry(&ctx->tmp_obj);
-    }
-
-    /* If a resolved engine has been assigned, we should call it's deinit function to free any allocation it has made */
-    if (ctx->resolver_engine.deinit_engine != NULL) {
-	    ctx->resolver_engine.deinit_engine();
     }
 }
 
@@ -269,7 +277,6 @@ void tracex_object_int_iterator_end(TRACEX_object_iterator_t **iterator)
 
 static void convert_from_raw_to_user(struct tracex_object_context *ctx, struct tracex_object_raw *raw, struct tracex_object *user)
 {
-	struct tracex_object_labels labels;
 	/*TODO: Assign the correct endianess */
 
 	/* The name pointer has already been filled in during the parsing
@@ -283,22 +290,31 @@ static void convert_from_raw_to_user(struct tracex_object_context *ctx, struct t
 	user->params.param1 = raw->param_1;
 	user->params.param2 = raw->param_2;
 
-	if (ctx->resolver_engine.get_object_labels != NULL) {
-		labels = ctx->resolver_engine.get_object_labels(raw->type);
+    /* Resolve the labels */
+	resolve_labels(ctx, user);
+}
 
-		user->labels.objectTypeName = (labels.objectTypeName == NULL) ? default_resolver_invalid_obj_str :
-										labels.objectTypeName;
+static void resolve_labels(struct tracex_object_context *ctx, struct tracex_object *object)
+{
+    tracex_resolver_labels labels;
 
-        user->labels.param1 = (labels.param1 == NULL) ? default_resolver_invalid_params_str :
-										labels.param1;
+    if (ctx->resolverFunc != NULL) {
+		labels = ctx->resolverFunc(E_TRACEX_RESOLVER_OBJECT, object->type);
 
-        user->labels.param2 = (labels.param2 == NULL) ? default_resolver_invalid_params_str :
-										labels.param2;
+		object->labels.objectTypeName = (labels.objLabels.objectTypeName == NULL) ? default_resolver_invalid_obj_str :
+										labels.objLabels.objectTypeName;
+
+        object->labels.param1 = (labels.objLabels.param1 == NULL) ? default_resolver_invalid_params_str :
+										labels.objLabels.param1;
+
+        object->labels.param2 = (labels.objLabels.param2 == NULL) ? default_resolver_invalid_params_str :
+										labels.objLabels.param2;
 	} else {
-		user->labels.objectTypeName = default_resolver_invalid_obj_str;
-		user->labels.param1 = default_resolver_invalid_params_str;
-		user->labels.param2 = default_resolver_invalid_params_str;
+		object->labels.objectTypeName = default_resolver_invalid_obj_str;
+		object->labels.param1 = default_resolver_invalid_params_str;
+		object->labels.param2 = default_resolver_invalid_params_str;
 	}
+
 }
 static tracex_ret_t parse_incrementally(struct tracex_object_context *ctx, void *buffer, size_t buffer_len, size_t *consumed)
 {

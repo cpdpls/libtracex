@@ -22,13 +22,6 @@ struct tracex_event_labels{
 
 };
 
-struct tracex_resolver_event_engine{
-	int (*init_engine)(const char *path);
-	struct tracex_event_labels (*get_event_labels)(uint32_t eventId);
-	void (*deinit_engine)(void);
-	const char *file_path;
-};
-
 struct tracex_event {
 	enum tracex_event_occurence_type occurenceType;
 

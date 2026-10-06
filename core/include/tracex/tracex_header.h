@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include "tracex_errno.h"
 
-typedef struct tracex_handler tracex_handler;       /* Forward declaration */
 
 enum tracex_dump_endianess
 {

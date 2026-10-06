@@ -12,71 +12,22 @@
 
 #include "tracex/tracex.h"
 #include "tracex/tracex_debug.h"
-#include "tracex_resolver/tracex_labels.h"
+#include "labels_engine/labels_engine.h"
 
 
-tracex_handler *handler;
+/* Global handler variable */
+tracex_handler_t *handler;
 
 void eventParsedCB(tracex_handler_t *handler, struct tracex_event *event, tracex_ret_t status);
 void headerParsedCB(tracex_handler_t *handler, struct tracex_header *header, tracex_ret_t status);
 void objectParsedCB(tracex_handler_t *handler, struct tracex_object *object, tracex_ret_t status);
+static tracex_ret_t registerCallbacks(void);
+static tracex_ret_t registerResolver(void);
+static int initLabelsEngine(void);
+static void uninitLabelsEngine(void);
+
 void network();
 void file(char random);
-
-int main(void)
-{
-    tracex_ret_t status_tx;
-
-    struct tracex_callbacks callbacks;
-    struct tracex_resolver_event_engine event_resolver;
-    struct tracex_resolver_obj_engine obj_resolver;
-    char key;
-
-    callbacks.on_event_parsed = eventParsedCB;
-    callbacks.on_header_parsed = headerParsedCB;
-    callbacks.on_object_parsed = objectParsedCB;
-
-    event_resolver.init_engine = tracex_resolver_event_load_labels;
-    event_resolver.get_event_labels = tracex_resolver_get_event_labels;
-    event_resolver.deinit_engine = tracex_resolver_event_destroy_labels;
-    event_resolver.file_path = NULL;
-
-    obj_resolver.init_engine = tracex_resolver_object_load_labels;
-    obj_resolver.get_object_labels = tracex_resolver_get_object_labels;
-    obj_resolver.deinit_engine = tracex_resolver_object_destroy_labels;
-    obj_resolver.file_path = NULL;
-
-    tracex_init();
-
-    status_tx = tracex_create_new_handler(&handler);
-
-    if (status_tx != TRACEX_SUCCESS)
-    {
-        printf("%s\n", TRACEX_strerror(status_tx));
-        exit(-1);
-    }
-
-    if (tracex_register_callbacks(handler, &callbacks) != TRACEX_SUCCESS)
-    {
-        printf("%s\n", TRACEX_strerror(status_tx));
-        exit(-1);
-    }
-
-    tracex_register_event_resolver_engine(handler, &event_resolver, NULL);
-    tracex_register_object_resolver_engine(handler, &obj_resolver, NULL);
-
-    network();
-
-    printf("PRESS ANY KEY TO EXIT !\n");
-    key = getchar();
-    tracex_destroy_handler(&handler);
-
-
-    tracex_deinit();
-
-    return 0;
-
-}
 
 void eventParsedCB(tracex_handler_t *handler, struct tracex_event *event, tracex_ret_t status)
 {
@@ -129,19 +80,108 @@ void network()
 
     do
     {
-        to_parse = recv(lfd, buffer, sizeof(buffer), 0);
-        buff_ptr = buffer;
+	    // tracex_refresh_resolver_labels(handler);
+	    to_parse = recv(lfd, buffer, sizeof(buffer), 0);
+	    buff_ptr = buffer;
 
-        bytes_left = to_parse;
-        do {
-            status = tracex_parse(handler, buff_ptr, bytes_left, &bytes_parsed);
-            buff_ptr += bytes_parsed;
-            bytes_left -= bytes_parsed;
+	    bytes_left = to_parse;
+	    do {
+		    status = tracex_parse(handler, buff_ptr, bytes_left, &bytes_parsed);
+		    buff_ptr += bytes_parsed;
+		    bytes_left -= bytes_parsed;
 
-        } while (bytes_left != 0);
+	    } while (bytes_left != 0);
 
     }while (to_parse > 0);
 
     close(lfd);
+
+}
+
+static tracex_ret_t registerCallbacks(void)
+{
+    struct tracex_callbacks callbacks;
+    tracex_ret_t status;
+
+    callbacks.on_event_parsed = eventParsedCB;
+    callbacks.on_header_parsed = headerParsedCB;
+    callbacks.on_object_parsed = objectParsedCB;
+
+    status = tracex_register_callbacks(handler, &callbacks);
+
+    return status;
+}
+
+static tracex_ret_t registerResolver(void)
+{
+	return tracex_register_resolver_function(handler, labels_engine_resolve_labels);
+}
+
+static int initLabelsEngine(void)
+{
+	int status;
+
+	/* We first load all the labels in the labels engine */
+
+	status = labels_engine_object_load_labels(NULL);
+
+	status |= labels_engine_event_load_labels(NULL);
+
+	return status;
+}
+
+static void uninitLabelsEngine(void)
+{
+	labels_engine_event_destroy_labels();
+	labels_engine_object_destroy_labels();
+}
+
+int main(void)
+{
+    tracex_ret_t status;
+    int appstatus;
+
+    char key;
+    
+    /* First we create a handler for the parsing */
+    status = tracex_create_new_handler(&handler);
+
+    if (status != TRACEX_SUCCESS)
+    {
+        printf("%s\n", TRACEX_strerror(status));
+	    appstatus = 1;
+	    goto handle_error;
+    }
+
+    /* We now need to register the callbacks, otherwise we won't be notified about newly parsed object or event */
+    if ((status = registerCallbacks()) != TRACEX_SUCCESS) {
+        printf("%s\n", TRACEX_strerror(status));
+	    appstatus = 1;
+	    goto handle_error;
+    }
+
+    if (initLabelsEngine() != 0){
+	    printf("An error occured at labels initialization !\n");
+	    appstatus = 1;
+	    goto handle_error;
+    }
+
+    if ((status = registerResolver()) != TRACEX_SUCCESS) {
+        printf("%s\n", TRACEX_strerror(status));
+	    appstatus = 1;
+	    goto handle_error;
+    }
+
+    /* Call the main network logic to parse incrementally */
+    network();
+
+    /* Destroy the loaded labels */
+    uninitLabelsEngine();
+
+handle_error:
+	tracex_destroy_handler(&handler);
+
+handle_exit:
+	return 0;
 
 }

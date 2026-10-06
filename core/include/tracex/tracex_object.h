@@ -14,13 +14,6 @@ struct tracex_object_labels {
     const char *param2;
 };
 
-struct tracex_resolver_obj_engine{
-	int (*init_engine)(const char *path);
-	struct tracex_object_labels (*get_object_labels)(uint32_t object_type);
-	void (*deinit_engine)(void);
-	const char *file_path;
-};
-
 struct tracex_object
 {
     uint32_t type;

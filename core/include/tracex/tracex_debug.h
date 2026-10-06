@@ -5,7 +5,9 @@
 #include "tracex_object.h"
 #include "tracex_event.h"
 
-// void TRACEX_debug_print_raw_header(const struct tracex_header_raw *header);
+/* Forward declaration */
+typedef struct tracex_handler tracex_handler_t;
+
 void TRACEX_debug_print_user_header(struct tracex_header *user_hdr);
 void TRACEX_debug_print_single_object(const struct tracex_object *entry);
 void TRACEX_debug_print_objects(const struct tracex_handler *handler);

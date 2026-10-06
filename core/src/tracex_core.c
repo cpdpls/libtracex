@@ -25,7 +25,7 @@
 /* Flag set to detect wether tracex has been init */
 static uint8_t tracex_init_done;
 
-
+static void tracex_init(void);
 
 /**
  * @brief 	Internal callback that is always called, when the header has been parsed. It will call the
@@ -64,39 +64,15 @@ static void core_on_event_parsed_callback(void *cb_data, struct tracex_event *ev
  */
 static void assign_internal_callbacks(tracex_handler_t *handler);
 
-tracex_ret_t tracex_init(void)
-{
-	/*
-	 * First try to detect the endianess of the host system
-	 * Since a tracex dump can be in either big or little endian format
-	 * We first need to detect the host endianess in order to parse correctly
-	 * Do it as soon as possible
-	 */
-	tracex_utils_detect_indianess();
-
-
-	tracex_init_done = 1;
-
-	return TRACEX_SUCCESS;
-}
-
-void tracex_deinit(void)
-{
-	/* Call the destructors of the previous parsed labels from a json file */
-	/* tracex_object_destroy_labels();
-	tracex_event_destroy_labels();
-	*/
-}
 
 tracex_ret_t tracex_create_new_handler(tracex_handler_t **new_handler)
 {
 	struct tracex_handler *handler = NULL;
 	tracex_ret_t status;
 
-	/* Don't go furthur is the user has call the init function of the library  */
+	/* If this is the very first create handler, we need to initialize the library   */
 	if (!tracex_init_done) {
-		status = TRACEX_NOT_INIT;
-		goto handle_exit;
+		tracex_init();
 	}
 
 	/* Sanitize for bad input */
@@ -156,35 +132,46 @@ tracex_ret_t tracex_register_callbacks(tracex_handler_t *handler, struct tracex_
 	return TRACEX_SUCCESS;
 }
 
-tracex_ret_t tracex_register_object_resolver_engine(tracex_handler_t *handler, struct tracex_resolver_obj_engine *resolver_engine, int *init_status)
+tracex_ret_t tracex_register_resolver_function(tracex_handler_t *handler, tracexResolverGetlabel resolverFunc)
 {
-	int status;
+	tracex_ret_t status;
 
-	if (handler == NULL || resolver_engine == NULL) {
+	if (handler == NULL || resolverFunc == NULL) {
 		status = TRACEX_BAD_INPUT_PTR;
 		goto handle_exit;
 	}
 
 	
-	/* Assign the object resolver engine functions pointers */
-	status =  tracex_object_int_register_resolver_engine(&handler->objs_ctx, resolver_engine, init_status);
-
-
+	/* Assign the resolver function to the event and object context */
+	if ((status = tracex_object_int_register_resolver_function(&handler->objs_ctx, resolverFunc)) != TRACEX_SUCCESS)
+		goto handle_exit;
+	
+	if ((status =  tracex_event_int_register_resolver_function(&handler->event_ctx, resolverFunc)) != TRACEX_SUCCESS)
+		goto handle_exit;
 
 handle_exit:
 	return status;
 }
 
-tracex_ret_t tracex_register_event_resolver_engine(tracex_handler_t *handler, struct tracex_resolver_event_engine *resolver_engine, int *init_status)
+tracex_ret_t tracex_refresh_resolver_labels(tracex_handler_t *handler)
 {
-	int status;
+	tracex_ret_t status;
 
-	if (resolver_engine != NULL) {
-		/* Assign the object resolver engine functions pointers */
-		status =  tracex_event_int_register_resolver_engine(&handler->event_ctx, resolver_engine, init_status);
-	} else
-		status = TRACEX_RESOLVER_ENGINE_FAILURE;
+	if (handler == NULL) {
+		status = TRACEX_BAD_INPUT_PTR;
+		goto handle_exit;
+	}
 
+	/* Refresh the labels of all the already parsed objects */
+	if ((status = tracex_object_int_refresh_resolver_labels(&handler->objs_ctx)) != TRACEX_SUCCESS)
+		goto handle_exit;
+
+	/* Refresh the labels of all the already parsed events */
+	if ((status = tracex_event_int_refresh_resolver_labels(&handler->event_ctx)) != TRACEX_SUCCESS)
+		goto handle_exit;
+	
+
+handle_exit:
 	return status;
 }
 
@@ -362,6 +349,20 @@ handle_exit:
 	/* Assign the total consumed bytes for this call to the user provided pointer s*/
 	*bytes_consumed = consumed_by_call;
 	return status;
+}
+
+static void tracex_init(void)
+{
+	/*
+	 * First try to detect the endianess of the host system
+	 * Since a tracex dump can be in either big or little endian format
+	 * We first need to detect the host endianess in order to parse correctly
+	 * Do it as soon as possible
+	 */
+	tracex_utils_detect_indianess();
+
+
+	tracex_init_done = 1;
 }
 
 

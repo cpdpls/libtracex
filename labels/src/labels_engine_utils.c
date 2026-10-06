@@ -3,8 +3,9 @@
 #include <stdlib.h>
 
 #include "cJSON.h"
+#include "labels_engine_utils.h"
 
-int tracex_resolver_utils_load_json_file(const uint8_t *path, cJSON **root)
+int labels_engine_utils_load_json_file(const uint8_t *path, cJSON **root)
 {
     int status;
     FILE *file_ptr = NULL;

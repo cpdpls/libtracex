@@ -5,6 +5,8 @@
 #include "tracex_core.h"
 #include "tracex/tracex_object.h"
 #include "tracex_event_int.h"
+#include "tracex/tracex.h"
+
 
 #define TRACEX_DEBUG_HDR(fmt, args...) fprintf(stdout, "TRACEX-HEADER >> " fmt, ##args)
 #define TRACEX_DEBUG_OBJ(fmt, args...) fprintf(stdout, "TRACEX-OBJECT >> " fmt, ##args)
@@ -22,28 +24,6 @@ void TRACEX_debug_print_user_header(struct tracex_header *user_hdr)
     TRACEX_DEBUG_HDR("| END USER HEADER |\n\n");
 
 }
-// void TRACEX_debug_print_raw_header(const struct tracex_header_raw *header)
-// {
-
-//     /* Assign the raw header pointer */
-
-//     TRACEX_DEBUG_HDR("| BEGIN RAW HEADER |\n"); 
-//     TRACEX_DEBUG_HDR("Id : %.4s (0x%.4x)\n", (uint8_t*)&header->id, header->id);
-//     TRACEX_DEBUG_HDR("Time-Stamp mask : 0x%.4x\n", header->timestamp_mask);
-//     TRACEX_DEBUG_HDR("Trace Base Address : 0x%.4x\n", header->trace_base_addr);
-//     TRACEX_DEBUG_HDR("Object Registry Start Pointer : 0x%.4x\n", header->obj_registry_start_ptr);
-//     TRACEX_DEBUG_HDR("Reserved 1 : 0x%.2x\n", header->res1);
-//     TRACEX_DEBUG_HDR("Object Registry Name Size : %u\n", header->obj_registry_name_size);
-//     TRACEX_DEBUG_HDR("Object Registry End Pointer : 0x%.4x\n", header->obj_registry_end_ptr);
-//     TRACEX_DEBUG_HDR("Buffer Start Pointer : 0x%.4x\n", header->event_buff_start_ptr);
-//     TRACEX_DEBUG_HDR("Buffer End Pointer : 0x%.4x\n", header->event_buff_end_ptr);
-//     TRACEX_DEBUG_HDR("Buffer Current Pointer : 0x%.4x\n", header->event_buff_curr_ptr);
-//     TRACEX_DEBUG_HDR("Reserved 2 : 0x%.4x\n", header->res2);
-//     TRACEX_DEBUG_HDR("Reserved 3 : 0x%.4x\n", header->res3);
-//     TRACEX_DEBUG_HDR("Reserved 4 : 0x%.4x\n", header->res4);
-//     TRACEX_DEBUG_HDR("| END RAW HEADER |\n\n");
-
-// }   
 
 void TRACEX_debug_print_single_object(const struct tracex_object *entry)
 {

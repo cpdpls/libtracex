@@ -18,6 +18,7 @@ static char *default_resolver_invalid_event_str = "Invalid";
 
 
 static void convert_from_raw_to_user(struct tracex_event_context *ctx, struct tracex_event_raw *raw, struct tracex_event *user);
+static void resolve_labels(struct tracex_event_context *ctx, struct tracex_event *event);
 static void destroy_event_entry(struct tracex_event_entry **entry);
 static tracex_ret_t parse_incrementally(struct tracex_event_context *ctx, void *buffer, size_t buffer_len, size_t *consumed);
 static tracex_ret_t process_event(struct tracex_event_context *ctx);
@@ -62,38 +63,48 @@ handle_exit:
     return status;
 }
 
-tracex_ret_t tracex_event_int_register_resolver_engine(struct tracex_event_context *ctx, struct tracex_resolver_event_engine *engine, int *init_status)
+tracex_ret_t tracex_event_int_register_resolver_function(struct tracex_event_context *ctx, tracexResolverGetlabel resolverFunc)
 {
 	tracex_ret_t status;
-	int init_tmp_sts;
 
     /* Sanitize input */
-    if (engine->init_engine == NULL || engine->deinit_engine == NULL ||
-	    engine->get_event_labels == NULL)
-    {
+    if (ctx == NULL || resolverFunc == NULL) {
 	    status = TRACEX_BAD_INPUT_PTR;
 	    goto handle_exit;
     }
 
-
-    /* Call the init provided function */
-    init_tmp_sts = engine->init_engine(engine->file_path);
-
-    /* If the user cares about the init return status, give it back to him */
-    if (init_status != NULL)
-        *init_status = init_tmp_sts;
-
-    /* If the init succeeded, we can assign the function pointer internally to the context */
-    if (init_tmp_sts == 0) {
-        status = TRACEX_SUCCESS;
-        ctx->resolver_engine = *engine;
-    }
-    else
-	    status = TRACEX_RESOLVER_ENGINE_FAILURE;
+    /* Assign the function resolver to the context */
+    ctx->resolverFunc = resolverFunc;
+    
+    status = TRACEX_SUCCESS;
 
 handle_exit:
 	return status;
+}
 
+tracex_ret_t tracex_event_int_refresh_resolver_labels(struct tracex_event_context *ctx)
+{
+    tracex_ret_t status;
+    struct tracex_event_entry *entry;
+
+    /* Sanitize input */
+    if (ctx == NULL) {
+	    status = TRACEX_BAD_INPUT_PTR;
+	    goto handle_exit;
+    }
+
+    /* Since the resolve function has parsed or deleted labels
+     * We need to loop on the already parsed object and update their labels 
+     */
+
+     tracex_list_for_each_entry(entry, &ctx->event_list, node) {
+	    resolve_labels(ctx, &entry->event);
+    }
+
+    status = TRACEX_SUCCESS;
+
+handle_exit:
+	return status;
 }
 tracex_ret_t tracex_event_int_parse(struct tracex_event_context *ctx, void *buffer, size_t buff_len, uint64_t *consumed)
 {
@@ -160,11 +171,6 @@ void tracex_event_int_destroy_context(struct tracex_event_context *ctx)
      */
     if (ctx->staging_raw_offset != 0 && ctx->tmp_event != NULL) {
         destroy_event_entry(&ctx->tmp_event);
-    }
-
-    /* If a resolved engine has been assigned, we should call it's deinit function to free any allocation it has made */
-    if (ctx->resolver_engine.deinit_engine != NULL) {
-	    ctx->resolver_engine.deinit_engine();
     }
 
 }
@@ -285,7 +291,7 @@ handle_exit:
 
 static void convert_from_raw_to_user(struct tracex_event_context *ctx, struct tracex_event_raw *raw, struct tracex_event *user)
 {
-	struct tracex_event_labels labels;
+	tracex_resolver_labels labels;
 
 	user->eventId = raw->event_id;
 	user->threadPointer = raw->thread_pointer;
@@ -298,32 +304,40 @@ static void convert_from_raw_to_user(struct tracex_event_context *ctx, struct tr
 	user->rawInfos.info3 = raw->info3;
 	user->rawInfos.info4 = raw->info4;
 
+	resolve_labels(ctx, user);
+}
 
-    if (ctx->resolver_engine.get_event_labels != NULL) {
-	    labels = ctx->resolver_engine.get_event_labels(raw->event_id);
+static void resolve_labels(struct tracex_event_context *ctx, struct tracex_event *event)
+{
+    tracex_resolver_labels labels;
 
-	    user->labels.event_name = labels.event_name == NULL ? default_resolver_invalid_event_str :
-								  user->labels.event_name;
-	    user->labels.info1 = labels.info1 == NULL ? default_resolver_invalid_info_str :
-                                    user->labels.info1;
+     if (ctx->resolverFunc != NULL) {
+	    labels = ctx->resolverFunc(E_TRACEX_RESOLVER_EVENT, event->eventId);
+
+	    event->labels.event_name = (labels.eventLabels.event_name == NULL) ? default_resolver_invalid_event_str :
+								  labels.eventLabels.event_name;
+	    event->labels.info1 = (labels.eventLabels.info1 == NULL) ? default_resolver_invalid_info_str :
+                                    labels.eventLabels.info1;
 
 
-        user->labels.info2 = labels.info2 == NULL ? default_resolver_invalid_info_str :
-                                    user->labels.info2;
-        user->labels.info3 = labels.info3 == NULL ? default_resolver_invalid_info_str :
-                                    user->labels.info3;
+        event->labels.info2 = (labels.eventLabels.info2 == NULL) ? default_resolver_invalid_info_str :
+                                    labels.eventLabels.info2;
+        event->labels.info3 = (labels.eventLabels.info3 == NULL) ? default_resolver_invalid_info_str :
+                                    labels.eventLabels.info3;
 
-        user->labels.info4 = labels.info4 == NULL ? default_resolver_invalid_info_str :
-                                    user->labels.info4;
+        event->labels.info4 = (labels.eventLabels.info4 == NULL) ? default_resolver_invalid_info_str :
+                                    labels.eventLabels.info4;
 
 
     } else {
-	    user->labels.event_name = default_resolver_invalid_event_str;
-	    user->labels.info1 = default_resolver_invalid_info_str;
-        user->labels.info2 = default_resolver_invalid_info_str;
-        user->labels.info3 = default_resolver_invalid_info_str;
-        user->labels.info4 = default_resolver_invalid_info_str;
+	    event->labels.event_name = default_resolver_invalid_event_str;
+	    event->labels.info1 = default_resolver_invalid_info_str;
+        event->labels.info2 = default_resolver_invalid_info_str;
+        event->labels.info3 = default_resolver_invalid_info_str;
+        event->labels.info4 = default_resolver_invalid_info_str;
     }
+
+
 }
 static void destroy_event_entry(struct tracex_event_entry **entry)
 {

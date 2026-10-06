@@ -11,7 +11,8 @@
 #include "tracex/tracex_debug.h"
 
 
-tracex_handler *handler;
+/* Global handler variable */
+tracex_handler_t *handler;
 
 void eventParsedCB(tracex_handler_t *handler, struct tracex_event *event, tracex_ret_t status);
 void headerParsedCB(tracex_handler_t *handler, struct tracex_header *header, tracex_ret_t status);
@@ -66,8 +67,6 @@ int main(int argc, char *argv[])
     callbacks.on_header_parsed = headerParsedCB;
     callbacks.on_object_parsed = objectParsedCB;
 
-    tracex_init();
-
     status = tracex_create_new_handler(&handler);
 
     if (status != TRACEX_SUCCESS)
@@ -84,11 +83,7 @@ int main(int argc, char *argv[])
     
     file(file_path, enable_random);
 
-    // printf("PRESS ANY KEY TO EXIT !\n");
-    // opt = getchar();
     tracex_destroy_handler(&handler);
-
-    tracex_deinit();
 
     return 0;
 

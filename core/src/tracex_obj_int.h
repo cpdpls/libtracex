@@ -2,6 +2,7 @@
 #define TRACEX_OBJ_INT_H
 
 #include <stdint.h>
+#include "tracex/tracex_resolver.h"
 #include "tracex/tracex_object.h"
 #include "tracex/tracex_errno.h"
 #include "tracex_list.h"
@@ -56,7 +57,7 @@ struct tracex_object_context
         we are parsing the obj name field
     */
     enum tracex_obj_fsm             fsm;                                        /* State machine used when parsing fields */
-    struct tracex_resolver_obj_engine resolver_engine;
+    tracexResolverGetlabel resolverFunc;
 };
 
 struct tracex_obj_iterator
@@ -68,8 +69,10 @@ struct tracex_obj_iterator
 
 tracex_ret_t tracex_object_int_init(struct tracex_object_context *ctx);
 tracex_ret_t tracex_object_int_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop, uint32_t name_size);
-tracex_ret_t tracex_object_int_register_resolver_engine(struct tracex_object_context *ctx, struct tracex_resolver_obj_engine *engine, int *init_status);
-tracex_ret_t tracex_object_int_parse(struct tracex_object_context *ctx, void *buffer, size_t buff_len,uint64_t *consumed);
+tracex_ret_t tracex_object_int_register_resolver_function(struct tracex_object_context *ctx, tracexResolverGetlabel resolverFunc);
+tracex_ret_t tracex_object_int_refresh_resolver_labels(struct tracex_object_context *ctx);
+tracex_ret_t tracex_object_int_parse(struct tracex_object_context *ctx, void *buffer, size_t buff_len,
+				     uint64_t *consumed);
 void tracex_object_destroy_context(struct tracex_object_context *ctx);
 
 tracex_ret_t tracex_object_int_iterator_init(struct tracex_object_context *ctx, TRACEX_object_iterator_t **iterator);
