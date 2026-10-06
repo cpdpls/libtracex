@@ -150,26 +150,26 @@ int main(void)
     {
         printf("%s\n", TRACEX_strerror(status));
 	    appstatus = 1;
-	    goto handle_error;
+	    goto handle_exit;
     }
 
     /* We now need to register the callbacks, otherwise we won't be notified about newly parsed object or event */
     if ((status = registerCallbacks()) != TRACEX_SUCCESS) {
         printf("%s\n", TRACEX_strerror(status));
 	    appstatus = 1;
-	    goto handle_error;
+	    goto handle_exit;
     }
 
     if (initLabelsEngine() != 0){
 	    printf("An error occured at labels initialization !\n");
 	    appstatus = 1;
-	    goto handle_error;
+	    goto handle_exit;
     }
 
     if ((status = registerResolver()) != TRACEX_SUCCESS) {
         printf("%s\n", TRACEX_strerror(status));
 	    appstatus = 1;
-	    goto handle_error;
+	    goto handle_exit;
     }
 
     /* Call the main network logic to parse incrementally */
@@ -178,10 +178,9 @@ int main(void)
     /* Destroy the loaded labels */
     uninitLabelsEngine();
 
-handle_error:
-	tracex_destroy_handler(&handler);
 
 handle_exit:
-	return 0;
+    tracex_destroy_handler(&handler);
+	return appstatus;
 
 }

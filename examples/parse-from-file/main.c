@@ -9,7 +9,7 @@
 
 #include "tracex/tracex.h"
 #include "tracex/tracex_debug.h"
-
+#include "labels_engine/labels_engine.h"
 
 /* Global handler variable */
 tracex_handler_t *handler;
@@ -17,83 +17,18 @@ tracex_handler_t *handler;
 void eventParsedCB(tracex_handler_t *handler, struct tracex_event *event, tracex_ret_t status);
 void headerParsedCB(tracex_handler_t *handler, struct tracex_header *header, tracex_ret_t status);
 void objectParsedCB(tracex_handler_t *handler, struct tracex_object *object, tracex_ret_t status);
+static tracex_ret_t registerCallbacks(void);
+static tracex_ret_t registerResolver(void);
+static int initLabelsEngine(void);
+static void uninitLabelsEngine(void);
+
 void file(char *file_path, char enable_random);
-
-static struct option long_options[] = {
-    {"file",    required_argument, 0,  'f' },
-    {"random",  no_argument,       0,  'r' },
-    {0,         0,                 0,  0 }
-};
-
-int main(int argc, char *argv[])
-{
-    tracex_ret_t status;
-    struct tracex_callbacks callbacks;
-    int opt;
-    int option_index = 0;
-    char missing = 0;
-    char *file_path;
-    char enable_random = 0;
-
-    while(1) {
-
-        opt = getopt_long(argc, argv, "f:r", long_options, &option_index);
-
-        if (opt == -1)
-            break;
-        
-        switch(opt) {
-            case 'f':
-		        file_path = optarg;
-		        break;
-            case 'r':
-		        enable_random = 1;
-                break;
-
-            case '?':
-		        printf("Unknown option '%c'\n", optopt);
-                break;
-            case ':':
-		    printf("Missing argument !\n");
-                break;
-            
-            default:
-		    printf("Unexpected getopt_long\n");
-                break;
-	    }
-    }
-
-    callbacks.on_event_parsed = eventParsedCB;
-    callbacks.on_header_parsed = headerParsedCB;
-    callbacks.on_object_parsed = objectParsedCB;
-
-    status = tracex_create_new_handler(&handler);
-
-    if (status != TRACEX_SUCCESS)
-    {
-        printf("%s\n", TRACEX_strerror(status));
-        exit(-1);
-    }
-
-    if (tracex_register_callbacks(handler, &callbacks) != TRACEX_SUCCESS)
-    {
-        printf("%s\n", TRACEX_strerror(status));
-        exit(-1);
-    }
-    
-    file(file_path, enable_random);
-
-    tracex_destroy_handler(&handler);
-
-    return 0;
-
-}
 
 void eventParsedCB(tracex_handler_t *handler, struct tracex_event *event, tracex_ret_t status)
 {
     if (status == TRACEX_SUCCESS)
     {
-        //TRACEX_debug_print_single_event(event);
+        /*TRACEX_debug_print_single_event(event); */
     }
 
 }
@@ -109,9 +44,47 @@ void objectParsedCB(tracex_handler_t *handler, struct tracex_object *object, tra
 {
     if (status == TRACEX_SUCCESS)
     {
-        // TRACEX_debug_print_single_object(object);
+        TRACEX_debug_print_single_object(object);
     }
 
+}
+
+static tracex_ret_t registerCallbacks(void)
+{
+    struct tracex_callbacks callbacks;
+    tracex_ret_t status;
+
+    callbacks.on_event_parsed = eventParsedCB;
+    callbacks.on_header_parsed = headerParsedCB;
+    callbacks.on_object_parsed = objectParsedCB;
+
+    status = tracex_register_callbacks(handler, &callbacks);
+
+    return status;
+}
+
+static tracex_ret_t registerResolver(void)
+{
+	return tracex_register_resolver_function(handler, labels_engine_resolve_labels);
+}
+
+static int initLabelsEngine(void)
+{
+	int status;
+
+	/* We first load all the labels in the labels engine */
+
+	status = labels_engine_object_load_labels(NULL);
+
+	status |= labels_engine_event_load_labels(NULL);
+
+	return status;
+}
+
+static void uninitLabelsEngine(void)
+{
+	labels_engine_event_destroy_labels();
+	labels_engine_object_destroy_labels();
 }
 
 void file(char *file_path, char enable_random)
@@ -181,4 +154,89 @@ void file(char *file_path, char enable_random)
     free(orig_buff);
     fclose(file_ptr);
     
+}
+
+int main(int argc, char *argv[])
+{
+    tracex_ret_t status;
+    int appstatus;
+    char *file_path = NULL;
+    char enable_random = 0;
+    int val, index = 0;
+    const struct option lopts[] = {
+        {"file",    required_argument,  NULL,  'f' },
+        {"random",  no_argument,        NULL,  'r' },
+        {NULL,      no_argument,        NULL,   0 }
+    };
+    
+    while (EOF != (val = getopt_long(argc, argv, ":f:r", lopts, &index))) {
+	    switch (val) {
+            case 'f':
+                file_path = optarg;
+                break;
+            case 'r':
+                enable_random = 1;
+                break;
+    
+            case '?':
+                printf("Unknown option '%c'\n", optopt);
+                break;
+            case ':':
+                printf("Missing argument for option : '%c'\n", optopt);
+                exit(1);
+                break;
+
+	    default:
+		        printf("wtf\n");
+            break;
+	    }
+    }
+
+    if (file_path == NULL) {
+	    printf("Missing required file path !\n");
+	    exit(1);
+    }
+    if (optind < argc) {
+        printf("non-option ARGV-elements: ");
+               while (optind < argc)
+                   printf("%s ", argv[optind++]);
+               printf("\n");
+	       exit(1);
+    }
+
+   /* First we create a handler for the parsing */
+    status = tracex_create_new_handler(&handler);
+
+    if (status != TRACEX_SUCCESS)
+    {
+        printf("%s\n", TRACEX_strerror(status));
+	    appstatus = 1;
+	    goto handle_exit;
+    }
+
+    /* We now need to register the callbacks, otherwise we won't be notified about newly parsed object or event */
+    if ((status = registerCallbacks()) != TRACEX_SUCCESS) {
+        printf("%s\n", TRACEX_strerror(status));
+	    appstatus = 1;
+	    goto handle_exit;
+    }
+
+    if (initLabelsEngine() != 0){
+	    printf("An error occured at labels initialization !\n");
+	    appstatus = 1;
+	    goto handle_exit;
+    }
+
+    if ((status = registerResolver()) != TRACEX_SUCCESS) {
+        printf("%s\n", TRACEX_strerror(status));
+	    appstatus = 1;
+	    goto handle_exit;
+    }
+    
+    file(file_path, enable_random);
+
+handle_exit:
+    tracex_destroy_handler(&handler);
+    return appstatus;
+
 }
