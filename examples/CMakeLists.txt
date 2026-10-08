@@ -8,5 +8,8 @@ add_executable(stream_parsing
 add_executable(file_parsing
     parse-from-file/main.c
 )
+
+target_link_options(file_parsing PRIVATE -llua )
+target_link_options(stream_parsing PRIVATE -llua )
 target_link_libraries(stream_parsing PRIVATE tracex_core labels_engine)
 target_link_libraries(file_parsing PRIVATE tracex_core labels_engine)

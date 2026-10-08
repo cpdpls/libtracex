@@ -13,4 +13,5 @@ void TRACEX_debug_print_single_object(const struct tracex_object *entry);
 void TRACEX_debug_print_objects(const struct tracex_handler *handler);
 void TRACEX_debug_print_single_event(const struct tracex_event *entry);
 void TRACEX_debug_print_events(const struct tracex_handler *handler);
+void TRACEX_debug_print_total_events_count(const struct tracex_handler *handler);
 #endif

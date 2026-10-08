@@ -120,3 +120,8 @@ static void tracex_debug_print_object_params(const struct tracex_object *object)
 
 
 }
+
+void TRACEX_debug_print_total_events_count(const struct tracex_handler *handler)
+{
+	TRACEX_DEBUG_EVENT("Total event parsed : %lu\n", handler->event_ctx.tot_count);
+}

@@ -21,6 +21,10 @@ BIND_IP       = "0.0.0.0"
 BIND_PORT     = 5555
 BASE_ADDR     = 0x20000000
 
+# Timestamp behaviour (like a real TraceX timer)
+TS_START      = 1000          # initial value
+TS_STEP_MIN   = 1             # minimum ticks between events
+TS_STEP_MAX   = 5             # maximum ticks between events (small jitter)
 # ------------------------------------------------------------------
 # Structure sizes
 # ------------------------------------------------------------------
@@ -37,7 +41,6 @@ def make_name(s: str) -> bytes:
     b = s.encode("ascii", errors="replace")[:NAME_SIZE-1]
     return b + b"\x00" * (NAME_SIZE - len(b))
 
-
 def build_header(num_objects: int, num_events: int) -> bytes:
     registry_start = BASE_ADDR + HEADER_SIZE
     registry_end   = registry_start + num_objects * OBJECT_SIZE
@@ -47,7 +50,7 @@ def build_header(num_objects: int, num_events: int) -> bytes:
 
     buf = bytearray()
     buf += pack_u32(0x54585442)          # TXTB
-    buf += pack_u32(0xFFFFFFFF)          # timer mask
+    buf += pack_u32(0xFFFFFFFF)          # timer mask (32-bit)
     buf += pack_u32(BASE_ADDR)
     buf += pack_u32(registry_start)
     buf += pack_u16(0)
@@ -61,7 +64,6 @@ def build_header(num_objects: int, num_events: int) -> bytes:
     buf += pack_u32(0xCCCCCCCC)
     assert len(buf) == HEADER_SIZE
     return bytes(buf)
-
 
 def generate_objects(num_objects: int):
     object_ptrs = []
@@ -106,8 +108,12 @@ def generate_objects(num_objects: int):
     assert len(buf) == num_objects * OBJECT_SIZE
     return bytes(buf), object_ptrs
 
-
-def generate_events(num_events: int, object_ptrs: list, start_ts: int = 1000):
+def generate_events(num_events: int, object_ptrs: list, start_ts: int):
+    """
+    Generate events with a strictly increasing timestamp.
+    Returns (event_bytes, next_ts) so the caller can continue
+    the timeline in the next block.
+    """
     event_ids = [1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 20, 21,
                  30, 31, 40, 41, 50, 51, 100, 101, 4096]
     buf = bytearray()
@@ -126,7 +132,9 @@ def generate_events(num_events: int, object_ptrs: list, start_ts: int = 1000):
             priority   = (random.randint(0, 31) << 16) | random.randint(0, 31)
 
         event_id = random.choice(event_ids)
-        ts += random.randint(1, 50)
+
+        # Steady incremental timestamp (small jitter only)
+        ts += random.randint(TS_STEP_MIN, TS_STEP_MAX)
 
         info1 = random.choice(object_ptrs) if object_ptrs else random.randint(0, 0xFFFF)
         info2 = random.randint(0, 0xFFFFFFFF)
@@ -136,15 +144,14 @@ def generate_events(num_events: int, object_ptrs: list, start_ts: int = 1000):
         buf += pack_u32(thread_ptr)
         buf += pack_u32(priority)
         buf += pack_u32(event_id)
-        buf += pack_u32(ts)
+        buf += pack_u32(ts)          # increasing timestamp
         buf += pack_u32(info1)
         buf += pack_u32(info2)
         buf += pack_u32(info3)
         buf += pack_u32(info4)
 
     assert len(buf) == num_events * EVENT_SIZE
-    return bytes(buf), ts
-
+    return bytes(buf), ts          # return the last used timestamp
 
 def handle_client(client_socket):
     try:
@@ -160,19 +167,17 @@ def handle_client(client_socket):
 
         total_bytes = 0
         blocks = 0
+        current_ts = TS_START          # <-- persistent timestamp across blocks
 
-        # Progress bar:
-        # - finite mode  → known total (1 block)
-        # - infinite mode → no total (spins forever)
         bar_total = block_size if not INFINITE else None
 
         with alive_bar(bar_total, title="Sending TraceX data", unit="B") as bar:
             while True:
                 # Generate one full block (objects + events)
                 objects, object_ptrs = generate_objects(NUM_OBJECTS)
-                events, _ = generate_events(NUM_EVENTS, object_ptrs)
+                events, current_ts = generate_events(NUM_EVENTS, object_ptrs, current_ts)
 
-                # Send the whole block as fast as possible
+                # Send the whole block
                 client_socket.sendall(objects)
                 client_socket.sendall(events)
 
@@ -180,8 +185,8 @@ def handle_client(client_socket):
                 total_bytes += sent
                 blocks += 1
 
-                bar(sent)                       # advance progress bar
-                bar.text(f"blocks={blocks}  total={total_bytes} B")
+                bar(sent)
+                bar.text(f"blocks={blocks}  total={total_bytes} B  ts={current_ts}")
 
                 if not INFINITE:
                     break
@@ -201,7 +206,6 @@ def handle_client(client_socket):
         except Exception:
             pass
 
-
 def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -220,7 +224,6 @@ def main():
         print("\n[+] Server stopped")
     finally:
         server.close()
-
 
 if __name__ == "__main__":
     main()
