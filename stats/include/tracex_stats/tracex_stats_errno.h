@@ -1,0 +1,20 @@
+#ifndef TRACEX_STATS_ERRNO_H
+#define TRACEX_STATS_ERRNO_H
+
+typedef enum
+{
+    TRACEX_STATS_SUCCESS,
+    TRACEX_STATS_BAD_INPUT_PTR,
+    TRACEX_STATS_ALLOCATION_FAILURE,
+    TRACEX_STATS_INVALID_LUA_HANDLER,
+    TRACEX_STATS_LUA_ERROR,
+    TRACEX_STATS_SCRIPT_MISSING_FUNCTION,
+    TRACEX_STATS_SCRIPT_MISSING_TABLE,
+    TRACEX_STATS_ERRNO_COUNT,
+
+} tracex_stats_ret_t;
+
+
+const char *tracex_stats_strerror(tracex_stats_ret_t tracex_stats_error);
+
+#endif

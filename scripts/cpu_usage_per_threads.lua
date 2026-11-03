@@ -2,6 +2,8 @@
 -- CPU usage per thread – only objects of type 1 (THREAD) are taken into account
 -- Works with 16-bit or 32-bit TraceX timestamps
 
+objects = {}
+events = {}
 local threads = {}              -- pointer → { total = 0 }
 local previous_thread = nil
 local previous_ts     = nil
@@ -62,7 +64,7 @@ function get_result()
     local result = {
         name = "cpu_usage_per_thread",
         description = "CPU time and percentage used by each thread",
-        suggested_view = "timeline",
+        suggested_view = "bar",
         columns = {
             { name = "object_ptr",  type = "uint32" },
             { name = "name",        type = "string" },

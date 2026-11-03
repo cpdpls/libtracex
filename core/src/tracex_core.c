@@ -113,8 +113,9 @@ handle_error:
 
 handle_exit:
 
-	/* Giuve back the newly created or destroyed handler and return the status */
-	*new_handler = handler;
+	/* Give back the newly created or destroyed handler and return the status */
+	if (new_handler != NULL)
+		*new_handler = handler;
 	return status;
 }
 
