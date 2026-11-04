@@ -11,16 +11,16 @@ add_executable(file_parsing
     parse-from-file/main.c
 )
 
-add_executable(qt_stats_viewer
-    
-)
-
-target_link_libraries(qt_stats_viewer PRIVATE
-    Qt6::Widgets
-    tracex_core
-    labels_engine
-    tracex_stats
-)
+#add_executable(qt_stats_viewer
+#    
+#)
+#
+#target_link_libraries(qt_stats_viewer PRIVATE
+#    Qt6::Widgets
+#    tracex_core
+#    labels_engine
+#    tracex_stats
+#)
 
 target_link_libraries(stream_parsing PRIVATE
     tracex_core
@@ -34,9 +34,9 @@ target_link_libraries(file_parsing PRIVATE
     tracex_stats
 )
 
-target_link_libraries(qt_stats_viewer PRIVATE
-    Qt6::Widgets
-    tracex_core
-    labels_engine
-    tracex_stats
-)
+#target_link_libraries(qt_stats_viewer PRIVATE
+#    Qt6::Widgets
+#    tracex_core
+#    labels_engine
+#    tracex_stats
+#)

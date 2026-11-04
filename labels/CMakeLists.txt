@@ -1,7 +1,6 @@
 add_library(labels_engine STATIC
     src/labels_engine.c
     src/labels_engine_utils.c
-    
 )
 
 add_library(tracex::labels_engine ALIAS labels_engine)
@@ -12,8 +11,9 @@ target_include_directories(labels_engine
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_SOURCE_DIR}/external/cjson
-        ${CMAKE_SOURCE_DIR}/external/uthash/include
+        # Paths relative to this dir (labels/), not the top-level project
+        ${CMAKE_CURRENT_SOURCE_DIR}/../external/cjson
+        ${CMAKE_CURRENT_SOURCE_DIR}/../external/uthash/include
 )
 
 target_link_libraries(labels_engine

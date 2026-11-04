@@ -253,6 +253,7 @@ handle_return:
     if (json_struct.root != NULL) {
         cJSON_Delete(json_struct.root);
     }
+
     return status;
 }
 
