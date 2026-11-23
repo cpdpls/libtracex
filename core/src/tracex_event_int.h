@@ -36,7 +36,7 @@ struct tracex_event_context
     struct tracex_event_entry   *tmp_event;         /* Temp allocated event object */
     uint64_t tot_count;                             /* Total count of events */
     uint64_t                    registry_size;      /* Total number of posssible events in the event registry */
-    tracexResolverGetlabel resolverFunc;
+    tracex_resolver_get_labels resolverFunc;
 };
 
 /**
@@ -57,7 +57,7 @@ tracex_ret_t tracex_event_int_init(struct tracex_event_context *ctx);
  */
 tracex_ret_t tracex_event_int_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop);
 
-tracex_ret_t tracex_event_int_register_resolver_function(struct tracex_event_context *ctx, tracexResolverGetlabel resolverFunc);
+tracex_ret_t tracex_event_int_register_resolver_function(struct tracex_event_context *ctx, tracex_resolver_get_labels resolverFunc);
 
 tracex_ret_t tracex_event_int_refresh_resolver_labels(struct tracex_event_context *ctx);
 /**

@@ -8,7 +8,7 @@ option(TRACEX_BUILD_LABELS   "Build the labels library"           ON)
 option(TRACEX_BUILD_STATS    "Build the statistics / Lua library" OFF)
 option(TRACEX_BUILD_EXAMPLES "Build example programs"             ON)
 
-# Examples need labels (→ cJSON) and stats (→ Lua)
+
 if(TRACEX_BUILD_EXAMPLES)
     if(NOT TRACEX_BUILD_LABELS)
         message(STATUS "TRACEX_BUILD_EXAMPLES is ON: enabling TRACEX_BUILD_LABELS")

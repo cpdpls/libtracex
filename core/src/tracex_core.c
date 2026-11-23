@@ -133,7 +133,7 @@ tracex_ret_t tracex_register_callbacks(tracex_handler_t *handler, struct tracex_
 	return TRACEX_SUCCESS;
 }
 
-tracex_ret_t tracex_register_resolver_function(tracex_handler_t *handler, tracexResolverGetlabel resolverFunc)
+tracex_ret_t tracex_register_resolver_function(tracex_handler_t *handler, tracex_resolver_get_labels resolverFunc)
 {
 	tracex_ret_t status;
 

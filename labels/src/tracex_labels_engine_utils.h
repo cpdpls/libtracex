@@ -1,5 +1,5 @@
-#ifndef LABELS_ENGINE_UTILS_H
-#define LABELS_ENGINE_UTILS_H
+#ifndef TRACEX_LABELS_ENGINE_UTILS_H
+#define TRACEX_LABELS_ENGINE_UTILS_H
 
 #include <stdint.h>
 #include "cJSON.h"

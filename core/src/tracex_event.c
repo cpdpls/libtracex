@@ -3,7 +3,6 @@
 #include "tracex/tracex_event.h"
 #include "tracex/tracex_errno.h"
 #include "tracex_event_int.h"
-#include "tracex_core.h"
 
 /* In case a resolver engine is not registed or, the engine returns an error,
  * This string will be assigned to all the event info strings 
@@ -63,7 +62,7 @@ handle_exit:
     return status;
 }
 
-tracex_ret_t tracex_event_int_register_resolver_function(struct tracex_event_context *ctx, tracexResolverGetlabel resolverFunc)
+tracex_ret_t tracex_event_int_register_resolver_function(struct tracex_event_context *ctx, tracex_resolver_get_labels resolverFunc)
 {
 	tracex_ret_t status;
 

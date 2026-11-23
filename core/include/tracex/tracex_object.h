@@ -14,8 +14,7 @@ struct tracex_object_labels {
     const char *param2;
 };
 
-struct tracex_object
-{
+struct tracex_object {
     uint32_t type;
     uint16_t thread_priority;
 

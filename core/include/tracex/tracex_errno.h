@@ -1,8 +1,7 @@
 #ifndef TRACEX_ERRNO_H
 #define TRACEX_ERRNO_H
 
-typedef enum
-{
+typedef enum {
     TRACEX_SUCCESS,
     TRACEX_ALLOC_FAILURE,
     TRACEX_NOT_INIT,

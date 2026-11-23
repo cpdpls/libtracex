@@ -1,6 +1,6 @@
 add_library(labels_engine STATIC
-    src/labels_engine.c
-    src/labels_engine_utils.c
+    src/tracex_labels_engine.c
+    src/tracex_labels_engine_utils.c
     
 )
 

@@ -6,7 +6,6 @@
 #include "tracex/tracex_object.h"
 #include "tracex/tracex_errno.h"
 #include "tracex_list.h"
-#include "tracex_header_int.h"
 
 
 enum tracex_obj_fsm
@@ -57,7 +56,7 @@ struct tracex_object_context
         we are parsing the obj name field
     */
     enum tracex_obj_fsm             fsm;                                        /* State machine used when parsing fields */
-    tracexResolverGetlabel resolverFunc;
+    tracex_resolver_get_labels resolverFunc;
 };
 
 struct tracex_obj_iterator
@@ -69,7 +68,7 @@ struct tracex_obj_iterator
 
 tracex_ret_t tracex_object_int_init(struct tracex_object_context *ctx);
 tracex_ret_t tracex_object_int_compute_registry_size(uint64_t *registry_size, uint32_t start, uint32_t stop, uint32_t name_size);
-tracex_ret_t tracex_object_int_register_resolver_function(struct tracex_object_context *ctx, tracexResolverGetlabel resolverFunc);
+tracex_ret_t tracex_object_int_register_resolver_function(struct tracex_object_context *ctx, tracex_resolver_get_labels resolverFunc);
 tracex_ret_t tracex_object_int_refresh_resolver_labels(struct tracex_object_context *ctx);
 tracex_ret_t tracex_object_int_parse(struct tracex_object_context *ctx, void *buffer, size_t buff_len,
 				     uint64_t *consumed);

@@ -62,7 +62,7 @@ handle_exit:
     return status;
 }
 
-tracex_ret_t tracex_object_int_register_resolver_function(struct tracex_object_context *ctx, tracexResolverGetlabel resolverFunc)
+tracex_ret_t tracex_object_int_register_resolver_function(struct tracex_object_context *ctx, tracex_resolver_get_labels resolverFunc)
 {
 	tracex_ret_t status;
 

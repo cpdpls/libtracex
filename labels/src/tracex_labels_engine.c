@@ -5,8 +5,8 @@
 #include "uthash.h"
 #include "cJSON.h"
 #include "tracex/tracex_resolver.h"
-#include "labels_engine/labels_engine.h"
-#include "labels_engine_utils.h"
+#include "tracex_labels/tracex_labels_engine.h"
+#include "tracex_labels_engine_utils.h"
 
 /* Default path of the json file shiped with this library for the objects labels */
 #define LABELS_ENGINE_DEFAULT_OBJECT_JSON_PATH "data/objects.json"
@@ -110,7 +110,7 @@ static void labels_engine_object_labels_add(struct labels_engine_object_labels *
 static int convert_cjson_to_obj_label(struct labels_engine_object_json_element *cjson_obj, struct labels_engine_object_labels **new_label);
 
 
-tracex_resolver_labels labels_engine_resolve_labels(enum tracex_resolver_request_type request, uint32_t label_id)
+tracex_resolver_labels tracex_labels_resolve_labels(enum tracex_resolver_request_type request, uint32_t label_id)
 {
 	tracex_resolver_labels labels;
 	struct labels_engine_object_labels *entry_object = NULL;
@@ -145,46 +145,7 @@ tracex_resolver_labels labels_engine_resolve_labels(enum tracex_resolver_request
 	return labels;
 }
 
-// struct tracex_object_labels tracex_resolver_get_object_labels(uint32_t type)
-// {
-//     struct tracex_labels_object_labels *entry = NULL;
-//     struct tracex_object_labels labels;
-
-//     /* First check if the provided type corresponds to a set of previously parsed object labels from the json file */
-//     HASH_FIND_INT(object_labels_hash, &type, entry);
-
-//     /* If the type is part of the hashed list, we can return the object labels  */
-// 	if (entry)
-// 		labels = entry->labels;
-
-//     /* Othwersise, the type is not linked to any existing label parsed from the json. Assign it the default string */
-//     else
-//         memset(&labels, 0, sizeof(struct tracex_object_labels));
-
-//     return labels;
-// }
-
-
-// tracex_resolver_labels labels_engine_resolve_labels(enum tracex_resolver_request_type request, uint32_t label_id)
-// {
-// 	struct labels_engine_event_labels *entry = NULL;
-// 	struct tracex_event_labels labels;
-
-// 	/* First check if the provided ID corresponds to a set of previously parsed event labels from the json file */
-// 	HASH_FIND_INT(event_labels_hash, &event_id, entry);
-
-// 	/* If the ID is part of the hashed list, we can return it's event label strings */
-// 	if (entry)
-// 		labels = entry->labels;
-
-// 	/* Othwersise, the ID is not linked to any existing label parsed from the json. Assign it the default string */
-// 	else
-// 		memset(&labels, 0, sizeof(struct tracex_event_labels));
-
-// 	return labels;
-// }
-
-int labels_engine_object_load_labels(const char *json_path)
+int tracex_labels_engine_object_load_labels(const char *json_path)
 {
     int status;
     struct labels_engine_object_json json_struct;
@@ -256,7 +217,7 @@ handle_return:
     return status;
 }
 
-void labels_engine_object_destroy_labels(void)
+void tracex_labels_engine_object_destroy(void)
 {
     struct labels_engine_object_labels *entry = NULL;
     struct labels_engine_object_labels *tmp = NULL;
@@ -421,7 +382,7 @@ handle_return:
 }
 
 
-int labels_engine_event_load_labels(const char *json_path)
+int tracex_labels_engine_event_load_labels(const char *json_path)
 {
 	int status;
 	struct labels_engine_event_json json_struct;
@@ -500,7 +461,7 @@ handle_return:
 	return status;
 }
 
-void labels_engine_event_destroy_labels(void)
+void tracex_labels_engine_event_destroy(void)
 {
 	struct labels_engine_event_labels *entry = NULL;
 	
@@ -520,9 +481,9 @@ static void labels_engine_event_labels_add(struct labels_engine_event_labels *ne
 
 	HASH_FIND_INT(event_labels_hash, &new_labels->eventId, existing);
 
-	/* If the event is found and override is allowed, delete the existing*/
+	/* If the event is found, delete the existing */
 	if (existing) {
-			destroy_event_label(&new_labels);
+		destroy_event_label(&new_labels);
 	}
 
 	/* Add the actual element in the list */

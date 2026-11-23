@@ -10,7 +10,7 @@
 
 #include "tracex/tracex.h"
 #include "tracex/tracex_debug.h"
-#include "labels_engine/labels_engine.h"
+#include "tracex_labels/tracex_labels_engine.h"
 #include "tracex_stats/tracex_stats.h"
 #include "tracex_stats/tracex_stats_errno.h"
 
@@ -90,7 +90,7 @@ static tracex_ret_t registerCallbacks(void)
 
 static tracex_ret_t registerResolver(void)
 {
-	return tracex_register_resolver_function(handler, labels_engine_resolve_labels);
+	return tracex_register_resolver_function(handler, tracex_labels_resolve_labels);
 }
 
 static int initLabelsEngine(void)
@@ -99,17 +99,17 @@ static int initLabelsEngine(void)
 
 	/* We first load all the labels in the labels engine */
 
-	status = labels_engine_object_load_labels(NULL);
+	status = tracex_labels_engine_object_load_labels(NULL);
 
-	status |= labels_engine_event_load_labels(NULL);
+	status |= tracex_labels_engine_event_load_labels(NULL);
 
 	return status;
 }
 
 static void uninitLabelsEngine(void)
 {
-	labels_engine_event_destroy_labels();
-	labels_engine_object_destroy_labels();
+	tracex_labels_engine_event_destroy();
+	tracex_labels_engine_object_destroy();
 }
 
 static void print_statistic_result(const tracex_stats_results *res)

@@ -5,8 +5,7 @@
 #include "tracex_errno.h"
 
 
-enum tracex_event_occurence_type
-{
+enum tracex_event_occurence_type {
     TRACEX_EVENT_OCCURENCE_TYPE_THREAD,
     TRACEX_EVENT_OCCURENCE_TYPE_ISR,
     TRACEX_EVENT_OCCURENCE_TYPE_INITIALIZATION

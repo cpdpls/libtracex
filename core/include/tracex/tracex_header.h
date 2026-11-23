@@ -5,8 +5,7 @@
 #include "tracex_errno.h"
 
 
-enum tracex_dump_endianess
-{
+enum tracex_dump_endianess {
     E_TRACEX_LITTLE_ENDIAN,
     E_TRACEX_BIG_ENDIAN
 };
